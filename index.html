@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"/>
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="theme-color" content="#000000"/>
+<meta name="description" content="DB in a bucket"/>
+<title>test dir persist</title>
+
+<!---
+<script type="text/javascript" src="./js/s3-client.js"></script>
+<link href="./css/mainmonitor.css" rel="stylesheet">
+--->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta24/dist/css/tabler.min.css">
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.1/full/pyodide.js"></script>
+
+<!----  codemirror5 ------------------------->
+<link rel="stylesheet" href="./js/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="./js/codemirror/theme/cobalt.css">
+<script src="./js/codemirror/lib/codemirror.js"></script>
+<script src="./js/codemirror/mode/python/python.js"></script>
+<script src="./js/codemirror/addon/edit/matchbrackets.js"></script>
+
+
+</head>
+
+    <body data-bs-theme="dark">
+	
+		<h1>test of dir persistence: pyodide/v0.27.1 </h1>
+		<p>
+			<button type="button" class="btn btn-primary" id="opendirbutton1">Open directory</button>
+			<button type="button" class="btn btn-secondary" id="synctodisk">Sync to disk</button>
+		</p>
+		
+		<p>
+			<textarea id="pycode" style="width: 100%;" rows="5"></textarea>
+			<div id="pycodebuttons">
+			<button type="button" class="btn btn-secondary" id="runpycode">Run (shift-enter)&nbsp;<span id="pyrunningspinner" class="spinner-border spinner-border-sm me-2"  style="display: none;" role="status"></span></button>
+			<button type="button" class="btn btn-secondary" id="showhistory">Restore history</button>
+			
+			</div>
+		</p>
+
+		<p>
+			<div>Py output:</div>
+			<textarea id="pyoutput" style="width: 100%;" rows="10"></textarea>
+			<div id="pyoutputbuttons">
+			<button type="button" class="btn btn-secondary" id="clearoutput">Clear output</button>
+			</div>
+		</p>
+	
+		<!---------            -------------------------  -------------------->
+		<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta24/dist/js/tabler.min.js"></script>
+
+		
+        <script defer="defer" type="module">
+			const { get, set } = await import(
+			  "https://unpkg.com/idb-keyval@5.0.2/dist/esm/index.js"
+			);
+			
+			import { ExecTimer } from "./js/exectimer.js"; 
+			
+			
+			
+			
+			window.exectimer = new ExecTimer({msgtext:"Initializing pyodide..."});
+
+			async function main_py() {
+				let pyodide = await loadPyodide();
+				let timing = window.exectimer.timeit("Py Ready!");
+				output.value += "Ready! ("+timing/1000+" sec)\n";
+				return pyodide;
+			}
+			window.pyodideReadyPromise = main_py();
+			let commandhistory = "";
+
+			function addToOutput(s,editorvalue="") {
+				output.value += ">>>" + editorvalue + "\n" + s + "\n";
+			}
+			
+			async function evaluatePython(additional_char) {
+				let pyodide = await window.pyodideReadyPromise;
+				//console.log(additional_char);
+				let add_string = '';
+				console.log("additional_char: ", additional_char);
+				if (additional_char instanceof String) {
+					add_string = additional_char; 
+					console.log("additional_char: string ", add_string);
+				}
+				
+				
+				window.exectimer.timeit("running command...");
+				document.getElementById("pyrunningspinner").style.display = 'block';
+				try {
+					let output = await pyodide.runPythonAsync(editor1.getValue());
+					console.log(output);
+					let editorvalue = editor1.getValue(); 
+					commandhistory += editorvalue + add_string;
+					editor1.setValue("");
+					addToOutput(output,editorvalue);
+				} catch (err) {
+					addToOutput(err);
+				}
+				document.getElementById("pyrunningspinner").style.display = 'none';
+				let timing = window.exectimer.timeit("done!");
+				addToOutput("Exec time " + timing/1000+ " sec\n\n");
+			}
+			
+			function restoreCmdHistory() {
+				editor1.setValue(commandhistory);
+				commandhistory = "";
+				editor1.focus();
+			}
+			
+			// -------------------------
+			
+			async function openDir() {
+				console.log("open dir clicked");
+				window.localdir = await mountDirectory("/mount_dir", "localdirhandle");
+				
+			}
+			
+			async function mountDirectory(pyodideDirectory, directoryKey) {
+			  let directoryHandle = await get(directoryKey);
+			  let pyodide = await window.pyodideReadyPromise;
+			  const opts = {
+				id: "mountdirid",
+				mode: "readwrite",
+			  };
+			  if (!directoryHandle) {
+				directoryHandle = await showDirectoryPicker(opts);
+				await set(directoryKey, directoryHandle);
+			  }
+			  const permissionStatus = await directoryHandle.requestPermission(opts);
+			  if (permissionStatus !== "granted") {
+				throw new Error("readwrite access to directory not granted");
+			  }
+			  const { syncfs } = await pyodide.mountNativeFS(
+				pyodideDirectory,
+				directoryHandle,
+			  );
+			  console.log("Mounted ",pyodideDirectory,directoryHandle, syncfs);
+			  return syncfs;
+			}
+						
+			async function syncMountedDirectory() {
+				let pyodide = await window.pyodideReadyPromise;
+				// https://github.com/pyodide/pyodide/blob/f8f026a5de496d71d1c6427e44ddcff8272f5dd4/src/js/nativefs.ts#L24
+				// false = direction sync to disk
+				await pyodide.FS.syncfs(false, (err)=>console.log(err));
+				console.log("Data sync to disk done");
+			}
+			
+			// ---------------------------
+
+
+			var editor1 = CodeMirror.fromTextArea(document.getElementById("pycode"), {
+				mode: {name: "python",
+					   version: 3,
+					   singleLineStringErrors: false},
+				lineNumbers: true,
+				indentUnit: 4,
+				matchBrackets: true,
+				theme: "cobalt",
+				extraKeys: {
+				  "Shift-Enter": function(cm) {
+					//console.log("shift-enter pressed (codemirror)"); 
+					evaluatePython("\n");
+				  },
+				  "Tab": function(cm) {
+					var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
+					cm.replaceSelection(spaces);
+				  }
+				}
+			});
+
+			document.getElementById("opendirbutton1").addEventListener("click", openDir);
+			document.getElementById("runpycode").addEventListener("click", evaluatePython);
+			document.getElementById("showhistory").addEventListener("click", restoreCmdHistory);
+			document.getElementById("synctodisk").addEventListener("click", syncMountedDirectory);
+			
+			// clearoutput
+			document.getElementById("clearoutput").addEventListener("click", ()=>{
+					document.getElementById("pyoutput").value = ''; 
+				});
+			
+			
+			//~ document.getElementById("pycode").addEventListener("keypress", (event) => {
+					//~ if (event.keyCode == 13 && event.shiftKey) {
+						//~ console.log("shift-enter pressed"); 
+						//~ event.preventDefault();
+						//~ return false;
+					//~ }
+				//~ });
+			const output = document.getElementById("pyoutput");
+			output.value = "Initializing...\n";
+			
+			
+			/*
+await micropip.install('regex')
+
+import os
+#f1 = open("/mount_dir/sometextfile.txt",'w')
+#f1.write("This is a test line 1\nAnd this is line 2\n")
+#f1.close()
+f1 = open("/mount_dir/sometextfile.txt",'r+')
+f1_contents = f1.read()
+f1.close()
+f1_contents
+
+py.loadPackage("micropip")
+py.loadPackage("duckdb")
+py.loadPackage("sqlite3")
+
+
+cn1 = sqlite3.connect("/mount_dir/test1.db")
+c = cn1.cursor()
+res = cursor.execute("SELECT * FROM tbl01").fetchall()
+res
+cn1.commit()
+cn1.close()
+
+			
+import pyodide_js
+await pyodide_js.loadPackage('micropip')
+import micropip
+await micropip.install('pandas')
+import pandas as pd
+await micropip.install('openpyxl')
+
+df = pd.read_excel('/mount_dir/onlineretail.xlsx')
+			
+var py = await window.pyodideReadyPromise;	
+py.globals.get("df")
+
+------------
+df.tail(3).to_json(orient='records', lines=True)
+await micropip.install("duckdb") 
+import duckdbduckdb.sql("CREATE TABLE ordertimes AS SELECT * FROM df2")
+duckdb.sql("select * from ordertimes limit 10;")
+duckdb.sql("CREATE TABLE bigorderitems AS SELECT * FROM df")
+duckdb.sql("select count(*) from bigorderitems;")
+duckdb.sql("COPY bigorderitems TO '/mount_dir/bigorderitems.parquet' (FORMAT PARQUET, COMPRESSION 'zstd');")
+
+duckdb.sql("COPY bigorderitems TO '/mount_dir/bigorderitems.parquet' (FORMAT PARQUET, COMPRESSION 'zstd');")
+
+in JS:
+var file01 = py.FS.readFile('/mount_dir/bigorderitems.parquet')
+			
+			*/
+        </script>
+    </body>
+</html>
