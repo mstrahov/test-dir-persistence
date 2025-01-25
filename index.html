@@ -85,7 +85,7 @@
 				//console.log(additional_char);
 				let add_string = '';
 				console.log("additional_char: ", additional_char);
-				if (additional_char instanceof String) {
+				if (typeof additional_char === 'string' || additional_char instanceof String) {
 					add_string = additional_char; 
 					console.log("additional_char: string ", add_string);
 				}
@@ -95,7 +95,7 @@
 				document.getElementById("pyrunningspinner").style.display = 'block';
 				try {
 					let output = await pyodide.runPythonAsync(editor1.getValue());
-					console.log(output);
+					console.log(output.toJs());
 					let editorvalue = editor1.getValue(); 
 					commandhistory += editorvalue + add_string;
 					editor1.setValue("");
