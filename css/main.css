@@ -1,0 +1,28 @@
+.tabulator .tabulator-header .tabulator-col .tabulator-col-content .tabulator-col-title{
+    white-space: normal;
+    text-overflow: clip;
+}
+
+.monitorCellcolorRedOnBeige{
+	background-color:  rgba(251,229,214,0.5);
+	color: red;
+}
+
+
+#monitor1:hover, #monitor1_1:hover, #monitor1_2:hover, #monitor1_3:hover, #monitor5:hover, #monitor5_1:hover, #monitor4:hover, #monitor4_1:hover, #monitor6:hover, #monitor6_1:hover  {
+	cursor: pointer;
+
+}
+
+textarea {
+      font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace !important;
+      white-space: pre;
+      overflow-x: auto;
+      height: auto;
+	  resize: vertical;
+}
+
+.CodeMirror {
+	  resize: vertical;
+	  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace !important;
+}
