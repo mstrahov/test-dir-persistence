@@ -27,28 +27,42 @@
 </head>
 
     <body data-bs-theme="dark">
-	
-		<h1>test of dir persistence: pyodide/v0.27.1 </h1>
-		<p>
-			<button type="button" class="btn btn-primary" id="opendirbutton1">Open directory</button>
-			<button type="button" class="btn btn-secondary" id="synctodisk">Sync to disk</button>
-		</p>
 		
 		<p>
+		<h1>test of dir persistence: pyodide/v0.27.1 </h1>
+		</p>
+	
+		<div style="display:flex;">
+			<button type="button" class="btn btn-primary" id="opendirbutton1">Open directory</button>
+			<button type="button" class="btn btn-secondary" id="synctodisk">Sync to disk</button>
+		</div>
+		<div>
+			<ol class="breadcrumb breadcrumb-arrows">
+			  <li class="breadcrumb-item">
+				<a href="#">Local directory</a>
+			  </li>
+			  <li class="breadcrumb-item">
+				<a href="#">/mount_dir</a>
+			  </li>
+			</ol>
+		</div>
+
+		
+		<div>
 			<textarea id="pycode" style="width: 100%;" rows="5"></textarea>
 			<div id="pycodebuttons">
 			<button type="button" class="btn btn-secondary" id="runpycode">Run (shift-enter)&nbsp;<span id="pyrunningspinner" class="spinner-border spinner-border-sm me-2"  style="display: none;" role="status"></span></button>
 			<button type="button" class="btn btn-secondary" id="showhistory">Restore history</button>
 			
 			</div>
-		</p>
+		</div>
 
 		<p>
-			<div>Py output:</div>
+			<span>Py output:</span>
 			<textarea id="pyoutput" style="width: 100%;" rows="10"></textarea>
-			<div id="pyoutputbuttons">
+			<span id="pyoutputbuttons">
 			<button type="button" class="btn btn-secondary" id="clearoutput">Clear output</button>
-			</div>
+			</span>
 		</p>
 	
 		<!---------            -------------------------  -------------------->
