@@ -35,6 +35,7 @@
 		<div style="display:flex;">
 			<button type="button" class="btn btn-primary" id="opendirbutton1">Open directory</button>
 			<button type="button" class="btn btn-secondary" id="synctodisk">Sync to disk</button>
+			<button type="button" class="btn btn-secondary" id="showfilepicker">Show file picker</button>
 		</div>
 		<div>
 			<ol class="breadcrumb breadcrumb-arrows">
@@ -76,24 +77,20 @@
 			
 			import { ExecTimer } from "./js/exectimer.js"; 
 			
-			
-			
-			
-			window.exectimer = new ExecTimer({msgtext:"Initializing pyodide..."});
-
+			// ------------------------------------------------------------------------
 			async function main_py() {
 				let pyodide = await loadPyodide();
 				let timing = window.exectimer.timeit("Py Ready!");
 				output.value += "Ready! ("+timing/1000+" sec)\n";
+				document.getElementById("pyrunningspinner").style.display = 'none';
 				return pyodide;
 			}
-			window.pyodideReadyPromise = main_py();
-			let commandhistory = "";
-
+			
+			// ------------------------------------------------------------------------   
 			function addToOutput(s,editorvalue="") {
 				output.value += ">>>" + editorvalue + "\n" + s + "\n";
 			}
-			
+			// ------------------------------------------------------------------------
 			async function evaluatePython(additional_char) {
 				let pyodide = await window.pyodideReadyPromise;
 				//console.log(additional_char);
@@ -109,7 +106,7 @@
 				document.getElementById("pyrunningspinner").style.display = 'block';
 				try {
 					let output = await pyodide.runPythonAsync(editor1.getValue());
-					console.log(output.toJs());
+					console.log(output);      //  output.toJs()  
 					let editorvalue = editor1.getValue(); 
 					commandhistory += editorvalue + add_string;
 					editor1.setValue("");
@@ -121,44 +118,46 @@
 				let timing = window.exectimer.timeit("done!");
 				addToOutput("Exec time " + timing/1000+ " sec\n\n");
 			}
-			
+			// ------------------------------------------------------------------------
 			function restoreCmdHistory() {
 				editor1.setValue(commandhistory);
 				commandhistory = "";
 				editor1.focus();
 			}
 			
-			// -------------------------
+			// -------------------------------------------------------------------
 			
 			async function openDir() {
 				console.log("open dir clicked");
 				window.localdir = await mountDirectory("/mount_dir", "localdirhandle");
 				
 			}
-			
+			// ---------------------------------------------------------------------
 			async function mountDirectory(pyodideDirectory, directoryKey) {
-			  let directoryHandle = await get(directoryKey);
-			  let pyodide = await window.pyodideReadyPromise;
-			  const opts = {
-				id: "mountdirid",
-				mode: "readwrite",
-			  };
-			  if (!directoryHandle) {
-				directoryHandle = await showDirectoryPicker(opts);
-				await set(directoryKey, directoryHandle);
-			  }
-			  const permissionStatus = await directoryHandle.requestPermission(opts);
-			  if (permissionStatus !== "granted") {
-				throw new Error("readwrite access to directory not granted");
-			  }
-			  const { syncfs } = await pyodide.mountNativeFS(
-				pyodideDirectory,
-				directoryHandle,
-			  );
-			  console.log("Mounted ",pyodideDirectory,directoryHandle, syncfs);
-			  return syncfs;
+				  let directoryHandle = await get(directoryKey);
+				  let pyodide = await window.pyodideReadyPromise;
+				  const opts = {
+					id: "mountdirid",
+					mode: "readwrite",
+				  };
+				  if (!directoryHandle) {
+					directoryHandle = await showDirectoryPicker(opts);
+					await set(directoryKey, directoryHandle);
+				  }
+				  const permissionStatus = await directoryHandle.requestPermission(opts);
+				  if (permissionStatus !== "granted") {
+					throw new Error("readwrite access to directory not granted");
+				  }
+				  const { syncfs } = await pyodide.mountNativeFS(
+					pyodideDirectory,
+					directoryHandle,
+				  );
+				  window.mountdirhandle = directoryHandle;
+				  console.log("Mounted ",pyodideDirectory, directoryHandle, syncfs);
+				  
+				  return syncfs;
 			}
-						
+			// -----------------------------------------------------------			
 			async function syncMountedDirectory() {
 				let pyodide = await window.pyodideReadyPromise;
 				// https://github.com/pyodide/pyodide/blob/f8f026a5de496d71d1c6427e44ddcff8272f5dd4/src/js/nativefs.ts#L24
@@ -166,9 +165,25 @@
 				await pyodide.FS.syncfs(false, (err)=>console.log(err));
 				console.log("Data sync to disk done");
 			}
+			// -----------------------------------------------------------	
+			async function showFilePickerTest() {
+				
+				const opts = {
+					id: "filepickertest",
+					mode: "readwrite",
+					startIn: window.lastfilepicker,
+					multiple: true,
+				};
+				let fileHandler = await showOpenFilePicker(opts);
+				[window.lastfilepicker] = fileHandler;
+				console.log(fileHandler);	
+			}
 			
 			// ---------------------------
-
+			
+			window.exectimer = new ExecTimer({msgtext:"Initializing pyodide..."});
+			window.pyodideReadyPromise = main_py();
+			let commandhistory = "";
 
 			var editor1 = CodeMirror.fromTextArea(document.getElementById("pycode"), {
 				mode: {name: "python",
@@ -195,6 +210,8 @@
 			document.getElementById("runpycode").addEventListener("click", evaluatePython);
 			document.getElementById("showhistory").addEventListener("click", restoreCmdHistory);
 			document.getElementById("synctodisk").addEventListener("click", syncMountedDirectory);
+			document.getElementById("showfilepicker").addEventListener("click", showFilePickerTest);
+			
 			
 			// clearoutput
 			document.getElementById("clearoutput").addEventListener("click", ()=>{
@@ -211,7 +228,9 @@
 				//~ });
 			const output = document.getElementById("pyoutput");
 			output.value = "Initializing...\n";
+			document.getElementById("pyrunningspinner").style.display = 'block';
 			
+			window.filepickerid = 0;
 			
 			/*
 await micropip.install('regex')
@@ -263,6 +282,21 @@ duckdb.sql("COPY bigorderitems TO '/mount_dir/bigorderitems.parquet' (FORMAT PAR
 
 in JS:
 var file01 = py.FS.readFile('/mount_dir/bigorderitems.parquet')
+
+find object in FS
+py.FS.findObject("/mount_dir")
+
+py.FS.findObject("/mount_dir").contents
+
+for (const el in py.FS.findObject("/mount_dir").contents) { console.log(py.FS.findObject("/mount_dir").contents[el].isFolder, py.FS.findObject("/mount_dir").contents[el].mount.mountpoint,py.FS.findObject("/mount_dir").contents[el].name,py.FS.findObject("/mount_dir").contents[el].usedBytes,py.FS.findObject("/mount_dir").contents[el].isDevice);  break; }
+
+not ->  present py.FS.findObject("/mount_dir1")===null
+
+let resp=py.runPython(`
+import os
+os.listdir('/mount_dir')
+`);  
+console.log(resp.toJs());
 			
 			*/
         </script>

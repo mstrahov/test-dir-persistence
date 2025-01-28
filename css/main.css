@@ -22,6 +22,11 @@ textarea {
 	  resize: vertical;
 }
 
+button {
+	margin: 1pt;
+
+}
+
 .CodeMirror {
 	  resize: vertical;
 	  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace !important;
