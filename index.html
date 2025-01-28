@@ -167,9 +167,9 @@
 			}
 			// -----------------------------------------------------------	
 			async function showFilePickerTest() {
-				
+				// id or startIn works in Chrome (windows), does not work in Chromium (debian)
 				const opts = {
-					id: "filepickertest",
+					//id: "filepickertest",
 					mode: "readwrite",
 					startIn: window.lastfilepicker,
 					multiple: true,
@@ -263,16 +263,65 @@ import micropip
 await micropip.install('pandas')
 import pandas as pd
 await micropip.install('openpyxl')
+import openpyxl
 
-df = pd.read_excel('/mount_dir/onlineretail.xlsx')
+workbook = openpyxl.open('/mount_dir/onlineretail2.xlsx', read_only=True)
+sheet_names = workbook.sheetnames
+workbook.close()
+sheet_names  # change here
+
+df = pd.read_excel('/mount_dir/onlineretail2.xlsx',sheet_name='Sheet2', skiprows=0)
 			
+			
+========
+
+
+file = pd.ExcelFile('/mount_dir/onlineretail2.xlsx') 
+file.sheet_names
+df = pd.read_excel(file,sheet_name='Sheet2', skiprows=0)
+
+# https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_json.html#pandas.DataFrame.to_json
+df.head(10).to_json(orient='records', lines=True)
+
+df.head(10).to_json(orient='split')
+#  - json arrays:   columns, index, data
+
+-------------
+# drop column 0  ,  axis=1 argument tells Pandas to drop the column (as opposed to dropping a row, which would be axis=0).
+df = df.drop(df.columns[0], axis=1) 
+
+# ===================================   delete columns
+# delete 2 first columns
+df = df.iloc[:, 2:]
+# ===================================   delete rows
+# delete first 4 rows
+df = df.iloc[4:]
+# ===================================   fill down values
+
+# ===================================   filter by value
+
+# ===================================   rename columns 
+
+# ===================================   rename columns from row value
+
+# ===================================   add row with values?
+
+
+
+
+
+
+=======
+			
+---------------
 var py = await window.pyodideReadyPromise;	
 py.globals.get("df")
 
 ------------
 df.tail(3).to_json(orient='records', lines=True)
 await micropip.install("duckdb") 
-import duckdbduckdb.sql("CREATE TABLE ordertimes AS SELECT * FROM df2")
+import duckdb
+duckdb.sql("CREATE TABLE ordertimes AS SELECT * FROM df2")
 duckdb.sql("select * from ordertimes limit 10;")
 duckdb.sql("CREATE TABLE bigorderitems AS SELECT * FROM df")
 duckdb.sql("select count(*) from bigorderitems;")
