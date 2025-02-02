@@ -21,6 +21,13 @@
 <script src="./js/codemirror/mode/python/python.js"></script>
 <script src="./js/codemirror/addon/edit/matchbrackets.js"></script>
 
+<!------  tabulator --------------- --->
+<link href="./css/tabulator_site_dark.min.css" rel="stylesheet">
+<script type="text/javascript" src="./js/tabulator.min.js"></script>
+<!------   --------------- --->
+
+
+
 <link href="./css/main.css" rel="stylesheet">
 
 
@@ -58,17 +65,25 @@
 			</div>
 		</div>
 
-		<p>
+		<div>
 			<span>Py output:</span>
 			<textarea id="pyoutput" style="width: 100%;" rows="10"></textarea>
 			<span id="pyoutputbuttons">
 			<button type="button" class="btn btn-secondary" id="clearoutput">Clear output</button>
 			</span>
-		</p>
-	
-		<!---------            -------------------------  -------------------->
+		</div>
+		<div>
+			<div>Dataframe:</div>
+			<div id="dftablebuttons">
+				<button type="button" class="btn btn-secondary" id="loaddataframe">Load dataframe</button>
+				<button type="button" class="btn btn-secondary" id="showdataframe">Show dataframe</button>
+			</div>
+			<div id="dftable" style="resize:both;"></div>
+		</div>
+		<!---------     ----------------------------------------------------------------------------------  -------------------->
+		<!---------     ----------------------------------------------------------------------------------  -------------------->
+		
 		<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta24/dist/js/tabler.min.js"></script>
-
 		
         <script defer="defer" type="module">
 			const { get, set } = await import(
@@ -180,6 +195,87 @@
 			}
 			
 			// ---------------------------
+			// ---------------------------
+			
+			async function loadDataFrame() {
+				console.log('Loading df');
+				const loadingCommands = `import pyodide_js
+await pyodide_js.loadPackage('micropip')
+import micropip
+await micropip.install('pandas')
+await micropip.install('openpyxl')
+import pandas as pd
+import openpyxl
+file = pd.ExcelFile('/mount_dir/onlineretail2.xlsx') 
+#file.sheet_names
+df = pd.DataFrame()
+df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore_index=True)
+`;
+				editor1.setValue(loadingCommands);
+				console.log(loadingCommands);
+				await evaluatePython();
+								
+			}
+			
+			// ---------------------------
+			async function showDataFrame() {
+				console.log('Showing df');
+				let pyodide = await window.pyodideReadyPromise;
+				
+				//   df.head(10).to_json(orient='split')
+				// ----------------------------------------------
+				
+				window.exectimer.timeit("running command...");
+				document.getElementById("pyrunningspinner").style.display = 'block';
+				let getdfcmd = "df.to_json(orient='split')";
+				try {
+					let output = await pyodide.runPythonAsync(getdfcmd);
+					window.dfcontents = output;
+					console.log(window.dfcontents);      //  output.toJs()  
+					addToOutput(output,getdfcmd);
+					let dfarray = JSON.parse(output);
+					window.dfarray = dfarray;
+					
+					window.dftabulator.destroy();
+					window.dftabulator = null;
+					window.dftabulator = new Tabulator("#dftable", {
+						spreadsheet:true,  
+						rowHeader:{field:"_id", hozAlign:"center", headerSort:false, frozen:true},  
+						height:"311px",  
+						spreadsheetRows:window.dfarray.data.length,	
+						spreadsheetColumns:window.dfarray.columns.length,	
+						spreadsheetData:dfarray.data,  
+						// --------------------------------------
+						columnDefaults:{
+							tooltip:function(e, cell, onRendered){
+								var el = document.createElement("div");
+								el.innerText = cell.getValue(); 
+								return el; 
+							},
+						}	
+					});
+					
+				} catch (err) {
+					addToOutput(err);
+				}
+				document.getElementById("pyrunningspinner").style.display = 'none';
+				let timing = window.exectimer.timeit("done!");
+				addToOutput("Exec time " + timing/1000+ " sec\n\n");
+				
+				
+				//- -----------------------------------------
+				
+				//~ var data = [
+				//~ [1,2],
+				//~ [3,4]
+				//~ ];
+				//~ window.dftabulator.setSheetData(data);
+				
+			}
+			
+			
+			// ---------------------------
+			
 			
 			window.exectimer = new ExecTimer({msgtext:"Initializing pyodide..."});
 			window.pyodideReadyPromise = main_py();
@@ -212,6 +308,61 @@
 			document.getElementById("synctodisk").addEventListener("click", syncMountedDirectory);
 			document.getElementById("showfilepicker").addEventListener("click", showFilePickerTest);
 			
+			document.getElementById("loaddataframe").addEventListener("click", loadDataFrame);
+			document.getElementById("showdataframe").addEventListener("click", showDataFrame);
+			
+			//  df table
+			window.dftabulator = new Tabulator("#dftable", {
+				spreadsheet:true,
+				spreadsheetData:[[1,2,3],[4,5,6],[7,8,9]],
+				rowHeader:{field:"_id", hozAlign:"center", headerSort:false, frozen:true},  
+				
+				height:"311px",  
+				spreadsheetRows:3,	
+				spreadsheetColumns:3,
+				// ----------------
+				columnDefaults:{
+					tooltip:function(e, cell, onRendered){
+						//e - mouseover event
+						//cell - cell component
+						//onRendered - onRendered callback registration function
+						
+						var el = document.createElement("div");
+						//el.style.backgroundColor = "red";
+						//el.innerText = cell.getColumn().getField() + " - " + cell.getValue(); //return cells "field - value";
+						el.innerText = cell.getValue(); //return cells "field - value";
+						return el; 
+					},
+				},
+				// ----------
+				selectableRange:1, 
+				selectableRangeColumns:true,
+				selectableRangeRows:true,	
+				//--------------------
+				spreadsheetColumnDefinition:{
+						editor:"input",
+						clickMenu:[
+							{
+								label:"smth",
+								action:function(e, cell){
+									//cell.setValue("");
+									console.log(cell);
+								}
+							},
+						]
+					},
+				//-------------
+				rowContextMenu:[
+					{
+						label:"Click here Row",
+						action:function(e, row){
+							console.log(e);
+							console.log(row);
+						}
+					},
+				]
+			});
+					
 			
 			// clearoutput
 			document.getElementById("clearoutput").addEventListener("click", ()=>{
@@ -290,12 +441,19 @@ df.head(10).to_json(orient='split')
 # drop column 0  ,  axis=1 argument tells Pandas to drop the column (as opposed to dropping a row, which would be axis=0).
 df = df.drop(df.columns[0], axis=1) 
 
-# ===================================   delete columns
+# ===================================   delete columns left/right
 # delete 2 first columns
 df = df.iloc[:, 2:]
-# ===================================   delete rows
+# ===================================   delete rows left/right
 # delete first 4 rows
 df = df.iloc[4:]
+
+# ===================================   delete one column middle
+df.drop(df.columns[2], axis=1, inplace=True)
+
+# ===================================   delete one row
+df.drop(df.index[2], inplace=True)
+
 # ===================================   fill down values
 
 # ===================================   filter by value
@@ -309,7 +467,8 @@ df = df.iloc[4:]
 # # =================================== convert type        https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.infer_objects.html
 
 
-#  iterate over dataframe - return rows from 10 to 15 from pandas dataframe # Get the rows from 10 to 15 (inclusive)  rows_10_to_15 = df.iloc[9:16].to_json(orient='split')
+#  iterate over dataframe - return rows from 10 to 15 from pandas dataframe # Get the rows from 10 to 15 (inclusive)  
+rows_10_to_15 = df.iloc[9:16].to_json(orient='split')
 
 
 =======
@@ -329,6 +488,7 @@ duckdb.sql("select count(*) from bigorderitems;")
 duckdb.sql("COPY bigorderitems TO '/mount_dir/bigorderitems.parquet' (FORMAT PARQUET, COMPRESSION 'zstd');")
 
 duckdb.sql("COPY bigorderitems TO '/mount_dir/bigorderitems.parquet' (FORMAT PARQUET, COMPRESSION 'zstd');")
+COPY lineitem TO 'zstd_v2.parquet' (COMPRESSION zstd, PARQUET_VERSION V2);  !!
 
 in JS:
 var file01 = py.FS.readFile('/mount_dir/bigorderitems.parquet')
@@ -347,6 +507,26 @@ import os
 os.listdir('/mount_dir')
 `);  
 console.log(resp.toJs());
+			
+			
+----------------python parsing
+import ast
+code_text = """import os
+os.listdir("/mount_dir")
+"""
+tree = ast.parse(code_text)
+#top_level_commands = [ast.dump(node) for node in tree.body]
+#top_level_code = [compile(ast.parse(cmd), filename="<ast>", mode="exec") for cmd in top_level_commands]
+
+----------------------
+# https://docs.python.org/3/library/ast.html#ast.unparse
+import ast
+code_text = """import os
+os.listdir("/mount_dir")
+"""
+tree = ast.parse(code_text)
+top_level_commands = [ast.unparse(node) for node in tree.body]
+top_level_commands
 			
 			*/
         </script>
