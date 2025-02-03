@@ -1,30 +1,31 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"/>
-<link rel="icon" type="image/svg+xml" href="favicon.svg" />
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="theme-color" content="#000000"/>
-<meta name="description" content="DB in a bucket"/>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="DB in a bucket">
 <title>test dir persist</title>
 
-<!---
+<!--
 <script type="text/javascript" src="./js/s3-client.js"></script>
 <link href="./css/mainmonitor.css" rel="stylesheet">
---->
+-->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta24/dist/css/tabler.min.css">
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.1/full/pyodide.js"></script>
 
-<!----  codemirror5 ------------------------->
+<!-- =====  codemirror5 ================================== -->
 <link rel="stylesheet" href="./js/codemirror/lib/codemirror.css">
 <link rel="stylesheet" href="./js/codemirror/theme/cobalt.css">
 <script src="./js/codemirror/lib/codemirror.js"></script>
 <script src="./js/codemirror/mode/python/python.js"></script>
 <script src="./js/codemirror/addon/edit/matchbrackets.js"></script>
 
-<!------  tabulator --------------- --->
+<!-- =====  tabulator ===================== -->
 <link href="./css/tabulator_site_dark.min.css" rel="stylesheet">
-<script type="text/javascript" src="./js/tabulator.min.js"></script>
-<!------   --------------- --->
+<script src="./js/tabulator.min.js"></script>
+<!-- ========================================================== -->
 
 
 
@@ -35,9 +36,9 @@
 
     <body data-bs-theme="dark">
 		
-		<p>
+		
 		<h1>test of dir persistence: pyodide/v0.27.1 </h1>
-		</p>
+		
 	
 		<div style="display:flex;">
 			<button type="button" class="btn btn-primary" id="opendirbutton1">Open directory</button>
@@ -80,12 +81,12 @@
 			</div>
 			<div id="dftable" style="resize:both;"></div>
 		</div>
-		<!---------     ----------------------------------------------------------------------------------  -------------------->
-		<!---------     ----------------------------------------------------------------------------------  -------------------->
+		<!-- ================================================================================================================== -->
+		<!-- ================================================================================================================== -->
 		
 		<script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta24/dist/js/tabler.min.js"></script>
 		
-        <script defer="defer" type="module">
+        <script type="module">
 			const { get, set } = await import(
 			  "https://unpkg.com/idb-keyval@5.0.2/dist/esm/index.js"
 			);
@@ -340,16 +341,29 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 				selectableRangeRows:true,	
 				//--------------------
 				spreadsheetColumnDefinition:{
-						editor:"input",
-						clickMenu:[
+						//editor:"input",
+						contextMenu:[
 							{
-								label:"smth",
+								label:"Cell context menu",
 								action:function(e, cell){
 									//cell.setValue("");
-									console.log(cell);
+									let curColumn = cell.getColumn();
+									let colIndex = curColumn.getTable().getColumnLayout().findIndex((el)=>el.field===curColumn.getField());
+									console.log(cell,"row=",cell.getRow().getIndex(),"column=",colIndex);
+									
 								}
 							},
-						]
+						],
+						headerContextMenu:[
+							{
+								label:"Column header context menu",
+								action:function(e, column){
+									column.updateDefinition({title:"Updated Title"});
+									let colIndex = column.getTable().getColumnLayout().findIndex((el)=>el.field===column.getField());
+									console.log(column,"column=",colIndex);
+								}
+							},
+						],
 					},
 				//-------------
 				rowContextMenu:[
@@ -357,7 +371,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 						label:"Click here Row",
 						action:function(e, row){
 							console.log(e);
-							console.log(row);
+							console.log(row,"row=",row.getIndex());
 						}
 					},
 				]
