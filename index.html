@@ -22,15 +22,13 @@
 <script src="./js/codemirror/mode/python/python.js"></script>
 <script src="./js/codemirror/addon/edit/matchbrackets.js"></script>
 
-<!-- =====  tabulator ===================== -->
+<!-- =====  tabulator ==================================== -->
 <link href="./css/tabulator_site_dark.min.css" rel="stylesheet">
 <script src="./js/tabulator.min.js"></script>
-<!-- ========================================================== -->
-
+<!-- ===================================================== -->
 
 
 <link href="./css/main.css" rel="stylesheet">
-
 
 </head>
 
@@ -92,6 +90,8 @@
 			);
 			
 			import { ExecTimer } from "./js/exectimer.js"; 
+			import { dfAction, getdfActionsArray } from "./js/dfaction.js";
+			import { TransformStep } from "./js/dftransforms.js";
 			
 			// ------------------------------------------------------------------------
 			async function main_py() {
@@ -397,6 +397,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			
 			window.filepickerid = 0;
 			
+			
 			/*
 await micropip.install('regex')
 
@@ -475,6 +476,8 @@ df.drop(df.index[2], inplace=True)
 # ===================================   rename columns 
 
 # ===================================   rename columns from row value
+df.rename({"num": "number", "let": "letter"}, axis="columns", inplace=True)
+
 
 # ===================================   add row with values?
 
@@ -542,6 +545,41 @@ tree = ast.parse(code_text)
 top_level_commands = [ast.unparse(node) for node in tree.body]
 top_level_commands
 			
+-----
+import zipfile
+
+---------------------
+import osawait micropip.install("cryptography")
+from cryptography.fernet import Fernet
+key = Fernet.generate_key()
+f = Fernet(key)
+token = f.encrypt(b"my deep dark secret")
+token
+f.decrypt(token)
+
+----------------------------
+
+#hashes
+import hashlib
+with open('/mount_dir/onlineretail2.xlsx', "rb") as f:
+    file_hash = hashlib.blake2b()
+    while chunk := f.read(8192):
+        file_hash.update(chunk)
+#file_hash.digest()
+file_hash.hexdigest() 
+
+------------------------------------
+#filestats
+import pathlib
+fname = pathlib.Path('/mount_dir/Online Retail.xlsx')
+assert fname.exists(), f'No such file: {fname}'  # check that the file exists
+fname.stat()
+fname.stat().st_size
+
+
+
+			
+
 			*/
         </script>
     </body>
