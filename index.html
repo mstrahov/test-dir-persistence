@@ -79,6 +79,18 @@
 			</div>
 			<div id="dftable" style="resize:both;"></div>
 		</div>
+		<div id="TransformationSteps">
+		</div>
+		
+		<template id="transformtemplate">
+			<div>Data load and transfrom steps:</div>
+			<div id="transformbuttons">
+				<button type="button" class="btn btn-secondary" id="loadstepsfromdisk">Load steps from disk</button>
+				<button type="button" class="btn btn-secondary" id="savestepstodisk">Save steps to disk</button>
+			</div>
+			<div id="transformstable" style="resize:both;"></div>
+		</template>
+		
 		<!-- ================================================================================================================== -->
 		<!-- ================================================================================================================== -->
 		
@@ -91,7 +103,7 @@
 			
 			import { ExecTimer } from "./js/exectimer.js"; 
 			import { dfAction, getdfActionsArray } from "./js/dfaction.js";
-			import { TransformStep } from "./js/dftransforms.js";
+			import { TransformStep, TransformStepsControl } from "./js/dftransforms.js";
 			
 			// ------------------------------------------------------------------------
 			async function main_py() {
@@ -397,6 +409,10 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			
 			window.filepickerid = 0;
 			
+			window.teststeps = new TransformStepsControl({
+					containerid: "#TransformationSteps",
+					containertemplateid : "#transformtemplate",
+				});
 			
 			/*
 await micropip.install('regex')
