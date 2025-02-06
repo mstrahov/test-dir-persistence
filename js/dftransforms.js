@@ -56,16 +56,19 @@ export class TransformStepsControl {
 		
 		this.tabulatorProperties = {
 			height:"311px", 
+			movableRows:true,
 			rowHeader:{headerSort:false, resizable: false, minWidth:30, width:30, rowHandle:true, formatter:"handle"},
 			columns:[
-				{title:"Name", field:"srcDfActionName", editor:true,},
-				{title:"Status", field:"lastRunStatus", editor:true,},
-				{title:"Type", field:"targetEnv", editor:true,},
-				{title:"Code", field:"scriptCode", editor:true,},
+				{title:"Name", field:"srcDfActionName", editor:true, headerSort:false,},
+				{title:"Status", field:"lastRunStatus", editor:true,headerSort:false,},
+				{title:"Type", field:"targetEnv", editor:true,headerSort:false,},
+				{title:"Code", field:"scriptCode", editor:true,headerSort:false,formatter:"textarea",},
+				{title:"Exec time", field:"executionTime", editor:false,headerSort:false,},
 			],
 			data:[
 				{
 				stepOrder: 0,
+				srcDfActionId: "",
 				srcDfActionName: "Import file",
 				scriptCode: "file = pd.ExcelFile('/mount_dir/onlineretail2.xlsx')",
 				targetEnv: "py",
@@ -77,6 +80,7 @@ export class TransformStepsControl {
 			 },
 			 {
 				stepOrder: 1,
+				srcDfActionId: "",
 				srcDfActionName: "Import file as excel",
 				scriptCode: "df = pd.read_excel(file,sheet_name='Sheet2', skiprows=0)",
 				targetEnv: "py",
