@@ -78,6 +78,44 @@
 				<button type="button" class="btn btn-secondary" id="showdataframe">Show dataframe</button>
 			</div>
 			<div id="dftable" style="resize:both;"></div>
+			
+			<!--  -- -------------------------------------- -->
+			 <div class="container my-5">
+				<div id="modal-container">
+				  <!-- Button to trigger the modal -->
+				  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">
+					Open Modal
+				  </button>
+
+				  <!-- Modal -->
+				  <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true" data-bs-backdrop="static">
+					<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+					  <div class="modal-content">
+						<div class="modal-header">
+						  <h5 class="modal-title" id="myModalLabel">Select an Option</h5>
+						  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+						</div>
+						<div class="modal-body">
+						  <select class="form-select" aria-label="Select an option">
+							<option selected>Open this select menu</option>
+							<option value="1">Option 1</option>
+							<option value="2">Option 2</option>
+							<option value="3">Option 3</option>
+						  </select>
+						</div>
+						<div class="modal-footer">
+						  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+						  <button type="button" class="btn btn-primary">Save changes</button>
+						</div>
+					  </div>
+					</div>
+				  </div>
+				</div>
+			  </div>
+			
+			
+			
+			<!-- --- -------------------------------------------------- -->
 		</div>
 		<div id="TransformationSteps">
 		</div>
@@ -85,11 +123,11 @@
 		<template id="transformtemplate">
 			<div>Data load and transfrom steps:</div>
 			<div id="transformbuttons">
-				<button type="button" class="btn btn-secondary" id="loadstepsfromdisk">Load script from disk</button>
-				<button type="button" class="btn btn-secondary" id="savestepstodisk">Save script to disk</button>
-				<button type="button" class="btn btn-secondary" id="editasjson">Edit as json</button>
-				<button type="button" class="btn btn-secondary" id="savepyscript">Save as python script</button>
-				<button type="button" class="btn btn-secondary" id="loadpyscript">Load python script</button>
+				<button type="button" class="btn btn-secondary btn-sm" id="loadstepsfromdisk">Load script from disk</button>
+				<button type="button" class="btn btn-secondary btn-sm" id="savestepstodisk">Save script to disk</button>
+				<button type="button" class="btn btn-secondary btn-sm" id="editasjson">Edit as json</button>
+				<button type="button" class="btn btn-secondary btn-sm" id="savepyscript">Save as python script</button>
+				<button type="button" class="btn btn-secondary btn-sm" id="loadpyscript">Load python script</button>
 				
 			</div>
 			<div id="transformstable" style="resize:both;"></div>
@@ -452,9 +490,10 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 								targetEnv: "py",
 								targetDataframe: "df",
 								mutations: ["df","file"], 
-								lastRunStatus: "success",
+								lastRunStatus: true,
 								lastRunResult: "",
 								executionTime: 0,
+								stepactive: true,
 							 },
 							 {
 								stepOrder: 1,
@@ -464,9 +503,10 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 								targetEnv: "py",
 								targetDataframe: "df",
 								mutations: ["df","file"], 
-								lastRunStatus: "success",
+								lastRunStatus: undefined,
 								lastRunResult: "",
 								executionTime: 0,
+								stepactive: true,
 							 },
 						],
 						lastRunStepNum: 0,

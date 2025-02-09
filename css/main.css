@@ -32,3 +32,11 @@ button {
 	  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace !important;
 	  height: 211px;
 }
+
+.modal {
+	
+}
+.modal-backdrop {
+	background: grey;
+	opacity:0.8 !important;
+}

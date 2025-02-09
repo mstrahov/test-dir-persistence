@@ -14,9 +14,10 @@ export const TransformStep = {
 	targetEnv: "py",
 	targetDataframe: "df",
 	mutations: ["df","file"], 
-	lastRunStatus: "success",
+	lastRunStatus: undefined,
 	lastRunResult: "",
 	executionTime: 0,
+	stepactive: true,
 };
 
 //  methods: toJson(), load from json
@@ -95,11 +96,13 @@ export class TransformStepsControl {
 				  width: 20
 				},
 				{title:"stepOrder", field:"stepOrder", editor:false, headerSort:false,},
+				{title:"Run status", field:"lastRunStatus", formatter:"tickCross", formatterParams:{ allowEmpty:true, allowTruthy:true, }, editor:false, headerSort:false, },
 				{title:"Name", field:"srcDfActionName", editor:true, headerSort:false,},
-				{title:"Status", field:"lastRunStatus", editor:true,headerSort:false,},
 				{title:"Type", field:"targetEnv", editor:true,headerSort:false,},
 				{title:"Code", field:"scriptCode", editor:true,headerSort:false,formatter:"textarea",},
 				{title:"Exec time", field:"executionTime", editor:false,headerSort:false,},
+				
+
 			],
 			data:this.#transformscript.transformSteps,
 		};
