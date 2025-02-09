@@ -66,7 +66,7 @@
 
 		<div>
 			<span>Py output:</span>
-			<textarea id="pyoutput" style="width: 100%;" rows="10"></textarea>
+			<textarea id="pyoutput" style="width: 100%;" rows="7"></textarea>
 			<span id="pyoutputbuttons">
 			<button type="button" class="btn btn-secondary" id="clearoutput">Clear output</button>
 			</span>
@@ -85,8 +85,12 @@
 		<template id="transformtemplate">
 			<div>Data load and transfrom steps:</div>
 			<div id="transformbuttons">
-				<button type="button" class="btn btn-secondary" id="loadstepsfromdisk">Load steps from disk</button>
-				<button type="button" class="btn btn-secondary" id="savestepstodisk">Save steps to disk</button>
+				<button type="button" class="btn btn-secondary" id="loadstepsfromdisk">Load script from disk</button>
+				<button type="button" class="btn btn-secondary" id="savestepstodisk">Save script to disk</button>
+				<button type="button" class="btn btn-secondary" id="editasjson">Edit as json</button>
+				<button type="button" class="btn btn-secondary" id="savepyscript">Save as python script</button>
+				<button type="button" class="btn btn-secondary" id="loadpyscript">Load python script</button>
+				
 			</div>
 			<div id="transformstable" style="resize:both;"></div>
 		</template>
@@ -271,10 +275,12 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 				} catch (err) {
 					addToOutput(err);
 				}
+				
+					
 				document.getElementById("pyrunningspinner").style.display = 'none';
 				let timing = window.exectimer.timeit("done!");
 				addToOutput("Exec time " + timing/1000+ " sec\n\n");
-				
+					
 				
 				//- -----------------------------------------
 				
@@ -282,12 +288,28 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 				//~ [1,2],
 				//~ [3,4]
 				//~ ];
-				//~ window.dftabulator.setSheetData(data);
+				//~ window.dftabulator.setSheetData(data);	
+			}   // ---  /end Show Dataframe
+			
+			
+			// ------------------- show code in editor
+			
+			async function showCodeTextinEditor(codetext,callback) {
+				console.log(codetext);
+				let curEditorContents = editor1.getValue();
+				if (curEditorContents.length>0) { curEditorContents += "\n"; }
+				editor1.setValue(curEditorContents + codetext);
+			}
+			
+			// ------------------------------------------
+			function getCodeTextFromEditor() {
+				return editor1.getValue();
 				
 			}
 			
 			
 			// ---------------------------
+				
 			
 			
 			window.exectimer = new ExecTimer({msgtext:"Initializing pyodide..."});
@@ -330,7 +352,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 				spreadsheetData:[[1,2,3],[4,5,6],[7,8,9]],
 				rowHeader:{field:"_id", hozAlign:"center", headerSort:false, frozen:true},  
 				
-				height:"311px",  
+				height:"211px",  
 				spreadsheetRows:3,	
 				spreadsheetColumns:3,
 				// ----------------
@@ -407,11 +429,52 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			output.value = "Initializing...\n";
 			document.getElementById("pyrunningspinner").style.display = 'block';
 			
+						
 			window.filepickerid = 0;
 			
 			window.teststeps = new TransformStepsControl({
 					containerid: "#TransformationSteps",
 					containertemplateid : "#transformtemplate",
+					outputcodefunc: showCodeTextinEditor,
+					getcodefunc: getCodeTextFromEditor,
+					pyodideobject: undefined,
+					duckdbconn: undefined,
+					transformscript: {
+						srcfiles: [],
+						destfiles: [],
+						filesdirectory: "/mount_dir",
+						transformSteps: [
+							{
+								stepOrder: 0,
+								srcDfActionId: "",
+								srcDfActionName: "Import file",
+								scriptCode: "file = pd.ExcelFile('/mount_dir/onlineretail2.xlsx')",
+								targetEnv: "py",
+								targetDataframe: "df",
+								mutations: ["df","file"], 
+								lastRunStatus: "success",
+								lastRunResult: "",
+								executionTime: 0,
+							 },
+							 {
+								stepOrder: 1,
+								srcDfActionId: "",
+								srcDfActionName: "Import file as excel",
+								scriptCode: "df = pd.read_excel(file,sheet_name='Sheet2', skiprows=0)",
+								targetEnv: "py",
+								targetDataframe: "df",
+								mutations: ["df","file"], 
+								lastRunStatus: "success",
+								lastRunResult: "",
+								executionTime: 0,
+							 },
+						],
+						lastRunStepNum: 0,
+						lastRunStatus: "success",
+						lastRunResult: "",
+						executionTime: 0,
+						
+					},
 				});
 			
 			/*

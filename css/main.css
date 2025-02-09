@@ -30,4 +30,5 @@ button {
 .CodeMirror {
 	  resize: vertical;
 	  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace !important;
+	  height: 211px;
 }
