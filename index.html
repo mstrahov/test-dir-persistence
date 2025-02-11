@@ -13,7 +13,7 @@
 <link href="./css/mainmonitor.css" rel="stylesheet">
 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta24/dist/css/tabler.min.css">
-<script src="https://cdn.jsdelivr.net/pyodide/v0.27.1/full/pyodide.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js"></script>
 
 <!-- =====  codemirror5 ================================== -->
 <link rel="stylesheet" href="./js/codemirror/lib/codemirror.css">
@@ -26,7 +26,7 @@
 <link href="./css/tabulator_site_dark.min.css" rel="stylesheet">
 <script src="./js/tabulator.min.js"></script>
 <!-- ===================================================== -->
-
+<script src="https://cdn.jsdelivr.net/npm/luxon/build/global/luxon.min.js" type="text/javascript"></script>
 
 <link href="./css/main.css" rel="stylesheet">
 
@@ -35,13 +35,14 @@
     <body data-bs-theme="dark">
 		
 		
-		<h1>test of dir persistence: pyodide/v0.27.1 </h1>
+		<h1>test of dir persistence: pyodide/v0.27.2 </h1>
 		
 	
 		<div style="display:flex;">
 			<button type="button" class="btn btn-primary" id="opendirbutton1">Open directory</button>
 			<button type="button" class="btn btn-secondary" id="synctodisk">Sync to disk</button>
-			<button type="button" class="btn btn-secondary" id="showfilepicker">Show file picker</button>
+			<button type="button" class="btn btn-secondary" id="showfilepicker">Show browser file picker</button>
+			<button type="button" class="btn btn-secondary" id="showfiledialog">Show file dialog</button>
 		</div>
 		<div>
 			<ol class="breadcrumb breadcrumb-arrows">
@@ -53,7 +54,7 @@
 			  </li>
 			</ol>
 		</div>
-
+		<div id="filetree" style="resize:both;"></div>
 		
 		<div>
 			<textarea id="pycode" style="width: 100%;" rows="5"></textarea>
@@ -79,46 +80,59 @@
 			</div>
 			<div id="dftable" style="resize:both;"></div>
 			
-			<!--  -- -------------------------------------- -->
-			 <div class="container my-5">
-				<div id="modal-container">
-				  <!-- Button to trigger the modal -->
-				  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">
-					Open Modal
-				  </button>
 
-				  <!-- Modal -->
-				  <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true" data-bs-backdrop="static">
-					<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-					  <div class="modal-content">
-						<div class="modal-header">
-						  <h5 class="modal-title" id="myModalLabel">Select an Option</h5>
-						  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-						</div>
-						<div class="modal-body">
-						  <select class="form-select" aria-label="Select an option">
-							<option selected>Open this select menu</option>
-							<option value="1">Option 1</option>
-							<option value="2">Option 2</option>
-							<option value="3">Option 3</option>
-						  </select>
-						</div>
-						<div class="modal-footer">
-						  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-						  <button type="button" class="btn btn-primary">Save changes</button>
-						</div>
-					  </div>
-					</div>
-				  </div>
+		</div>
+		<div id="TransformationSteps">
+		</div>
+		
+		
+		<!--  -- -------------------------------------- -->
+		 <!-- <div class="container my-5">  -->
+			
+			
+			
+		<div id="modal-container">
+		  <!-- Button to trigger the modal -->
+		  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">
+			Open Modal
+		  </button>
+		</div>
+
+			
+			
+	  <!-- Modal -->
+		<div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true" data-bs-backdrop="static">
+			<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+			  <div class="modal-content">
+				<div class="modal-header">
+				  <h5 class="modal-title" id="myModalLabel">Select an Option</h5>
+				  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+				  <select class="form-select" aria-label="Select an option">
+					<option selected>Open this select menu</option>
+					<option value="1">Option 1</option>
+					<option value="2">Option 2</option>
+					<option value="3">Option 3</option>
+				  </select>
+				</div>
+				<div class="modal-footer">
+				  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+				  <button type="button" class="btn btn-primary">Save changes</button>
 				</div>
 			  </div>
+			</div>
+		</div>
+		
+		  
+		  
+		  
+		<!-- </div>  -->
 			
 			
 			
 			<!-- --- -------------------------------------------------- -->
-		</div>
-		<div id="TransformationSteps">
-		</div>
+		
 		
 		<template id="transformtemplate">
 			<div>Data load and transfrom steps:</div>
@@ -146,7 +160,7 @@
 			import { ExecTimer } from "./js/exectimer.js"; 
 			import { dfAction, getdfActionsArray } from "./js/dfaction.js";
 			import { TransformStep, TransformStepsControl } from "./js/dftransforms.js";
-			
+			import { FileSystemHandler } from "./js/fileshandlers.js";
 			// ------------------------------------------------------------------------
 			async function main_py() {
 				let pyodide = await loadPyodide();
@@ -297,8 +311,8 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 						spreadsheet:true,  
 						rowHeader:{field:"_id", hozAlign:"center", headerSort:false, frozen:true},  
 						height:"311px",  
-						spreadsheetRows:window.dfarray.data.length,	
-						spreadsheetColumns:window.dfarray.columns.length,	
+						spreadsheetRows:dfarray.data.length,	
+						spreadsheetColumns:dfarray.columns.length,	
 						spreadsheetData:dfarray.data,  
 						// --------------------------------------
 						columnDefaults:{
@@ -310,9 +324,20 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 						}	
 					});
 					
+					window.dftabulator.on("tableBuilt", ()=>{ 
+						let columns = window.dftabulator.getColumns();
+						for (let i=1;i<columns.length;i++) {
+							columns[i].updateDefinition({title: dfarray.columns[i-1]});	
+							//console.log(dfarray.columns[i-1]);
+						}
+					});
+					
+					
+										
 				} catch (err) {
 					addToOutput(err);
 				}
+				
 				
 					
 				document.getElementById("pyrunningspinner").style.display = 'none';
@@ -346,12 +371,48 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			}
 			
 			
-			// ---------------------------
+			// ---------------------------  show file selection dialog
+			
+			async function showFileSelectionDialog() {
+				const filehandler = window.localFileHandler;
+				let filetree = await filehandler.genFileTreePyFS('/mount_dir');
+				console.log(filetree);
+				// filetree
+				let tabulatorProperties = {
+					height:"311px", 
+					movableRows:false,
+					reactiveData:false, 
+					//index: "stepOrder",
+					rowHeader:{headerSort:false, resizable: false, minWidth:30, width:30, rowHandle:true, formatter:"handle"},
+					columns:[
+						
+						{title:"Name", field:"name", editor:false, headerSort:true,},
+						{title:"Last change", field:"modificationDate", editor:false, headerSort:true,hozAlign:"left",sorter:"date",formatter:"datetime",formatterParams:{outputFormat:"dd.MM.yy hh:mm:ss",},width:160,},
+						{title:"Size", field:"sizeBytes", editor:false, headerSort:true,},
+						
+				
+						
+
+					],
+					data:filetree,
+					dataTree:true,
+					dataTreeStartExpanded:false,
+					dataTreeChildIndent:27,
+					dataTreeElementColumn:"name", 
+				};
 				
 			
+				window.testfilelisttable?.destroy();
+				window.testfilelisttable = null;
+				window.testfilelisttable = new Tabulator("#filetree", tabulatorProperties);
+			}
+			
+			
+			// ----------------------------
 			
 			window.exectimer = new ExecTimer({msgtext:"Initializing pyodide..."});
 			window.pyodideReadyPromise = main_py();
+			window.localFileHandler = new FileSystemHandler({pyodidePromise: window.pyodideReadyPromise});
 			let commandhistory = "";
 
 			var editor1 = CodeMirror.fromTextArea(document.getElementById("pycode"), {
@@ -380,6 +441,8 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			document.getElementById("showhistory").addEventListener("click", restoreCmdHistory);
 			document.getElementById("synctodisk").addEventListener("click", syncMountedDirectory);
 			document.getElementById("showfilepicker").addEventListener("click", showFilePickerTest);
+			//showfiledialog  showFileSelectionDialog
+			document.getElementById("showfiledialog").addEventListener("click", showFileSelectionDialog);
 			
 			document.getElementById("loaddataframe").addEventListener("click", loadDataFrame);
 			document.getElementById("showdataframe").addEventListener("click", showDataFrame);
@@ -606,6 +669,40 @@ df.rename({"num": "number", "let": "letter"}, axis="columns", inplace=True)
 #  iterate over dataframe - return rows from 10 to 15 from pandas dataframe # Get the rows from 10 to 15 (inclusive)  
 rows_10_to_15 = df.iloc[9:16].to_json(orient='split')
 
+#  read csv from http
+import pyodide.http
+import io
+with pyodide.http.open_url('https://raw.githubusercontent.com/Tanishqa-10/AskPython/main/Sampledata.csv') as f:
+    df = pd.read_csv(io.StringIO(f.getvalue()), sep=",");
+
+##
+import pyodide.http
+import io
+with pyodide.http.open_url('https://raw.githubusercontent.com/walethewave/Practicing_Data_Analysis/refs/heads/main/1.04.%20Real-life%20example.csv') as f:
+    df = pd.read_csv(io.StringIO(f.getvalue()), sep=",");
+
+df = df1
+df = pd.DataFrame(df['Brand'].drop_duplicates().sort_values())
+
+
+
+
+
+
+
+#  read csv from google sheets:
+import pyodide.http
+import io
+with pyodide.http.open_url('https://docs.google.com/spreadsheets/d/{KEY}/export?format=csv') as f:
+    df = pd.read_csv(io.StringIO(f.getvalue()));
+
+
+# read excel from http (google docs gives zip errors)
+import pyodide.http
+import io
+with pyodide.http.open_url('https://docs.google.com/spreadsheets/d/{KEY}/export?format=xlsx') as f:
+    df = pd.read_excel(io.StringIO(f.getvalue()),sheet_name='Sheet1', skiprows=0);
+    
 
 =======
 			
