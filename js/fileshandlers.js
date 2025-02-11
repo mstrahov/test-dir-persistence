@@ -74,15 +74,22 @@ export class FileSystemHandler {
 						nodeObj.type = 'file';
 						nodeObj.sizeBytes = node.usedBytes;
 						nodeObj.timestamp = node.timestamp;
-						nodeObj.modificationDate =new Date(nodeObj.timestamp);
+						nodeObj.modificationDate = new luxon.DateTime.fromJSDate(new Date(nodeObj.timestamp));   // .toLocaleString(DateTime.DATETIME_SHORT_WITH_SECONDS);
+						const fileparts = node.name.split('.');
+						nodeObj.filetype = fileparts[fileparts.length-1];
+						
 						//console.log("File", node.name, node.usedBytes, node.timestamp);
 					} else {
 						nodeObj.type = 'directory';
+						nodeObj.filetype = ' ';
 						nodeObj['_children'] = treeTraverse(nodeObj.fullpath,node);		
 					}
 					fileTree.push(nodeObj);
 				}	
 			}
+			fileTree.sort((a,b)=> { 
+				return (a.type+'__'+a.name).localeCompare(b.type+'__'+b.name) 
+			});
 			return fileTree;
 		}
 		
