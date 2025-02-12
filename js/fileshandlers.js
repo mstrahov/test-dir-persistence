@@ -70,6 +70,7 @@ export class FileSystemHandler {
 					nodeObj.name = node.name;
 					nodeObj.path = curPath;
 					nodeObj.fullpath = curPath+"/"+node.name;
+					nodeObj.pick = null;
 					if (!node.isFolder) {
 						nodeObj.type = 'file';
 						nodeObj.sizeBytes = node.usedBytes;
