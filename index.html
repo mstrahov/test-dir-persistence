@@ -751,7 +751,54 @@ py.loadPackage("micropip")
 py.loadPackage("duckdb")
 py.loadPackage("sqlite3")
 
+import pyodide_js
+await pyodide_js.loadPackage('micropip')
+import micropip
+await micropip.install("sqlite3")
+import sqlite3
 
+cn1 = sqlite3.connect("file:db.file?vfs=opfs")
+c = cn1.cursor()
+cn1.execute("SELECT 2+2;").fetchall()
+
+
+res = cn1.execute("SELECT 2+2;").fetchall()
+res
+
+cn1.execute("create table tbl01 (id INTEGER, name TEXT);")
+cn1.execute("INSERT INTO tbl01 (id, name) VALUES (1,'row one');")
+cn1.execute("SELECT * FROM tbl01;").fetchall()
+cn1.commit()
+cn1.close()
+
+
+# -----------
+
+let py = await window.pyodideReadyPromise;
+let root = await navigator.storage.getDirectory();
+py.loadPackage(["micropip", "sqlite3"]);
+let mountpoint = await py.mountNativeFS("/nativefs", root);
+py.FS.analyzePath("/");
+py.FS.syncfs(false,()=>{})
+py.FS.analyzePath("/nativefs");
+
+import sqlite3
+cn1 = sqlite3.connect("/nativefs/test1.db")
+c = cn1.cursor()
+cn1.execute("create table tbl01 (id INTEGER, name TEXT);")
+cn1.execute("INSERT INTO tbl01 (id, name) VALUES (1,'row one');")
+cn1.execute("SELECT * FROM tbl01;").fetchall()
+cn1.commit()
+cn1.close()
+
+import os
+os.listdir("/nativefs")
+
+
+#-----------------
+
+
+# file:db.file?vfs=opfs
 cn1 = sqlite3.connect("/mount_dir/test1.db")
 c = cn1.cursor()
 res = cursor.execute("SELECT * FROM tbl01").fetchall()
