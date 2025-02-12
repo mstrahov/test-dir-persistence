@@ -503,6 +503,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 									row.toggleSelect();
 									
 									row.update({"pick":null}); 
+									(async (text)=> {await navigator.clipboard.writeText(text);})(rowdata.fullpath);
 									//console.log(cell);
 							 },
 						},
@@ -535,6 +536,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 							label:"Select",
 							action:function(e, row){
 								console.log(row.getData());
+								(async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
 							}
 						},
 					],
@@ -549,11 +551,13 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 					//e - the click event object
 					//row - row component
 					console.log(row.getData()); 
+					(async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
 				});
 				window.testfilelisttable.on("rowDblTap", function(e, row){
 					//e - the click event object
 					//row - row component
 					console.log(row.getData()); 
+					(async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
 				});
 				
 			}
