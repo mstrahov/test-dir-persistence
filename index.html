@@ -12,15 +12,30 @@
 <script type="text/javascript" src="./js/s3-client.js"></script>
 <link href="./css/mainmonitor.css" rel="stylesheet">
 -->
+<!--
+This would not be possible without these awesome opensource projects:
+	1. [Pyodide](https://pyodide.org/en/stable/) [src](https://github.com/pyodide/pyodide)
+	2. [Tabulator](https://www.tabulator.info/) [src](https://github.com/olifolkerd/tabulator)
+	3. [Codemirror](https://codemirror.net/5/) [src](https://github.com/codemirror/codemirror5)
+	4. [Bootstrap](https://getbootstrap.com/)
+	5. [Tabler.io](https://tabler.io/docs/ui)
+-->
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta24/dist/css/tabler.min.css">
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js"></script>
 
 <!-- =====  codemirror5 ================================== -->
 <link rel="stylesheet" href="./js/codemirror/lib/codemirror.css">
 <link rel="stylesheet" href="./js/codemirror/theme/cobalt.css">
+<link rel="stylesheet" href="./js/codemirror/addon/dialog/dialog.css">
 <script src="./js/codemirror/lib/codemirror.js"></script>
 <script src="./js/codemirror/mode/python/python.js"></script>
 <script src="./js/codemirror/addon/edit/matchbrackets.js"></script>
+<script src="./js/codemirror/addon/search/search.js"></script>
+<script src="./js/codemirror/addon/search/searchcursor.js"></script>
+<script src="./js/codemirror/addon/search/jump-to-line.js"></script>
+<script src="./js/codemirror/addon/comment/comment.js"></script> 
+<script src="./js/codemirror/addon/dialog/dialog.js"></script>
 
 <!-- =====  tabulator ==================================== -->
 <link href="./css/tabulator_site_dark.min.css" rel="stylesheet">
@@ -50,7 +65,7 @@
 				<a href="#">Local directory</a>
 			  </li>
 			  <li class="breadcrumb-item">
-				<a href="#">/mount_dir</a>
+				<a href="#">/app/mount_dir</a>
 			  </li>
 			</ol>
 		</div>
@@ -213,33 +228,52 @@
 			
 			async function openDir() {
 				console.log("open dir clicked");
-				window.localdir = await mountDirectory("/mount_dir", "localdirhandle");
+				window.localdir = await mountDirectory("/mount_dir", "localdirhandle", "/app");
 				
 			}
 			// ---------------------------------------------------------------------
-			async function mountDirectory(pyodideDirectory, directoryKey) {
-				  let directoryHandle = await get(directoryKey);
-				  let pyodide = await window.pyodideReadyPromise;
-				  const opts = {
+			async function mountDirectory(pyodideDirectory, directoryKey, approotdir) {
+				let directoryHandle = await get(directoryKey);
+				let pyodide = await window.pyodideReadyPromise;
+				const opts = {
 					id: "mountdirid",
 					mode: "readwrite",
-				  };
-				  if (!directoryHandle) {
-					directoryHandle = await showDirectoryPicker(opts);
-					await set(directoryKey, directoryHandle);
-				  }
-				  const permissionStatus = await directoryHandle.requestPermission(opts);
-				  if (permissionStatus !== "granted") {
-					throw new Error("readwrite access to directory not granted");
-				  }
-				  const { syncfs } = await pyodide.mountNativeFS(
-					pyodideDirectory,
-					directoryHandle,
-				  );
-				  window.mountdirhandle = directoryHandle;
-				  console.log("Mounted ",pyodideDirectory, directoryHandle, syncfs);
+				};
+				await pyodide.FS.mkdir(approotdir);
+				let opfsmountdirpath = approotdir+"/opfs";
+				await pyodide.FS.mkdir(opfsmountdirpath);
+				let localmountdirpath = approotdir+pyodideDirectory;
+				await pyodide.FS.mkdir(localmountdirpath);
+				let rootOPFS = await navigator.storage.getDirectory();
+				let mountpointOPFS = await pyodide.mountNativeFS(opfsmountdirpath, rootOPFS);
+				console.log("Mounted OPFS", opfsmountdirpath, rootOPFS, mountpointOPFS);
+
+				if ('showDirectoryPicker' in self) {
+					// The `showDirectoryPicker()` method of the File System Access API is supported.
+
+					  if (!directoryHandle) {
+						directoryHandle = await showDirectoryPicker(opts);
+						await set(directoryKey, directoryHandle);
+					  }
+					  const permissionStatus = await directoryHandle.requestPermission(opts);
+					  if (permissionStatus !== "granted") {
+						throw new Error("readwrite access to directory not granted");
+					  }
+					  
+					  var { syncfsres } = await pyodide.mountNativeFS(
+						localmountdirpath,
+						directoryHandle,
+					  );
+					  window.mountdirhandle = directoryHandle;
+					  console.log("Mounted ", localmountdirpath, directoryHandle, syncfsres);
+					  
+				} else {
+					console.error("File System Access API is not supported!");
+				}
+				
 				  
-				  return syncfs;
+				if (!syncfsres) { syncfsres = mountpointOPFS; }
+				return syncfsres;
 			}
 			// -----------------------------------------------------------			
 			async function syncMountedDirectory() {
@@ -275,7 +309,7 @@ await micropip.install('pandas')
 await micropip.install('openpyxl')
 import pandas as pd
 import openpyxl
-file = pd.ExcelFile('/mount_dir/onlineretail2.xlsx') 
+file = pd.ExcelFile('/app/mount_dir/onlineretail2.xlsx') 
 #file.sheet_names
 df = pd.DataFrame()
 df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore_index=True)
@@ -375,7 +409,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			
 			async function showFileSelectionDialog() {
 				const filehandler = window.localFileHandler;
-				let filetree = await filehandler.genFileTreePyFS('/mount_dir');
+				let filetree = await filehandler.genFileTreePyFS('/app/mount_dir');
 				console.log(filetree);
 				// filetree
 				
@@ -587,7 +621,8 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 				  "Tab": function(cm) {
 					var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
 					cm.replaceSelection(spaces);
-				  }
+				  },
+				  "Alt-A": "toggleComment"
 				}
 			});
 
@@ -698,13 +733,13 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 					transformscript: {
 						srcfiles: [],
 						destfiles: [],
-						filesdirectory: "/mount_dir",
+						filesdirectory: "/app/mount_dir",
 						transformSteps: [
 							{
 								stepOrder: 0,
 								srcDfActionId: "",
 								srcDfActionName: "Import file",
-								scriptCode: "file = pd.ExcelFile('/mount_dir/onlineretail2.xlsx')",
+								scriptCode: "file = pd.ExcelFile('/app/mount_dir/onlineretail2.xlsx')",
 								targetEnv: "py",
 								targetDataframe: "df",
 								mutations: ["df","file"], 
@@ -739,10 +774,10 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 await micropip.install('regex')
 
 import os
-#f1 = open("/mount_dir/sometextfile.txt",'w')
+#f1 = open("/app/mount_dir/sometextfile.txt",'w')
 #f1.write("This is a test line 1\nAnd this is line 2\n")
 #f1.close()
-f1 = open("/mount_dir/sometextfile.txt",'r+')
+f1 = open("/app/mount_dir/sometextfile.txt",'r+')
 f1_contents = f1.read()
 f1.close()
 f1_contents
@@ -776,6 +811,17 @@ cn1.close()
 
 let py = await window.pyodideReadyPromise;
 let root = await navigator.storage.getDirectory();
+
+# https://parzibyte.me/blog/en/2023/10/06/javascript-store-read-files-origin-private-file-system/
+let fileHandle = await root.getFileHandle('test1', {
+                create: true,
+            });
+            let writable = await fileHandle.createWritable();
+            await writable.write('test');
+            await writable.close();
+
+
+
 py.loadPackage(["micropip", "sqlite3"]);
 let mountpoint = await py.mountNativeFS("/nativefs", root);
 py.FS.analyzePath("/");
@@ -794,12 +840,15 @@ cn1.close()
 import os
 os.listdir("/nativefs")
 
-
+# ---------------------------------------
+duckdb shell:
+.files register opfs://test.csv  
+copy (select * from t1) to 'opfs://test.csv'; 
 #-----------------
 
 
 # file:db.file?vfs=opfs
-cn1 = sqlite3.connect("/mount_dir/test1.db")
+cn1 = sqlite3.connect("/app/mount_dir/test1.db")
 c = cn1.cursor()
 res = cursor.execute("SELECT * FROM tbl01").fetchall()
 res
@@ -815,18 +864,18 @@ import pandas as pd
 await micropip.install('openpyxl')
 import openpyxl
 
-workbook = openpyxl.open('/mount_dir/onlineretail2.xlsx', read_only=True)
+workbook = openpyxl.open('/app/mount_dir/onlineretail2.xlsx', read_only=True)
 sheet_names = workbook.sheetnames
 workbook.close()
 sheet_names  # change here
 
-df = pd.read_excel('/mount_dir/onlineretail2.xlsx',sheet_name='Sheet2', skiprows=0)
+df = pd.read_excel('/app/mount_dir/onlineretail2.xlsx',sheet_name='Sheet2', skiprows=0)
 			
 			
 ========
 
 
-file = pd.ExcelFile('/mount_dir/onlineretail2.xlsx') 
+file = pd.ExcelFile('/app/mount_dir/onlineretail2.xlsx') 
 file.sheet_names
 df = pd.read_excel(file,sheet_name='Sheet2', skiprows=0)
 
@@ -920,26 +969,26 @@ duckdb.sql("CREATE TABLE ordertimes AS SELECT * FROM df2")
 duckdb.sql("select * from ordertimes limit 10;")
 duckdb.sql("CREATE TABLE bigorderitems AS SELECT * FROM df")
 duckdb.sql("select count(*) from bigorderitems;")
-duckdb.sql("COPY bigorderitems TO '/mount_dir/bigorderitems.parquet' (FORMAT PARQUET, COMPRESSION 'zstd');")
+duckdb.sql("COPY bigorderitems TO '/app/mount_dir/bigorderitems.parquet' (FORMAT PARQUET, COMPRESSION 'zstd');")
 
-duckdb.sql("COPY bigorderitems TO '/mount_dir/bigorderitems.parquet' (FORMAT PARQUET, COMPRESSION 'zstd');")
+duckdb.sql("COPY bigorderitems TO '/app/mount_dir/bigorderitems.parquet' (FORMAT PARQUET, COMPRESSION 'zstd');")
 COPY lineitem TO 'zstd_v2.parquet' (COMPRESSION zstd, PARQUET_VERSION V2);  !!
 
 in JS:
-var file01 = py.FS.readFile('/mount_dir/bigorderitems.parquet')
+var file01 = py.FS.readFile('/app/mount_dir/bigorderitems.parquet')
 
 find object in FS
-py.FS.findObject("/mount_dir")
+py.FS.findObject("/app/mount_dir")
 
-py.FS.findObject("/mount_dir").contents
+py.FS.findObject("/app/mount_dir").contents
 
-for (const el in py.FS.findObject("/mount_dir").contents) { console.log(py.FS.findObject("/mount_dir").contents[el].isFolder, py.FS.findObject("/mount_dir").contents[el].mount.mountpoint,py.FS.findObject("/mount_dir").contents[el].name,py.FS.findObject("/mount_dir").contents[el].usedBytes,py.FS.findObject("/mount_dir").contents[el].isDevice);  break; }
+for (const el in py.FS.findObject("/app/mount_dir").contents) { console.log(py.FS.findObject("/app/mount_dir").contents[el].isFolder, py.FS.findObject("/app/mount_dir").contents[el].mount.mountpoint,py.FS.findObject("/app/mount_dir").contents[el].name,py.FS.findObject("/app/mount_dir").contents[el].usedBytes,py.FS.findObject("/app/mount_dir").contents[el].isDevice);  break; }
 
-not ->  present py.FS.findObject("/mount_dir1")===null
+not ->  present py.FS.findObject("/app/mount_dir1")===null
 
 let resp=py.runPython(`
 import os
-os.listdir('/mount_dir')
+os.listdir('/app/mount_dir')
 `);  
 console.log(resp.toJs());
 			
@@ -947,7 +996,7 @@ console.log(resp.toJs());
 ----------------python parsing
 import ast
 code_text = """import os
-os.listdir("/mount_dir")
+os.listdir("/app/mount_dir")
 """
 tree = ast.parse(code_text)
 #top_level_commands = [ast.dump(node) for node in tree.body]
@@ -957,7 +1006,7 @@ tree = ast.parse(code_text)
 # https://docs.python.org/3/library/ast.html#ast.unparse
 import ast
 code_text = """import os
-os.listdir("/mount_dir")
+os.listdir("/app/mount_dir")
 """
 tree = ast.parse(code_text)
 top_level_commands = [ast.unparse(node) for node in tree.body]
@@ -979,7 +1028,7 @@ f.decrypt(token)
 
 #hashes
 import hashlib
-with open('/mount_dir/onlineretail2.xlsx', "rb") as f:
+with open('/app/mount_dir/onlineretail2.xlsx', "rb") as f:
     file_hash = hashlib.blake2b()
     while chunk := f.read(8192):
         file_hash.update(chunk)
@@ -989,7 +1038,7 @@ file_hash.hexdigest()
 ------------------------------------
 #filestats
 import pathlib
-fname = pathlib.Path('/mount_dir/Online Retail.xlsx')
+fname = pathlib.Path('/app/mount_dir/Online Retail.xlsx')
 assert fname.exists(), f'No such file: {fname}'  # check that the file exists
 fname.stat()
 fname.stat().st_size
