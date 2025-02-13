@@ -409,7 +409,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			
 			async function showFileSelectionDialog() {
 				const filehandler = window.localFileHandler;
-				let filetree = await filehandler.genFileTreePyFS('/app/mount_dir');
+				let filetree = await filehandler.genFileTreePyFS('/app');
 				console.log(filetree);
 				// filetree
 				

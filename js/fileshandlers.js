@@ -62,6 +62,10 @@ export class FileSystemHandler {
 		
 		const treeTraverse = (curPath,curFSNode) => {
 			let fileTree = [];
+			
+			if (curFSNode.mounted && JSON.stringify(curFSNode?.contents)==='{}') {
+				curFSNode = pyodide.FS.analyzePath(curPath)?.object;
+			}
 			//console.log(curPath,curFSNode);
 			for (const key in curFSNode?.contents) {
 				const node = curFSNode.contents[key];
