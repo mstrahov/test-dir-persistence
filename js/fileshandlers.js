@@ -42,14 +42,60 @@ let pytrav = async (path) => {
 export class FileSystemHandler {
 	#pyodidePromise;
 	#pyodide;
-	
+	#approot;
+	#opfspath;
 	
 	constructor(params) {
 		this.#pyodidePromise = params.pyodidePromise;
-		
+		this.#approot = '/app';
+		this.#opfspath = this.#approot+'/opfs';
 	}
 	
-
+	async syncFS(populate=undefined) {
+		// populate == true  -->  sync direction: from FS to disk
+		// populate == false -->  sync direction: from disk to FS
+		// populate === undefined --> sync both ways
+		/* 
+		 * FS.syncfs() stores new files in OPFS correctly only if called in the order (false: disk->FS), then  (true: FS->disk)
+		 * TODO:  check if this prevents overwriting existing files in OPFS (e.g. opfs timestamp> mounted timestamp
+		 * TODO:  maybe delete existing opfs files before copy new?
+		 * 
+		 * FS.syncfs() - if called (true: FS->disk), then (false: disk->FS) for some reason does not store a new file to opfs store - needs to be researched, maybe a bug in pyodide? 
+		 *
+		 *   */
+		
+		
+		let pyodide = await this.#pyodidePromise;
+		if (populate === undefined) {
+			pyodide.FS.syncfs(false, (err)=>{
+					console.log('Sync FS (false: disk->FS)',err);
+					pyodide.FS.syncfs(true, (err)=>console.log('Sync FS (true: FS->disk)',err));
+			});
+			
+		} else {
+			const populatedir = populate?'FS->disk':'disk->FS';
+			pyodide.FS.syncfs(populate, (err)=>console.log('Sync FS with populate:',populate,populatedir,err));
+		}
+		console.log("Pyodide sync FS done");
+	}
+	
+	async pathExists(path) {
+		let pyodide = await this.#pyodidePromise;
+		return pyodide.FS.analyzePath(path).exists;
+	}
+	
+	async opfsIsMounted() {
+		return await this.pathExists(this.#opfspath);
+	}
+	
+	async writeFileToOPFSroot(filename,arraybuf) {
+		let res = true;
+		let pyodide = await this.#pyodidePromise;
+		await pyodide.FS.writeFile(this.#opfspath+"/"+filename,arraybuf);
+		return res;
+	}
+	
+	
 	async genFileTreePyFS(path) {
 		let pyodide = await this.#pyodidePromise;
 		let filePath = path;
@@ -62,8 +108,8 @@ export class FileSystemHandler {
 		
 		const treeTraverse = (curPath,curFSNode) => {
 			let fileTree = [];
-			
-			if (curFSNode.mounted && JSON.stringify(curFSNode?.contents)==='{}') {
+			if (!curFSNode) { return fileTree; }
+			if (curFSNode?.mounted && JSON.stringify(curFSNode?.contents)==='{}') {
 				curFSNode = pyodide.FS.analyzePath(curPath)?.object;
 			}
 			//console.log(curPath,curFSNode);

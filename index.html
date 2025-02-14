@@ -53,11 +53,19 @@ This would not be possible without these awesome opensource projects:
 		<h1>test of dir persistence: pyodide/v0.27.2 </h1>
 		
 	
-		<div>
+		<div style="display: flex;">
 			<button type="button" class="btn btn-primary" id="opendirbutton1">Open directory</button>
 			<button type="button" class="btn btn-secondary" id="synctodisk">Sync to disk</button>
 			<button type="button" class="btn btn-secondary" id="showfilepicker">Show browser file picker</button>
+			
+			<div>
+			<button type="button" class="btn btn-secondary" id="uploadfilesbutton" onclick="document.querySelector('#formFileMultiple').click();">Upload files to OPFS</button>
+			<input type="file" style="display: none;" class="form-control visually-hidden" style="width:5px;" id="formFileMultiple" accept="*" multiple onchange="console.log(this.files);" aria-label="Upload">
+			</div>
 			<button type="button" class="btn btn-secondary" id="showfiledialog">Show file dialog</button>
+			<div id="fileuploaddialogplaceholder"></div>
+			
+	
 		</div>
 		<div>
 			<ol class="breadcrumb breadcrumb-arrows">
@@ -162,6 +170,12 @@ This would not be possible without these awesome opensource projects:
 			<div id="transformstable" style="resize:both;"></div>
 		</template>
 		
+		
+		<template id="uploadbuttontemplate">
+			<button type="button" class="btn btn-secondary" id="uploadfilesbutton">Upload files to OPFS</button>
+			<input type="file" style="display: none;" class="form-control visually-hidden" style="width:5px;" id="formFileMultiple" accept="*" multiple aria-label="Upload">
+		</template>
+		
 		<!-- ================================================================================================================== -->
 		<!-- ================================================================================================================== -->
 		
@@ -176,6 +190,8 @@ This would not be possible without these awesome opensource projects:
 			import { dfAction, getdfActionsArray } from "./js/dfaction.js";
 			import { TransformStep, TransformStepsControl } from "./js/dftransforms.js";
 			import { FileSystemHandler } from "./js/fileshandlers.js";
+			import { FileUploadButton } from "./js/filedialogs.js";
+			
 			// ------------------------------------------------------------------------
 			async function main_py() {
 				let pyodide = await loadPyodide();
@@ -280,8 +296,12 @@ This would not be possible without these awesome opensource projects:
 				let pyodide = await window.pyodideReadyPromise;
 				// https://github.com/pyodide/pyodide/blob/f8f026a5de496d71d1c6427e44ddcff8272f5dd4/src/js/nativefs.ts#L24
 				// false = direction sync to disk
-				await pyodide.FS.syncfs(false, (err)=>console.log(err));
-				console.log("Data sync to disk done");
+				pyodide.FS.syncfs(false, (err)=>{ 
+								if (err) {console.log(err);}
+								pyodide.FS.syncfs(true, (err)=>console.log("Data sync to disk done",err));
+							}
+				);
+				
 			}
 			// -----------------------------------------------------------	
 			async function showFilePickerTest() {
@@ -602,6 +622,8 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			window.exectimer = new ExecTimer({msgtext:"Initializing pyodide..."});
 			window.pyodideReadyPromise = main_py();
 			window.localFileHandler = new FileSystemHandler({pyodidePromise: window.pyodideReadyPromise});
+			const fileuploaddialog = new FileUploadButton({containertemplateid: "#uploadbuttontemplate", containerid:"#fileuploaddialogplaceholder",  fileSystemHandler: window.localFileHandler });
+		
 			let commandhistory = "";
 
 			var editor1 = CodeMirror.fromTextArea(document.getElementById("pycode"), {
@@ -722,7 +744,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			
 						
 			window.filepickerid = 0;
-			
+					
 			window.teststeps = new TransformStepsControl({
 					containerid: "#TransformationSteps",
 					containertemplateid : "#transformtemplate",
