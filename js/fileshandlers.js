@@ -124,8 +124,10 @@ export class FileSystemHandler {
 					if (!node.isFolder) {
 						nodeObj.type = 'file';
 						nodeObj.sizeBytes = node.usedBytes;
+						// TODO:  expect new behavior in next versions of pyodide:  nodeObj.mtime (Date obj) instead of nodeObj.timestamp (missing in 0.28.0dev)
 						nodeObj.timestamp = node.timestamp;
 						nodeObj.modificationDate = new luxon.DateTime.fromJSDate(new Date(nodeObj.timestamp));   // .toLocaleString(DateTime.DATETIME_SHORT_WITH_SECONDS);
+						
 						const fileparts = node.name.split('.');
 						nodeObj.filetype = fileparts[fileparts.length-1];
 						
