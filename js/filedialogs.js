@@ -65,4 +65,67 @@ export class FileUploadButton {
 }
 	
 	
+//  SAVE A FILE AS  https://web.dev/patterns/files/save-a-file/
+
+export class FileDownLoadDialog {
+	#fsHandler;
+	#uuid;
 	
+	constructor (params)	{
+		this.#fsHandler = params.fileSystemHandler;
+		this.#uuid = self.crypto.randomUUID();
+	}
+	
+	async downloadFromFSPath(path) {
+		const pathparts = path.split("/");
+		const suggestedName = pathparts[pathparts.length-1];
+		
+		const blob = await this.#fsHandler.readFile(path);
+		if (blob) {
+			await this.saveFileFromBlob(new Blob([blob], { type: 'application/octet-stream' }), suggestedName);
+		} else {
+			console.error('Cannot save or not a file',path);
+		}
+	}
+	
+	async saveFileFromBlob(blob, suggestedName) {
+	  const supportsFileSystemAccess =
+		'showSaveFilePicker' in window &&
+		(() => {
+		  try {
+			return window.self === window.top;
+		  } catch {
+			return false;
+		  }
+		})();
+	  if (supportsFileSystemAccess) {
+		try {
+		  const handle = await showSaveFilePicker({
+			suggestedName,
+		  });
+		  const writable = await handle.createWritable();
+		  await writable.write(blob);
+		  await writable.close();
+		  return;
+		} catch (err) {
+		  if (err.name !== 'AbortError') {
+			console.error(err.name, err.message);        
+		  }
+		  return;
+		}
+	  }
+	  // Fallback if the File System Access API is not supported…
+	  const blobURL = URL.createObjectURL(blob);
+	  const a = document.createElement('a');
+	  a.href = blobURL;
+	  a.download = suggestedName;
+	  a.style.display = 'none';
+	  document.body.append(a);
+	  a.click();
+	  setTimeout(() => {
+		URL.revokeObjectURL(blobURL);
+		a.remove();
+	  }, 5000);
+	}
+	
+}

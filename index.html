@@ -53,7 +53,7 @@ This would not be possible without these awesome opensource projects:
 		<h1>test of dir persistence: pyodide/v0.27.2 </h1>
 		
 	
-		<div style="display: flex;">
+		<div style="display: flex; flex-wrap: wrap;">
 			<button type="button" class="btn btn-primary" id="opendirbutton1">Open directory</button>
 			<button type="button" class="btn btn-secondary" id="synctodisk">Sync to disk</button>
 			<button type="button" class="btn btn-secondary" id="showfilepicker">Show browser file picker</button>
@@ -190,7 +190,7 @@ This would not be possible without these awesome opensource projects:
 			import { dfAction, getdfActionsArray } from "./js/dfaction.js";
 			import { TransformStep, TransformStepsControl } from "./js/dftransforms.js";
 			import { FileSystemHandler } from "./js/fileshandlers.js";
-			import { FileUploadButton } from "./js/filedialogs.js";
+			import { FileUploadButton, FileDownLoadDialog } from "./js/filedialogs.js";
 			
 			// ------------------------------------------------------------------------
 			async function main_py() {
@@ -593,6 +593,14 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 								(async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
 							}
 						},
+						{
+							label:"Save file as ...",
+							action:function(e, row){
+								console.log(row.getData());
+								(async (path)=> {await filesaveasdialog.downloadFromFSPath(path); })(row.getData().fullpath);
+							}
+						},
+						
 					],
 					
 				};
@@ -623,6 +631,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			window.pyodideReadyPromise = main_py();
 			window.localFileHandler = new FileSystemHandler({pyodidePromise: window.pyodideReadyPromise});
 			const fileuploaddialog = new FileUploadButton({containertemplateid: "#uploadbuttontemplate", containerid:"#fileuploaddialogplaceholder",  fileSystemHandler: window.localFileHandler });
+			const filesaveasdialog = new FileDownLoadDialog({fileSystemHandler: window.localFileHandler});
 		
 			let commandhistory = "";
 
