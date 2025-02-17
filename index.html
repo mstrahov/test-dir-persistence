@@ -219,6 +219,7 @@ This would not be possible without these awesome opensource projects:
 				
 				window.exectimer.timeit("running command...");
 				document.getElementById("pyrunningspinner").style.display = 'block';
+				let completedWithError = false;
 				try {
 					let output = await pyodide.runPythonAsync(editor1.getValue());
 					console.log(output);      //  output.toJs()  
@@ -228,7 +229,30 @@ This would not be possible without these awesome opensource projects:
 					addToOutput(output,editorvalue);
 				} catch (err) {
 					addToOutput(err);
+					console.log(err);
+					window.pylasterror = err;
+					
+					const errarr = err?.message?.split("\n").filter(e=>e.length>0);
+					const pyerrmessageshort = errarr?.length>0 ? errarr[errarr.length-1] : "";
+					//  extract line number of the eval'ed script from the errarr[errarr.length-2]:    "File "<exec>", line 1, in <module>"
+					// TODO: extract line with  error from input script
+					let pyerrorline = "";
+					if (errarr?.length>1) {
+						const re = /line (\d+)/gi;
+						const matcharr = errarr[errarr.length-2].match(re);
+						if (matcharr!==null && matcharr.length>0) {
+							pyerrorline = matcharr[0].replace("line ","");
+						}
+					}
+					const pyerrtype = err?.type;  //  e.g. ZeroDivisionError
+					const pyerrmessage = err?.message?.toString() //  medium with stacktrace
+					const pyerrstack = err?.stack?.toString().length;   // longest output
+					
+					console.log("Short error: ", pyerrmessageshort, "line", pyerrorline);
+					
+					completedWithError = true;
 				}
+				
 				document.getElementById("pyrunningspinner").style.display = 'none';
 				let timing = window.exectimer.timeit("done!");
 				addToOutput("Exec time " + timing/1000+ " sec\n\n");
@@ -658,7 +682,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			});
 
 			document.getElementById("opendirbutton1").addEventListener("click", openDir);
-			document.getElementById("runpycode").addEventListener("click", evaluatePython);
+			document.getElementById("runpycode").addEventListener("click", async()=>{await evaluatePython();});
 			document.getElementById("showhistory").addEventListener("click", restoreCmdHistory);
 			document.getElementById("synctodisk").addEventListener("click", syncMountedDirectory);
 			document.getElementById("showfilepicker").addEventListener("click", showFilePickerTest);
