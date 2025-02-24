@@ -59,3 +59,10 @@ let item4 = new GridItemTabulator({templateid:"#gridelementtemplate", grid: grid
 item4.init();
 
 let item5 = new GridItemCodeEditor({templateid:"#gridelementtemplatecode", grid: grid, headertext: "py code",});
+
+//  to compact grid
+grid.compact();
+
+// to save grid
+console.log(JSON.stringify(self.testgrid.save(saveContent = false, saveGridOpt = true)));
+

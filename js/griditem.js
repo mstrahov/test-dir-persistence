@@ -27,12 +27,13 @@ export class GridItem {
 	
 		this.#grid.el.appendChild(clone);
 		this.#bodyelement= this.#grid.el.querySelector('#grid-el-body'+this.#uuid);
-		//~ let opts = {
-			//~ w: 3,
-			//~ h: 3,
-		//~ }
+		let opts = {
+			w: 3,
+			h: 3,
+			id : this.#uuid,
+		}
 		
-		this.#grid.makeWidget('item'+this.#uuid);
+		this.#grid.makeWidget('item'+this.#uuid,opts);
 		
 	}
 	
