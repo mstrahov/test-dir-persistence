@@ -51,7 +51,6 @@ This would not be possible without these awesome opensource projects:
 		
 		
 		<h1>test of dir persistence: pyodide/v0.27.2 </h1>
-		
 	
 		<div style="display: flex; flex-wrap: wrap;">
 			<button type="button" class="btn btn-primary" id="opendirbutton1">Open directory</button>
@@ -64,7 +63,7 @@ This would not be possible without these awesome opensource projects:
 			</div>
 			<button type="button" class="btn btn-secondary" id="showfiledialog">Show file dialog</button>
 			<div id="fileuploaddialogplaceholder"></div>
-			
+			<button type="button" class="btn btn-secondary" id="testshowpicker">Show picker</button>
 	
 		</div>
 		<div>
@@ -120,12 +119,14 @@ This would not be possible without these awesome opensource projects:
 			Open Modal
 		  </button>
 		</div>
+		
+		
 
 			
 			
 	  <!-- Modal -->
 		<div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true" data-bs-backdrop="static">
-			<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+			<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ">
 			  <div class="modal-content">
 				<div class="modal-header">
 				  <h5 class="modal-title" id="myModalLabel">Select an Option</h5>
@@ -154,7 +155,7 @@ This would not be possible without these awesome opensource projects:
 			
 			
 			
-			<!-- --- -------------------------------------------------- -->
+		<!-- --- -------------------------------------------------- -->
 		
 		
 		<template id="transformtemplate">
@@ -170,11 +171,33 @@ This would not be possible without these awesome opensource projects:
 			<div id="transformstable" style="resize:both;"></div>
 		</template>
 		
-		
+		<!-- --- -------------------------------------------------- -->
 		<template id="uploadbuttontemplate">
 			<button type="button" class="btn btn-secondary" id="uploadfilesbutton">Upload files to OPFS</button>
 			<input type="file" style="display: none;" class="form-control visually-hidden" style="width:5px;" id="formFileMultiple" accept="*" multiple aria-label="Upload">
 		</template>
+		<!-- --- -------------------------------------------------- -->
+		
+		<template id="tabulatorpickertemplate">
+			<div class="modal fade" id="pickermodal" tabindex="-1" aria-labelledby="pickerModalLabel" aria-hidden="true" data-bs-backdrop="static">
+				<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+				  <div class="modal-content">
+					<div class="modal-header">
+					  <h5 class="modal-title" id="pickerModalLabel">Select an option</h5>
+					  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+					</div>
+					<div class="modal-footer">
+					  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+					  <button type="button" class="btn btn-primary" id="pickermodalSelectButton">Select</button>
+					</div>
+				  </div>
+				</div>
+			</div>
+		
+		</template>
+		
 		
 		<!-- ================================================================================================================== -->
 		<!-- ================================================================================================================== -->
@@ -191,6 +214,7 @@ This would not be possible without these awesome opensource projects:
 			import { TransformStep, TransformStepsControl } from "./js/dftransforms.js";
 			import { FileSystemHandler } from "./js/fileshandlers.js";
 			import { FileUploadButton, FileDownLoadDialog } from "./js/filedialogs.js";
+			import { TabulatorPicker } from "./js/tabupicker.js";
 			
 			// ------------------------------------------------------------------------
 			async function main_py() {
@@ -649,6 +673,35 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			}
 			
 			
+			async function testOptionPicker(picker) {
+				console.log("test option picker click");
+				
+				
+				const data = [
+				  { id: 1, name: "John Doe", age: 30 },
+				  { id: 2, name: "Jane Smith", age: 25 },
+				  { id: 3, name: "Bob Johnson", age: 35 },
+				  { id: 4, name: "Alice Williams", age: 28 },
+				];
+
+				const columns = [
+					{ title: "ID", field: "id" },
+					{ title: "Name", field: "name" },
+					{ title: "Age", field: "age" },
+				 ];
+				
+				let tabulatoroptions = {
+					data: data,
+					columns: columns,
+				};
+				try {
+					const selectedOption = await picker.showoptions(tabulatoroptions);
+					console.log('Selected option:', selectedOption);
+				} catch (error) {
+					console.error('Error:', error.message);
+				}
+			}
+			
 			// ----------------------------
 			
 			window.exectimer = new ExecTimer({msgtext:"Initializing pyodide..."});
@@ -691,6 +744,11 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			
 			document.getElementById("loaddataframe").addEventListener("click", loadDataFrame);
 			document.getElementById("showdataframe").addEventListener("click", showDataFrame);
+			
+			// testshowpicker
+			document.getElementById("testshowpicker").addEventListener("click", async ()=>{await testOptionPicker(testpicker)});
+			
+			var testpicker = new TabulatorPicker({templateid:"#tabulatorpickertemplate"});
 			
 			//  df table
 			window.dftabulator = new Tabulator("#dftable", {
