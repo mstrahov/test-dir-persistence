@@ -192,6 +192,17 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 				window.exectimer.timeit("running command...");
 				document.getElementById("pyrunningspinner").style.display = 'block';
 				let getdfcmd = "df.to_json(orient='split')";
+				let gettypescmd = "df.dtypes.to_json(orient='split',default_handler=str)";
+				/* df memory usage df.memory_usage().sum()
+				 *  df dimensions df.ndim  Return 1 if Series. Otherwise return 2 if DataFrame.
+					df.shape - tuple of array dimensions (n_rows, n_cols)   
+					let output = await pyodide.runPythonAsync(getdfcmd);
+					let n_rows = output[0];  // output.length   //  output.type === 'tuple'
+					let n_cols = output[1];
+					let dfjs = pyodide.globals.get("df")  - get a global from pyodide
+					dfjs.type === "DataFrame"
+					dfjs.length  // number of records
+				 */
 				try {
 					let output = await pyodide.runPythonAsync(getdfcmd);
 					window.dfcontents = output;
@@ -871,6 +882,7 @@ py.globals.get("df")
 df.tail(3).to_json(orient='records', lines=True)
 await micropip.install("duckdb") 
 import duckdb
+duckdb.sql("select version();")
 duckdb.sql("CREATE TABLE ordertimes AS SELECT * FROM df2")
 duckdb.sql("select * from ordertimes limit 10;")
 duckdb.sql("CREATE TABLE bigorderitems AS SELECT * FROM df")
@@ -879,6 +891,18 @@ duckdb.sql("COPY bigorderitems TO '/app/mount_dir/bigorderitems.parquet' (FORMAT
 
 duckdb.sql("COPY bigorderitems TO '/app/mount_dir/bigorderitems.parquet' (FORMAT PARQUET, COMPRESSION 'zstd');")
 COPY lineitem TO 'zstd_v2.parquet' (COMPRESSION zstd, PARQUET_VERSION V2);  !!
+
+//  pandas df and pyarrow
+https://arrow.apache.org/docs/python/pandas.html
+await pyodide_js.loadPackage('pyarrow')
+import pyarrow
+table = pyarrow.Table.from_pandas(df)
+df_new = table.to_pandas()
+
+duckdb back to df:
+df = duckdb.sql("SELECT 42").df()
+
+
 
 in JS:
 var file01 = py.FS.readFile('/app/mount_dir/bigorderitems.parquet')
