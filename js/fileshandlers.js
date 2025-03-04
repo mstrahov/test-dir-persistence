@@ -96,7 +96,7 @@ export class FileSystemHandler {
 	}
 	
 	
-	
+
 	async readFile(path) {
 		// returns a new Uint8Array buffer (encoding is binary)
 		// https://emscripten.org/docs/api_reference/Filesystem-API.html#FS.readFile
@@ -108,6 +108,11 @@ export class FileSystemHandler {
 		return undefined;
 	}
 	
+	/**
+	 * Generates a nested array for tabulator tree output from a path of filesystem
+	 * @param {string} path - path in FS, defaults to "/"
+	 * @returns {Array} 	
+	 */
 	async genFileTreePyFS(path) {
 		let pyodide = await this.#pyodidePromise;
 		let filePath = path;

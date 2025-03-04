@@ -53,6 +53,7 @@ export class TransformStepsControl {
 	#getcodefunc; 
 	#tabulatorObj;
 	#transformscript;
+	#scriptname;
 	
 	constructor(params) {
 		this.#containerid=params.containerid;	
@@ -62,6 +63,7 @@ export class TransformStepsControl {
 		this.#outputcodefunc = params.outputcodefunc;
 		this.#getcodefunc = params.getcodefunc;
 		this.#transformscript = {...params.transformscript};
+		this.#scriptname = params.scriptname;
 		
 		const template = document.querySelector(this.#containertemplateid);
 		const clone = template.content.cloneNode(true);
@@ -203,7 +205,5 @@ export class TransformStepsControl {
 		}
 	}
 	
-	
-	
-	
+		
 }

@@ -6,12 +6,14 @@
 			import { dfAction, getdfActionsArray } from "./dfaction.js";
 			import { TransformStep, TransformStepsControl } from "./dftransforms.js";
 			import { FileSystemHandler } from "./fileshandlers.js";
+			import { FormatSaver }  from "./formatsaver.js";
 			import { FileUploadButton, FileDownLoadDialog } from "./filedialogs.js";
 			import { TabulatorPicker } from "./tabupicker.js";
 			
 			// ------------------------------------------------------------------------
 			async function main_py() {
 				let pyodide = await loadPyodide();
+				//  await pyodide.loadPackage("micropip");
 				let timing = window.exectimer.timeit("Py Ready!");
 				output.value += "Ready! ("+timing/1000+" sec)\n";
 				document.getElementById("pyrunningspinner").style.display = 'none';
@@ -511,6 +513,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			window.exectimer = new ExecTimer({msgtext:"Initializing pyodide..."});
 			window.pyodideReadyPromise = main_py();
 			window.localFileHandler = new FileSystemHandler({pyodidePromise: window.pyodideReadyPromise});
+			window.localFormatSaver = new FormatSaver({pyodidePromise: window.pyodideReadyPromise, dbFileName: "/app/mount_dir/default.dbsqlite"});
 			const fileuploaddialog = new FileUploadButton({containertemplateid: "#uploadbuttontemplate", containerid:"#fileuploaddialogplaceholder",  fileSystemHandler: window.localFileHandler });
 			const filesaveasdialog = new FileDownLoadDialog({fileSystemHandler: window.localFileHandler});
 		
@@ -647,6 +650,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 					getcodefunc: getCodeTextFromEditor,
 					pyodideobject: undefined,
 					duckdbconn: undefined,
+					scriptname: "testscript",
 					transformscript: {
 						srcfiles: [],
 						destfiles: [],

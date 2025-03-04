@@ -1,6 +1,11 @@
 /* *****************************
  * file dialogs
+ * -----------------
  * 
+ * FileUploadButton:
+ * 		creates a button from params.containertemplateid template, places it to params.containerid and handles files uploaded to opfs root either by python or js opfs handle
+ * 
+ * FileDownLoadDialog: saves file from path to blob by URL.createObjectURL in document
  * 
  * *************************** */
 
