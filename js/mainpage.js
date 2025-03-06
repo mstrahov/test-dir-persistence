@@ -905,7 +905,7 @@ df_new = table.to_pandas()
 
 duckdb back to df:
 df = duckdb.sql("SELECT 42").df()
-
+# https://duckdb.org/docs/stable/clients/python/conversion.html
 
 
 in JS:

@@ -48,7 +48,7 @@ conn_internal.execute('''
         name TEXT NOT NULL,
         objtype TEXT NOT NULL,
         datahash TEXT,
-        timestamp TEXT, 
+        modtimestamp TEXT DEFAULT CURRENT_TIMESTAMP, 
         data BLOB
     );
 ''')
@@ -89,8 +89,9 @@ filedata_01 = b'''${stringval}'''
 conn_internal.execute('''
     INSERT INTO tbl_objects (name, objtype, data)
     VALUES (?, ?, ?)
-    ON CONFLICT(name, objtype) DO UPDATE SET data=excluded.data;	
+    ON CONFLICT(name, objtype) DO UPDATE SET data=excluded.data, modtimestamp = CURRENT_TIMESTAMP;	
 ''', ('${name}','${objtype}', sqlite3.Binary(filedata_01)))
+del filedata_01
 `;	
 
 		await this.openConn();
@@ -112,8 +113,9 @@ with open('${filename}', 'rb') as f:
 conn_internal.execute('''
     INSERT INTO tbl_objects (name, objtype, data)
     VALUES (?, ?, ?)
-    ON CONFLICT(name, objtype) DO UPDATE SET data=excluded.data;	
+    ON CONFLICT(name, objtype) DO UPDATE SET data=excluded.data, modtimestamp = CURRENT_TIMESTAMP;
 ''', ('${name}','${objtype}', sqlite3.Binary(filedata_01)))
+del filedata_01
 `;
 		if (! await this.#fshandler.pathExists(filename)) {
 			console.error('File does not exist: ', filename);
@@ -165,6 +167,7 @@ conn_internal_data = conn_internal.execute('''
 ''',('${name}','${objtype}')).fetchone()[0]
 with open('${filename}', 'wb') as file:
     file.write(conn_internal_data)
+del conn_internal_data
 `;
 		let output = undefined;
 		await this.openConn();
