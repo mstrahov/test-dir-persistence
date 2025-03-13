@@ -9,6 +9,7 @@
 			import { FormatSaver }  from "./formatsaver.js";
 			import { FileUploadButton, FileDownLoadDialog } from "./filedialogs.js";
 			import { TabulatorPicker } from "./tabupicker.js";
+			import { DataFrameTableView } from "./dataframetableview.js";
 			
 			// ------------------------------------------------------------------------
 			async function main_py() {
@@ -262,6 +263,14 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 				//~ window.dftabulator.setSheetData(data);	
 			}   // ---  /end Show Dataframe
 			
+			async function showDataFrame2() {
+				console.log("Showing dataframe 2");
+				if (window.testdataframe2) {
+					
+					await window.testdataframe2.showdf();
+					
+				}
+			}
 			
 			// ------------------- show code in editor
 			
@@ -367,7 +376,27 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 					
 					return filterval; //must return a boolean, true if it passes the filter.
 				}
-								
+					
+				function customHeaderIncludesStringFunction(headerValue, rowValue, rowData, filterParams){
+					//headerValue - the value of the header filter element
+					//rowValue - the value of the column in this row
+					//rowData - the data for the row being filtered
+					//filterParams - params object passed to the headerFilterFuncParams property
+					// column.setHeaderFilterValue("");
+					let res = true;
+					console.log("header filter",headerValue);
+					if (!headerValue||headerValue.length==0) { return true; } 
+					try {
+						if(rowValue){
+							res = rowValue.includes(headerValue);
+							console.log("header filter res",res,rowValue,rowData);
+						} 
+					} catch (e) {
+						console.error(e);
+					}						
+					
+					return res;
+				}			
 				
 				let tabulatorProperties = {
 					height:"311px", 
@@ -393,7 +422,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 								//~ row.toggleSelect();
 							 //~ },
 						//~ },
-						{title:"Name", field:"name", editor:false, headerSort:true,headerFilter:"input",},
+						{title:"Name", field:"name", editor:false, headerSort:true, headerFilter:"input", headerFilterFunc:customHeaderIncludesStringFunction, },
 						{title:"Pick", field:"pick", editor:true,headerSort:false,
 							formatter:"tickCross", 
 							 hozAlign:"center", 
@@ -431,6 +460,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 					],
 					data:filetree,
 					dataTree:true,
+					dataTreeFilter:true,
 					dataTreeStartExpanded:false,
 					dataTreeChildIndent:27,
 					dataTreeElementColumn:"name", 
@@ -551,13 +581,22 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			
 			document.getElementById("loaddataframe").addEventListener("click", loadDataFrame);
 			document.getElementById("showdataframe").addEventListener("click", showDataFrame);
+			document.getElementById("showdataframe2").addEventListener("click", showDataFrame2);
 			
 			// testshowpicker
 			document.getElementById("testshowpicker").addEventListener("click", async ()=>{await testOptionPicker(testpicker)});
 			
 			var testpicker = new TabulatorPicker({templateid:"#tabulatorpickertemplate"});
 			
-			//  df table
+			// df table 2
+			window.testdataframe2 = new DataFrameTableView({
+						pyodidePromise: window.pyodideReadyPromise, 
+						containerid: "#dftable2",
+						dfname: "df",
+						tabulatorProperties: { height:"311px", },
+					});
+			
+			//  df table 1
 			window.dftabulator = new Tabulator("#dftable", {
 				spreadsheet:true,
 				spreadsheetData:[[1,2,3],[4,5,6],[7,8,9]],
@@ -621,7 +660,13 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 					},
 				]
 			});
-					
+			
+			window.dftabulator.on("tableBuilt", ()=>{ 
+				let columns = window.dftabulator.getColumns();
+				columns[1].updateDefinition({title: 'test1', hozAlign:"center", formatter:"money", });	
+			});
+			
+			
 			
 			// clearoutput
 			document.getElementById("clearoutput").addEventListener("click", ()=>{
