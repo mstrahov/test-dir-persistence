@@ -4,6 +4,7 @@
  * 
  * ---------------*/
 import { dfAction, getdfActionsArray } from "./dfaction.js";
+import EventBus from "./eventbus.js";
 
 // filesync as a separate step?
 

@@ -385,12 +385,13 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 					//filterParams - params object passed to the headerFilterFuncParams property
 					// column.setHeaderFilterValue("");
 					let res = true;
-					console.log("header filter",headerValue);
+					//console.log("header filter",headerValue,rowData);
 					if (!headerValue||headerValue.length==0) { return true; } 
 					try {
+						if (rowData._children) { return true; }
 						if(rowValue){
 							res = rowValue.includes(headerValue);
-							console.log("header filter res",res,rowValue,rowData);
+							//console.log("header filter res",res,rowValue,rowData);
 						} 
 					} catch (e) {
 						console.error(e);
@@ -455,7 +456,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 							},
 							width:160,},
 						{title:"Size", field:"sizeBytes", hozAlign:"right", editor:false, headerSort:true,sorter:"number",headerFilter:minMaxFilterEditor,headerFilterFunc:minMaxFilterFunction,headerFilterLiveFilter:false,},
-						{title:"Type", field:"filetype", editor:false, headerSort:true,headerFilter:"input",},
+						{title:"Type", field:"filetype", editor:false, headerSort:true,headerFilter:"input",headerFilterFunc:customHeaderIncludesStringFunction,},
 						
 						// 
 					],
