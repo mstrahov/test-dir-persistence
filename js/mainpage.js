@@ -598,6 +598,10 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 					});
 			
 			window.testdataframe2.eventbus.subscribe('tableBuilt',()=>{ console.log("df2 table built"); });
+			window.testdataframe2.eventbus.subscribe('dfActionEvent',(obj,eventdata)=>{ console.log("dfActionEvent",eventdata); });
+			
+			
+			
 			//  df table 1
 			window.dftabulator = new Tabulator("#dftable", {
 				spreadsheet:true,

@@ -44,6 +44,7 @@ export class TransformTableView extends DataFrameTableView {
 		let res = [];
 		const actionsarr = getdfActionsArray(["cell"]);
 		console.log("actionsarr",actionsarr);
+		const that = this;
 		for (const a of actionsarr) {
 			res.push({
 				label:a.name,
@@ -51,6 +52,8 @@ export class TransformTableView extends DataFrameTableView {
 								let curColumn = cell.getColumn();
 								let colIndex = curColumn.getTable().getColumnLayout().findIndex((el)=>el.field===curColumn.getField());
 								console.log(cell,"row=",cell.getRow().getIndex(),"column=",colIndex);
+								
+								that.eventbus.dispatch('dfActionEvent',that,{actionid:a.actionid, parameters:{df:"df",rownum:cell.getRow().getIndex()-1, colnum:colIndex-1}}  );
 							}
 			});
 			
