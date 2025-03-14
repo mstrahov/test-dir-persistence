@@ -11,7 +11,6 @@ export class DataFrameTableView {
 	#containerid;
 	#internalContainer;
 	#uuid;
-	#tabulatorobj;
 	
 	constructor(params) {
 		this.#containerid = params.containerid;	
@@ -26,7 +25,7 @@ export class DataFrameTableView {
 		this.getdfcmd =  this.dfname + ".to_json(orient='split')";
 		this.gettypescmd = this.dfname + ".dtypes.to_json(orient='split',default_handler=str)";	
 		// TODO: automatically adjust number of records to output based on df's length ??  	
-		this.#tabulatorobj = undefined;
+		this.tabulatorobj = undefined;
 		this.columnsarray = [];
 		this.columnstypes = undefined;
 	}
@@ -41,8 +40,8 @@ export class DataFrameTableView {
 		if (!this.pyodide) { await this.init(); }
 		//  need to destroy and recreate tabulator object to correctly display changes in col/row qty and definitions
 		try {
-			if (this.#tabulatorobj) {
-				this.#tabulatorobj.destroy();
+			if (this.tabulatorobj) {
+				this.tabulatorobj.destroy();
 			}
 		} catch (err) {}
 		//  get data from a df
@@ -59,14 +58,18 @@ export class DataFrameTableView {
 		try {
 			const outputtypes = await this.pyodide.runPythonAsync(this.gettypescmd);
 			this.columnstypes = JSON.parse(outputtypes);
-			console.log("df types: ", this.columnstypes); 
+			//console.log("df types: ", this.columnstypes); 
+			/*
+			 * this.columnstypes.data[]   - float64, object,...
+			 * this.columnstypes.index[]   -  column names
+			 */
 		} catch (err) {
 			console.error(`Error getting ${this.dfname} data types`,this.gettypescmd,err);
 			// TODO: show error in place of a table?
 			return false;
 		}
 		
-		this.#tabulatorobj = new Tabulator(this.#internalContainer, {
+		this.tabulatorobj = new Tabulator(this.#internalContainer, {
 						...this.tabulatorProperties,
 						spreadsheet:true,  
 						rowHeader:{field:"_id", hozAlign:"center", headerSort:false, frozen:true},  
@@ -84,15 +87,16 @@ export class DataFrameTableView {
 						}	
 					});
 		this.columnsarray = [...dfarray.columns];
-		this.#tabulatorobj.on("tableBuilt", this.eventTableBuilt.bind(this));
+		this.tabulatorobj.on("tableBuilt", this.eventTableBuilt.bind(this));
 		//  window.dftabulator.options.rowContextMenu[0].label = 'clickety click';
 	}
 	
 	eventTableBuilt() {
-		const columns = this.#tabulatorobj.getColumns();
+		const columns = this.tabulatorobj.getColumns();
 		for (let i=1;i<columns.length;i++) {
 			columns[i].updateDefinition({title: this.columnsarray[i-1]});	
-		}	
+		}
+		this.eventbus.dispatch('tableBuilt',this);	
 	}
 	
 }

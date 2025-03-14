@@ -10,6 +10,7 @@
 			import { FileUploadButton, FileDownLoadDialog } from "./filedialogs.js";
 			import { TabulatorPicker } from "./tabupicker.js";
 			import { DataFrameTableView } from "./dataframetableview.js";
+			import { TransformTableView } from "./transformtableview.js";
 			
 			// ------------------------------------------------------------------------
 			async function main_py() {
@@ -589,13 +590,14 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			var testpicker = new TabulatorPicker({templateid:"#tabulatorpickertemplate"});
 			
 			// df table 2
-			window.testdataframe2 = new DataFrameTableView({
+			window.testdataframe2 = new TransformTableView({
 						pyodidePromise: window.pyodideReadyPromise, 
 						containerid: "#dftable2",
 						dfname: "df",
 						tabulatorProperties: { height:"311px", },
 					});
 			
+			window.testdataframe2.eventbus.subscribe('tableBuilt',()=>{ console.log("df2 table built"); });
 			//  df table 1
 			window.dftabulator = new Tabulator("#dftable", {
 				spreadsheet:true,

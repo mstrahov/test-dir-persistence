@@ -9,9 +9,10 @@
  * 		getdfActionsArray(["row","column"]);
  * -----------------------*/
 
-const dfActionsList = [
+export const dfActionsList = [
 	{
 		actionid: "DeleteColumnByIndex",
+		name: "Delete column",
 		description: "Delete column",
 		pytemplate: '{{df}} = {{df}}.drop({{df}}.columns[{{colnum}}], axis=1)',
 		pyexample: 'df = df.drop(df.columns[2], axis=1)',
@@ -20,6 +21,7 @@ const dfActionsList = [
 	},
 	{
 		actionid: "DeleteRowByIndex",
+		name: "Delete row",
 		description: "Delete row",
 		pytemplate: '{{df}}.drop({{df}}.index[{{rownum}}], inplace=True)',
 		pyexample: 'df.drop(df.index[2], inplace=True)',
@@ -28,7 +30,8 @@ const dfActionsList = [
 	},
 	{
 		actionid: "PythonScript",
-		description: "Python script",
+		name: "Add python script",
+		description: "Add python script",
 		pytemplate: '{{df}}={{df}}',
 		pyexample: 'df=df',
 		actiontype: ["column","row","cell"],
