@@ -19,6 +19,8 @@ This would not be possible without these awesome opensource projects:
 	3. [Codemirror](https://codemirror.net/5/) [src](https://github.com/codemirror/codemirror5)
 	4. [Bootstrap](https://getbootstrap.com/)
 	5. [Tabler.io](https://tabler.io/docs/ui)
+	6. [Plotly.py](https://github.com/plotly/plotly.py)
+	7. [Plotly.js](https://github.com/plotly/plotly.js)
 -->
 
 <!-- =====  tabler/bootstrap ================================== -->
@@ -26,7 +28,7 @@ This would not be possible without these awesome opensource projects:
 <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
 
 <!-- =====  pyodide ================================== -->
-<script src="https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.3/full/pyodide.js"></script>
 
 <!-- =====  codemirror5 ================================== -->
 <link rel="stylesheet" href="./js/codemirror/lib/codemirror.css">
@@ -44,8 +46,11 @@ This would not be possible without these awesome opensource projects:
 <!-- =====  tabulator ==================================== -->
 <link href="./css/tabulator_site_dark.min.css" rel="stylesheet">
 <script src="./js/tabulator.min.js"></script>
-<!-- ===================================================== -->
+<!-- =====  tabulator/luxon =================================== -->
 <script src="https://cdn.jsdelivr.net/npm/luxon/build/global/luxon.min.js" type="text/javascript"></script>
+
+<!-- =====  plotly ==================================== -->
+<script charset="utf-8" src="https://cdn.plot.ly/plotly-3.0.0.min.js"></script>
 
 <link href="./css/main.css" rel="stylesheet">
 
@@ -57,7 +62,7 @@ This would not be possible without these awesome opensource projects:
     <body data-bs-theme="dark">
 		
 		
-		<h1>test of dir persistence: pyodide/v0.27.2 </h1>
+		<h1>test of dir persistence: pyodide/v0.27.3 </h1>
 	
 		<div style="display: flex; flex-wrap: wrap;">
 			<button type="button" class="btn btn-primary" id="opendirbutton1">Open directory</button>
@@ -107,6 +112,7 @@ This would not be possible without these awesome opensource projects:
 				<button type="button" class="btn btn-secondary" id="loaddataframe">Load dataframe</button>
 				<button type="button" class="btn btn-secondary" id="showdataframe">Show dataframe</button>
 				<button type="button" class="btn btn-secondary" id="showdataframe2">Show dataframe 2</button>
+				<button type="button" class="btn btn-secondary" id="showplotlyhtml">Chart test</button>
 			</div>
 			<div id="dftable" style="resize:both;"></div>
 		</div>
@@ -128,7 +134,9 @@ This would not be possible without these awesome opensource projects:
 		</div>
 		
 		
-
+		<div id="chartcontainer1" style="resize:both;">
+			CHART TEST
+		</div>
 			
 			
 	  <!-- Modal -->

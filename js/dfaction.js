@@ -108,7 +108,10 @@ export class dfAction {
 	pycode() {
 		const regex = /{{(.*?)}}/g;
 		const result = this.#pyTemplate.replace(regex, (match, captureKey) => { 
-			return this.#actionparams[captureKey] || '';
+			if (this.#actionparams.hasOwnProperty(captureKey)) {
+				return this.#actionparams[captureKey];
+			}
+			else { return ''; }
 		});
 		this.#pyCodeString = result;
 		return result;

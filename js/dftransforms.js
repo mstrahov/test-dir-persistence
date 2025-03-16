@@ -65,6 +65,7 @@ export class TransformStepsControl {
 		this.#getcodefunc = params.getcodefunc;
 		this.#transformscript = {...params.transformscript};
 		this.#scriptname = params.scriptname;
+		this.eventbus = new EventBus(this);
 		
 		const template = document.querySelector(this.#containertemplateid);
 		const clone = template.content.cloneNode(true);
@@ -112,6 +113,28 @@ export class TransformStepsControl {
 		
 		this.#tabulatorObj = new Tabulator("#transformstable"+this.#uuid, this.tabulatorProperties);
 		
+		
+	}
+	
+	addScriptStep(stepdata) {
+			let newaction = new dfAction(stepdata);
+			let newstep = {
+				//rownum: this.#transformscript.transformSteps.length+1,
+				stepOrder: this.#transformscript.transformSteps.length,
+				srcDfActionId: stepdata.actionid,
+				srcDfActionName: newaction.actionTemplateObj.name,
+				scriptCode: newaction.pycode(),
+				targetEnv: "py",
+				targetDataframe: stepdata.parameters.df,
+				mutations: [stepdata.parameters.df], 
+				lastRunStatus: undefined,
+				lastRunResult: "",
+				executionTime: 0,
+				stepactive: true,
+				
+			};
+			this.#transformscript.transformSteps.push(newstep);
+			
 		
 	}
 	

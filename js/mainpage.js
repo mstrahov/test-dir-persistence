@@ -541,7 +541,65 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			}
 			
 			// ----------------------------
+			async function showChartTest() {
+				let pyodide = await window.pyodideReadyPromise;
+				let output1 = "";
+				window.exectimer.timeit("running command...");
+				document.getElementById("pyrunningspinner").style.display = 'block';
+				try {
+					
+				/* plot1 = plotly.io.to_html(fig,config={scrollZoom: true, toImageButtonOptions: { format: 'svg',filename: 'testchart', height: 500, width: 700, scale: 1  },responsive: true},include_plotlyjs=False,full_html=False)
+				 */	
+					output1 = await pyodide.runPythonAsync(`import pyodide_js
+await pyodide_js.loadPackage('micropip')
+import micropip
+await micropip.install('plotly')
+await micropip.install('pandas')
+import numpy
+import plotly
+import plotly.express as px
+"""fig = px.treemap(
+    names = ["Eve","Cain", "Seth", "Enos", "Noam", "Abel", "Awan", "Enoch", "Azura"],
+    parents = ["", "Eve", "Eve", "Seth", "Seth", "Eve", "Eve", "Awan", "Eve"]
+)
+fig.update_traces(root_color="lightgrey")
+fig.update_layout(margin = dict(t=50, l=25, r=25, b=25))
+
+df1 = px.data.gapminder().query("continent=='Oceania'")
+fig = px.line(df1, x="year", y="lifeExp", color='country')
+"""
+df1 = px.data.stocks()
+fig = px.line(df1, x='date', y="GOOG")
+plot1 = plotly.io.to_html(fig,config={'scrollZoom': True, 'responsive': True, 'displaylogo': True, 'displayModeBar': True, 'toImageButtonOptions': {
+        'format': 'svg', # one of png, svg, jpeg, webp
+        'filename': 'test_chart',
+        'height': 500,
+        'width': 700,
+        'scale': 1 # Multiply title/legend/axis/canvas sizes by this factor
+    }
+},include_plotlyjs=False,full_html=False)
+plot1`);
+				} catch (err) {
+					console.error('Error running chart test',err);
+				}
+				let container = document.querySelector("#chartcontainer1");
+				console.log("output: ",output1);
+				try {
+					container.innerHTML = output1;
+					eval(document.querySelector("#chartcontainer1").querySelector('script').innerText);
+				} catch (err) {
+					console.error('Error initializing running chart test',err);
+				}
+				document.getElementById("pyrunningspinner").style.display = 'none';
+				let timing = window.exectimer.timeit("done!");
+				addToOutput("Exec time " + timing/1000+ " sec\n\n");
+				
+			}
 			
+			
+			
+			// ----------------------------
+			// ----------------------------
 			window.exectimer = new ExecTimer({msgtext:"Initializing pyodide..."});
 			window.pyodideReadyPromise = main_py();
 			window.localFileHandler = new FileSystemHandler({pyodidePromise: window.pyodideReadyPromise});
@@ -585,23 +643,12 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			document.getElementById("showdataframe").addEventListener("click", showDataFrame);
 			document.getElementById("showdataframe2").addEventListener("click", showDataFrame2);
 			
+			document.getElementById("showplotlyhtml").addEventListener("click", showChartTest);
+			
 			// testshowpicker
 			document.getElementById("testshowpicker").addEventListener("click", async ()=>{await testOptionPicker(testpicker)});
 			
 			var testpicker = new TabulatorPicker({templateid:"#tabulatorpickertemplate"});
-			
-			// df table 2
-			window.testdataframe2 = new TransformTableView({
-						pyodidePromise: window.pyodideReadyPromise, 
-						containerid: "#dftable2",
-						dfname: "df",
-						tabulatorProperties: { height:"311px", },
-					});
-			
-			window.testdataframe2.eventbus.subscribe('tableBuilt',()=>{ console.log("df2 table built"); });
-			window.testdataframe2.eventbus.subscribe('dfActionEvent',(obj,eventdata)=>{ console.log("dfActionEvent",eventdata); });
-			
-			
 			
 			//  df table 1
 			window.dftabulator = new Tabulator("#dftable", {
@@ -742,6 +789,21 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 						
 					},
 				});
+			
+			// df table 2
+			window.testdataframe2 = new TransformTableView({
+						pyodidePromise: window.pyodideReadyPromise, 
+						containerid: "#dftable2",
+						dfname: "df",
+						tabulatorProperties: { height:"311px", },
+					});
+			
+			window.testdataframe2.eventbus.subscribe('tableBuilt',()=>{ console.log("df2 table built"); });
+			window.testdataframe2.eventbus.subscribe('dfActionEvent',(obj,eventdata)=>{ console.log("dfActionEvent",obj,eventdata);  window.teststeps.addScriptStep(eventdata);  });
+			window.teststeps.eventbus.subscribe('dfViewReloadEvent',(obj,eventdata)=>{ console.log("dfViewReloadEvent",obj,eventdata);  window.testdataframe2.showdf(); });
+			
+			window.testdfaction = new dfAction({actionid:"DeleteColumnByIndex",parameters:{df:"df",colnum:"2"}});
+			console.log(window.testdfaction, window.testdfaction.pycode());
 			
 			/*
 await micropip.install('regex')
@@ -1029,8 +1091,11 @@ assert fname.exists(), f'No such file: {fname}'  # check that the file exists
 fname.stat()
 fname.stat().st_size
 
+------------------
+#pyodide globals 
 
-
-			
+let g1 = pyodide.globals.toJs()
+g1.keys()
+g1.get("df").type			
 
 			*/
