@@ -113,6 +113,16 @@ export class TransformStepsControl {
 		
 		this.#tabulatorObj = new Tabulator("#transformstable"+this.#uuid, this.tabulatorProperties);
 		
+		this.#tabulatorObj.on("rowAdded", function(row){
+			//row - row component
+			console.log("added row ",row);
+		});
+		this.#tabulatorObj.on("rowDeleted", function(row){
+			//row - row component
+		});
+		this.#tabulatorObj.on("rowMoved", function(row){
+			//row - row component
+		});
 		
 	}
 	
@@ -138,6 +148,7 @@ export class TransformStepsControl {
 			this.#transformscript.transformSteps.push(newstep);
 			//  however, then tabulator.js does not set rownum correctly (appears as 0), so need to call row.move() as a workaround for a last row.- moving to a last row seems to update rownum
 			//  TODO: since it is not clear if getRows() guarantee to have a last pushed row at this point, this may not always work?  need to check
+			// probably need to hook the following to event "row-added" : 	dispatch row, data, pos, index Row has been added by a user
 			const rows = this.#tabulatorObj.getRows();
 			for (let i=0;i<rows.length;i++) {
 					let curpos = rows[i].getPosition();
