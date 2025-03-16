@@ -92,7 +92,7 @@ export class TransformStepsControl {
 			height:"311px", 
 			movableRows:true,
 			reactiveData:true, 
-			//index: "stepOrder",
+			index: "stepOrder",
 			rowHeader:{headerSort:false, resizable: false, minWidth:30, width:30, rowHandle:true, formatter:"handle"},
 			columns:[
 				{
@@ -120,7 +120,7 @@ export class TransformStepsControl {
 			let newaction = new dfAction(stepdata);
 			let newstep = {
 				//rownum: this.#transformscript.transformSteps.length+1,
-				stepOrder: this.#transformscript.transformSteps.length,
+				stepOrder: this.#transformscript.transformSteps.length+1,
 				srcDfActionId: stepdata.actionid,
 				srcDfActionName: newaction.actionTemplateObj.name,
 				scriptCode: newaction.pycode(),
@@ -133,9 +133,27 @@ export class TransformStepsControl {
 				stepactive: true,
 				
 			};
-			this.#transformscript.transformSteps.push(newstep);
 			
+			// tabulator is set as reactive here, so it adds a new row on push
+			this.#transformscript.transformSteps.push(newstep);
+			//  however, then tabulator.js does not set rownum correctly (appears as 0), so need to call row.move() as a workaround for a last row.- moving to a last row seems to update rownum
+			//  TODO: since it is not clear if getRows() guarantee to have a last pushed row at this point, this may not always work?  need to check
+			const rows = this.#tabulatorObj.getRows();
+			for (let i=0;i<rows.length;i++) {
+					let curpos = rows[i].getPosition();
+					if (curpos>0) {
+						rows[i].update({"stepOrder":rows[i].getPosition()});	
+					} else {
+						if (i>0) {
+							rows[i].move(i, false);
+						}
+					}
+			}
 		
+			
+			
+			//this.#tabulatorObj.addData([newstep], false);   setData
+			
 	}
 	
 	btnLoadStepsFromDiskClick(e) {
