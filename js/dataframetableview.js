@@ -22,7 +22,7 @@ export class DataFrameTableView {
 		this.#internalContainer = document.querySelector(this.#containerid);
 		this.pyodide = undefined;
 		this.eventbus = new EventBus(this);
-		this.getdfcmd =  this.dfname + ".to_json(orient='split')";
+		this.getdfcmd =  this.dfname + ".to_json(orient='split',date_format='iso')";
 		this.gettypescmd = this.dfname + ".dtypes.to_json(orient='split',default_handler=str)";	
 		// TODO: automatically adjust number of records to output based on df's length ??  	
 		this.tabulatorobj = undefined;
@@ -68,10 +68,28 @@ export class DataFrameTableView {
 			// TODO: show error in place of a table?
 			return false;
 		}
-		
+		window.exectimer.timeit("Showing dataframe 2 / got data...");
+		//~ this.tabulatorobj = new Tabulator(this.#internalContainer, {
+						//~ ...this.tabulatorProperties,
+						//~ spreadsheet:true,  
+						//~ rowHeader:{field:"_id", hozAlign:"center", headerSort:false, frozen:true},  
+						//~ //height:"311px",  
+						//~ spreadsheetRows: dfarray.data.length,	
+						//~ spreadsheetColumns: dfarray.columns.length,	
+						//~ spreadsheetData: dfarray.data,  
+						//~ // --------------------------------------
+						//~ columnDefaults:{
+							//~ tooltip:function(e, cell, onRendered){
+								//~ var el = document.createElement("div");
+								//~ el.innerText = cell.getValue(); 
+								//~ return el; 
+							//~ },
+						//~ }	
+					//~ });
+		// -------------------   tabulator with regular columns
 		this.tabulatorobj = new Tabulator(this.#internalContainer, {
 						...this.tabulatorProperties,
-						spreadsheet:true,  
+						
 						rowHeader:{field:"_id", hozAlign:"center", headerSort:false, frozen:true},  
 						//height:"311px",  
 						spreadsheetRows: dfarray.data.length,	
@@ -86,18 +104,27 @@ export class DataFrameTableView {
 							},
 						}	
 					});
+		
+		
 		this.columnsarray = [...dfarray.columns];
 		this.tabulatorobj.on("tableBuilt", this.eventTableBuilt.bind(this));
 		//  window.dftabulator.options.rowContextMenu[0].label = 'clickety click';
 	}
 	
 	eventTableBuilt() {
-		const columns = this.tabulatorobj.getColumns();
-		for (let i=1;i<columns.length;i++) {
-			columns[i].updateDefinition({title: this.columnsarray[i-1]});	
-		}
-		this.eventbus.dispatch('tableBuilt',this);	
+		//~ window.exectimer.timeit("Showing dataframe 2 / eventTableBuilt/ changing columns...");
+		//~ const columns = this.tabulatorobj.getColumns();
+		//~ window.exectimer.timeit("Showing dataframe 2 / got columns...");
+		//~ for (let i=1;i<columns.length;i++) {
+			//~ window.exectimer.timeit("Processing column... "+i);
+			//~ //columns[i].updateDefinition({title: this.columnsarray[i-1]});	
+		//~ }
+		this.eventbus.dispatch('tableBuilt', this);	
+		window.exectimer.timeit("Showing dataframe 2 / done...");
 	}
+	
+	
+	
 	
 }
 

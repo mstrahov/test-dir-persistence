@@ -38,6 +38,15 @@ export const dfActionsList = [
 		parameters: { df: "string"}
 	},
 	
+	{
+		actionid: "FillDownColumnValues",
+		name: "Fill down column values",
+		description: "Fill down column values",
+		pytemplate: "{{df}}.iloc[:, {{colnum}}] = {{df}}.iloc[:, {{colnum}}].ffill()",
+		pyexample: `df.iloc[:, 2] = df.iloc[:, 2].ffill()`,
+		actiontype: ["column","cell"],
+		parameters: { df: "string", colnum: "number"},
+	},
 ];
 
 

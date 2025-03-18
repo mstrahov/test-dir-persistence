@@ -114,8 +114,13 @@ export class TransformStepsControl {
 		this.#tabulatorObj = new Tabulator("#transformstable"+this.#uuid, this.tabulatorProperties);
 		
 		this.#tabulatorObj.on("rowAdded", function(row){
-			//row - row component
-			console.log("added row ",row);
+			// row - row component
+			// tabulator.js does not set rownum correctly (appears as 0), so need to call row.move() as a workaround for a last row
+			const tlen = row.getTable().getRows().length;
+			if (tlen>0) {
+				row.move(tlen-1, false);
+			}
+
 		});
 		this.#tabulatorObj.on("rowDeleted", function(row){
 			//row - row component
@@ -144,22 +149,30 @@ export class TransformStepsControl {
 				
 			};
 			
+			
+			
+			// first update steporders to sync with actual row moves
+			let rows = this.#tabulatorObj.getRows();
+			for (let i=0;i<rows.length;i++) {
+				rows[i].update({"stepOrder":rows[i].getPosition()});	
+			}
+			
 			// tabulator is set as reactive here, so it adds a new row on push
 			this.#transformscript.transformSteps.push(newstep);
 			//  however, then tabulator.js does not set rownum correctly (appears as 0), so need to call row.move() as a workaround for a last row.- moving to a last row seems to update rownum
 			//  TODO: since it is not clear if getRows() guarantee to have a last pushed row at this point, this may not always work?  need to check
 			// probably need to hook the following to event "row-added" : 	dispatch row, data, pos, index Row has been added by a user
-			const rows = this.#tabulatorObj.getRows();
-			for (let i=0;i<rows.length;i++) {
-					let curpos = rows[i].getPosition();
-					if (curpos>0) {
-						rows[i].update({"stepOrder":rows[i].getPosition()});	
-					} else {
-						if (i>0) {
-							rows[i].move(i, false);
-						}
-					}
-			}
+			//~ const rows = this.#tabulatorObj.getRows();
+			//~ for (let i=0;i<rows.length;i++) {
+					//~ let curpos = rows[i].getPosition();
+					//~ if (curpos>0) {
+						//~ rows[i].update({"stepOrder":rows[i].getPosition()});	
+					//~ } else {
+						//~ if (i>0) {
+							//~ rows[i].move(i, false);
+						//~ }
+					//~ }
+			//~ }
 		
 			
 			

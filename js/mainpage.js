@@ -266,6 +266,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 			
 			async function showDataFrame2() {
 				console.log("Showing dataframe 2");
+				window.exectimer.timeit("Showing dataframe 2...");
 				if (window.testdataframe2) {
 					
 					await window.testdataframe2.showdf();
@@ -939,6 +940,9 @@ df.drop(df.index[2], inplace=True)
 
 # ===================================   fill down values
 
+df.iloc[:, 3] = df.iloc[:, 3].fillna(method='ffill')
+
+
 # ===================================   filter by value
 
 # ===================================   rename columns 
@@ -951,7 +955,11 @@ df.rename({"num": "number", "let": "letter"}, axis="columns", inplace=True)
 
 # # =================================== convert type        https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.infer_objects.html
 
-
+#  convert excel datetime
+df['Unnamed: 7'] = pd.to_datetime(df['Unnamed: 7'], unit='ms', errors='ignore')    (coerce / to make NaT)
+df.iloc[:, 4] = pd.to_datetime(df.iloc[:, 4], unit='ms', errors='ignore')
+* 
+* 
 #  iterate over dataframe - return rows from 10 to 15 from pandas dataframe # Get the rows from 10 to 15 (inclusive)  
 rows_10_to_15 = df.iloc[9:16].to_json(orient='split')
 
