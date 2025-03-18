@@ -12,14 +12,17 @@ export class TransformTableView extends DataFrameTableView {
 			selectableRangeColumns:true,
 			selectableRangeRows:true,	
 			//--------------------
-			spreadsheetColumnDefinition:{
-				//editor:"input",
-				contextMenu: this.generateCellContextMenu(),
-				headerContextMenu:this.generateColumnHeaderContextMenu(),
-			},
+			//~ spreadsheetColumnDefinition:{
+				//~ //editor:"input",
+				//~ contextMenu: this.generateCellContextMenu(),
+				//~ headerContextMenu:this.generateColumnHeaderContextMenu(),
+			//~ },
 			//-------------
-			rowContextMenu:this.generateRowContextMenu(),
+			rowContextMenu:this.generateRowContextMenu.bind(this),
 		};
+		
+		this.headerContextMenuGeneratorFunction = this.generateColumnHeaderContextMenu.bind(this);
+		this.cellContextMenuGeneratorFunction = this.generateCellContextMenu.bind(this);
 		
 	}
 	// --------------------------------------------
@@ -33,7 +36,7 @@ export class TransformTableView extends DataFrameTableView {
 				action: function(e, cell){
 								let curColumn = cell.getColumn();
 								let colIndex = curColumn.getTable().getColumnLayout().findIndex((el)=>el.field===curColumn.getField());
-								that.eventbus.dispatch('dfActionEvent',that,{actionid:a.actionid, parameters:{df:"df",rownum:cell.getRow().getIndex()-1, colnum:colIndex-1}}  );
+								that.eventbus.dispatch('dfActionEvent',that,{actionid:a.actionid, parameters:{df:"df",rownum:cell.getRow().getIndex(), colnum:colIndex-1}}  );
 							}
 			});
 		}
@@ -65,7 +68,7 @@ export class TransformTableView extends DataFrameTableView {
 			res.push({
 				label:a.name,
 				action:	function(e, row){
-							that.eventbus.dispatch('dfActionEvent',that,{actionid:a.actionid, parameters:{df:"df",rownum:row.getIndex()-1 }}  );
+							that.eventbus.dispatch('dfActionEvent',that,{actionid:a.actionid, parameters:{df:"df",rownum:row.getIndex() }}  );
 						}
 			});	
 		}

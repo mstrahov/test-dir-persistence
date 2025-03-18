@@ -17,6 +17,8 @@ export class DataFrameTableView {
 		this.pyodidePromise = params.pyodidePromise;
 		this.dfname = params.dfname || 'df';
 		this.tabulatorProperties = params.tabulatorProperties || {};
+		this.headerContextMenuGeneratorFunction = undefined; 
+		this.cellContextMenuGeneratorFunction = undefined; 
 		
 		this.#uuid = self.crypto.randomUUID();
 		this.#internalContainer = document.querySelector(this.#containerid);
@@ -28,6 +30,7 @@ export class DataFrameTableView {
 		this.tabulatorobj = undefined;
 		this.columnsarray = [];
 		this.columnstypes = undefined;
+		this.lastcolumnlayout = undefined;
 	}
 	
 	async init() {
@@ -41,9 +44,10 @@ export class DataFrameTableView {
 		//  need to destroy and recreate tabulator object to correctly display changes in col/row qty and definitions
 		try {
 			if (this.tabulatorobj) {
+				this.lastcolumnlayout = this.tabulatorobj.getColumnLayout();
 				this.tabulatorobj.destroy();
 			}
-		} catch (err) {}
+		} catch (err) { console.error(err); }
 		//  get data from a df
 		let dfarray = {};
 		try {
@@ -90,11 +94,12 @@ export class DataFrameTableView {
 		this.tabulatorobj = new Tabulator(this.#internalContainer, {
 						...this.tabulatorProperties,
 						
-						rowHeader:{field:"_id", hozAlign:"center", headerSort:false, frozen:true},  
+						//rowHeader:{field:"_id", hozAlign:"center", headerSort:false, frozen:true},  
 						//height:"311px",  
-						spreadsheetRows: dfarray.data.length,	
-						spreadsheetColumns: dfarray.columns.length,	
-						spreadsheetData: dfarray.data,  
+						index: "df_row_index",
+						columns: this.generateColumnDefinitions(dfarray),
+						data: this.generateTableData(dfarray),
+					
 						// --------------------------------------
 						columnDefaults:{
 							tooltip:function(e, cell, onRendered){
@@ -123,8 +128,69 @@ export class DataFrameTableView {
 		window.exectimer.timeit("Showing dataframe 2 / done...");
 	}
 	
+	generateColumnDefinitions(dfarray) {
+		// this.columnstypes
+		let res = [];
+		let colwidth = 25;
+		if (this.lastcolumnlayout) {
+			let oldlayout = this.lastcolumnlayout.find((e)=>e.formatter==="rownum");
+			if (oldlayout) {
+				colwidth = oldlayout?.width;
+			}
+		}
+		
+		res.push({
+				  formatter: "rownum",
+				  width: colwidth
+				});
+		for (let i=0;i<dfarray.columns.length;i++) {
+			// this.lastcolumnlayout
+			let oldlayout = undefined; 
+			if (this.lastcolumnlayout) {
+				oldlayout = this.lastcolumnlayout.find((e)=>e.title===dfarray.columns[i]);
+				if (!oldlayout) {
+					oldlayout = this.lastcolumnlayout.find((e)=>e.field===`col${i}`);
+				}
+			}
+			let colwidth = 130;
+			if (oldlayout) {
+				colwidth = oldlayout?.width;
+			}
+			let newcolumn = {
+				title: dfarray.columns[i],
+				field: `col${i}`,
+				width: colwidth,
+				hozAlign: "left",
+				sorter: "string",
+				formatter: "plaintext",
+				//headerPopup: dfarray.columns[i], 
+				//responsive:0, 
+				frozen:false, 
+				//headerContextMenu: headerContextMenuGenerator	
+			};
+			if (this.headerContextMenuGeneratorFunction) {
+				newcolumn.headerContextMenu = this.headerContextMenuGeneratorFunction;
+			}
+			if (this.cellContextMenuGeneratorFunction) {
+				newcolumn.contextMenu = this.cellContextMenuGeneratorFunction;
+			}
+			res.push(newcolumn);
+		}
+		return res;
+	}
 	
-	
+	generateTableData(dfarray) {
+		let res = [];
+		for (let j=0;j<dfarray.data.length;j++) {
+			let newrow = { "df_row_index": dfarray.index[j] };
+			for (let i=0;i<dfarray.columns.length;i++) {
+				newrow[`col${i}`]=dfarray.data[j][i];	
+			}
+			res.push(newrow);
+		}
+		return res;
+	}
+		
 	
 }
 
