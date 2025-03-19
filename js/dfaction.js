@@ -23,8 +23,8 @@ export const dfActionsList = [
 		actionid: "DeleteRowByIndex",
 		name: "Delete row",
 		description: "Delete row",
-		pytemplate: '{{df}}.drop({{df}}.index[{{rownum}}], inplace=True)',
-		pyexample: 'df.drop(df.index[2], inplace=True)',
+		pytemplate: '{{df}}={{df}}.drop({{rownum}})',
+		pyexample: 'df=df.drop(2)',
 		actiontype: ["row","cell"],
 		parameters: { df: "string", rownum: "number"},
 	},
@@ -47,6 +47,46 @@ export const dfActionsList = [
 		actiontype: ["column","cell"],
 		parameters: { df: "string", colnum: "number"},
 	},
+	
+	{
+		actionid: "PromoteRowValuesToColumnNames",
+		name: "Promote row values to column names",
+		description: "Promote row values to column names",
+		pytemplate: `col_counts = {}
+new_cols = []
+for index, col in enumerate({{df}}.iloc[{{rownum}}]):
+    if {{df}}.iloc[{{rownum}}].isna()[index] or len(str(col)) == 0:
+        print(col)
+        new_col = {{df}}.columns[index]
+    else:
+        if col in col_counts:
+            col_counts[col] += 1
+            new_col = f"{col}_{col_counts[col]}"
+        else:
+            col_counts[col] = 1
+            new_col = col
+    new_cols.append(new_col)
+{{df}}.columns = new_cols
+`, 
+		pyexample: `col_counts = {}
+new_cols = []
+for index, col in enumerate(df.iloc[0]):
+    if df.iloc[0].isna()[index] or len(str(col)) == 0:
+        print(col)
+        new_col = df.columns[index]
+    else:
+        if col in col_counts:
+            col_counts[col] += 1
+            new_col = f"{col}_{col_counts[col]}"
+        else:
+            col_counts[col] = 1
+            new_col = col
+    new_cols.append(new_col)
+df.columns = new_cols`,
+		actiontype: ["row"],
+		parameters: { df: "string", rownum: "number"},
+	},
+	
 ];
 
 

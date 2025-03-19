@@ -154,8 +154,16 @@ export class DataFrameTableView {
 			width: colwidth
 		});
 		//  df row index column
+		
+		colwidth = 25;
+		if (this.lastcolumnlayout) {
+			let oldlayout = this.lastcolumnlayout.find((e)=>e.field==="df_row_index");
+			if (oldlayout) {
+				colwidth = oldlayout?.width;
+			}
+		}
 		res.push({
-				title: "index",
+				title: "",
 				field: "df_row_index",
 				width: colwidth,
 				hozAlign: "left",

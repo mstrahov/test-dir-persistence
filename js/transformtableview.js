@@ -36,7 +36,7 @@ export class TransformTableView extends DataFrameTableView {
 				action: function(e, cell){
 								let curColumn = cell.getColumn();
 								let colIndex = curColumn.getTable().getColumnLayout().findIndex((el)=>el.field===curColumn.getField());
-								that.eventbus.dispatch('dfActionEvent',that,{actionid:a.actionid, parameters:{df:"df",rownum:cell.getRow().getIndex(), colnum:colIndex-1}}  );
+								that.eventbus.dispatch('dfActionEvent',that,{actionid:a.actionid, parameters:{df:"df",rownum:cell.getRow().getIndex(), colnum:colIndex-2}}  );
 							}
 			});
 		}
@@ -53,7 +53,7 @@ export class TransformTableView extends DataFrameTableView {
 				label:a.name,
 				action: function(e, column){
 								let colIndex = column.getTable().getColumnLayout().findIndex((el)=>el.field===column.getField());
-								that.eventbus.dispatch('dfActionEvent',that,{actionid:a.actionid, parameters:{df:"df", colnum:colIndex-1}}  );
+								that.eventbus.dispatch('dfActionEvent',that,{actionid:a.actionid, parameters:{df:"df", colnum:colIndex-2}}  );
 						}
 			});
 		}

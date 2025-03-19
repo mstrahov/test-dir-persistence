@@ -950,6 +950,38 @@ df.iloc[:, 3] = df.iloc[:, 3].fillna(method='ffill')
 # ===================================   rename columns from row value
 df.rename({"num": "number", "let": "letter"}, axis="columns", inplace=True)
 
+# rename columns from row values:
+col_counts = {}
+new_cols = []
+for col in df.iloc[0]:
+    if col in col_counts:
+        col_counts[col] += 1
+        new_col = f"{col}_{col_counts[col]}"
+    else:
+        col_counts[col] = 1
+        new_col = col
+    new_cols.append(new_col)
+df.columns = new_cols
+* 
+##################################
+data = [["a", "b", None, "c", "b" ], [1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]
+df = pd.DataFrame(data)
+##
+col_counts = {}
+new_cols = []
+for index, col in enumerate(df.iloc[0]):
+    if df.iloc[0].isna()[index] or len(str(col)) == 0:
+        print(col)
+        new_col = df.columns[index]
+    else:
+        if col in col_counts:
+            col_counts[col] += 1
+            new_col = f"{col}_{col_counts[col]}"
+        else:
+            col_counts[col] = 1
+            new_col = col
+    new_cols.append(new_col)
+df.columns = new_cols
 
 # ===================================   add row with values?
 
