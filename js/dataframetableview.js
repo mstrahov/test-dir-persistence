@@ -1,6 +1,6 @@
 /********************************
  *  requires Tabulator.js
- * 
+ * 		outputs contents of a given dataframe to tabulator table
  * 
  * *******************************/
 

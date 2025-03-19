@@ -1,3 +1,9 @@
+/********************************
+ *  requires Tabulator.js
+ * 	Extends DataFrameTableView with menus for row, columns, cells, taken from dfActionList to generate commands for dftransforms (or subscriber)
+ * 
+ * *******************************/
+
 import { DataFrameTableView } from "./dataframetableview.js";
 import { dfActionsList, getdfActionsArray } from "./dfaction.js";
 

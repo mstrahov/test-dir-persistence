@@ -964,6 +964,8 @@ for col in df.iloc[0]:
 df.columns = new_cols
 * 
 ##################################
+* 
+* .isnull()
 data = [["a", "b", None, "c", "b" ], [1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]
 df = pd.DataFrame(data)
 ##
