@@ -51,7 +51,8 @@ export class DataFrameTableView {
 		//  get data from a df
 		let dfarray = {};
 		try {
-			const output = await this.pyodide.runPythonAsync(this.getdfcmd);
+			const get_df_data_command =  this.dfname + ".head(1).to_json(orient='split',date_format='iso')";
+			const output = await this.pyodide.runPythonAsync(get_df_data_command);
 			dfarray = JSON.parse(output);
 		} catch (err) {
 			console.error(`Error getting ${this.dfname} data`,this.getdfcmd,err);
@@ -98,8 +99,16 @@ export class DataFrameTableView {
 						//height:"311px",  
 						index: "df_row_index",
 						columns: this.generateColumnDefinitions(dfarray),
-						data: this.generateTableData(dfarray),
-					
+						//data: this.generateTableData(dfarray),
+						data: "",    // this has to set to "" in order for ajaxRequestFunc to work
+						// --------------------------------------
+						pagination:true,
+						paginationMode:"remote",
+						paginationCounter:"rows",
+						paginationSize:50,
+						ajaxURL:"x",
+						ajaxRequestFunc: this.internalDataFeed.bind(this),
+						//progressiveLoad:"scroll",
 						// --------------------------------------
 						columnDefaults:{
 							tooltip:function(e, cell, onRendered){
@@ -131,6 +140,8 @@ export class DataFrameTableView {
 	generateColumnDefinitions(dfarray) {
 		// this.columnstypes
 		let res = [];
+		
+		//  rownum formatter column 
 		let colwidth = 25;
 		if (this.lastcolumnlayout) {
 			let oldlayout = this.lastcolumnlayout.find((e)=>e.formatter==="rownum");
@@ -138,17 +149,32 @@ export class DataFrameTableView {
 				colwidth = oldlayout?.width;
 			}
 		}
-		
 		res.push({
-				  formatter: "rownum",
-				  width: colwidth
-				});
+			formatter: "rownum",
+			width: colwidth
+		});
+		//  df row index column
+		res.push({
+				title: "index",
+				field: "df_row_index",
+				width: colwidth,
+				hozAlign: "left",
+				sorter: "string",
+				formatter: "plaintext",
+				//headerPopup: dfarray.columns[i], 
+				//responsive:0, 
+				frozen:false, 
+				//headerContextMenu: headerContextMenuGenerator	
+		});
+				
+		// columns with data from df
 		for (let i=0;i<dfarray.columns.length;i++) {
 			// this.lastcolumnlayout
 			let oldlayout = undefined; 
 			if (this.lastcolumnlayout) {
 				oldlayout = this.lastcolumnlayout.find((e)=>e.title===dfarray.columns[i]);
 				if (!oldlayout) {
+					// do a second search in case column renamed, assume position is the same
 					oldlayout = this.lastcolumnlayout.find((e)=>e.field===`col${i}`);
 				}
 			}
@@ -190,9 +216,72 @@ export class DataFrameTableView {
 		}
 		return res;
 	}
+
+	async internalDataFeed(url, config, params) {
+			//  params expected as {page: 1, size: 50}
+			//  return  last_row value, last_page value
+			//~ {
+				//~ "last_page":15, //the total number of available pages (this value must be greater than 0)
+				//~ "last_row":246, //the total number of rows pages (this value must be greater than 0)
+				//~ "data":[ // an array of row data objects
+					//~ {id:1, name:"bob", age:"23"}, //example row data object
+				//~ ]
+			//~ }
 		
+		//data: this.generateTableData(dfarray),
+		console.log("Internal Data Feed params: ",params);
+		console.log("Internal Data Feed config: ",config);
+		let res = {
+			"last_page":0,
+			"last_row":0,
+			"data":[]
+		};
+		
+		// rows_10_to_15 = df.iloc[9:16].to_json(orient='split')
+		// rows_6_to_7 = df.iloc[5:6].to_json(orient='split')
+		//  number of columns   df.shape[0]
+		const number_of_cols_command = this.dfname + ".shape[0]";
+		// --------
+		let last_row = 0;
+		try {
+			last_row = await this.pyodide.runPythonAsync(number_of_cols_command);
+		} catch (err) {
+			console.error(`Error getting ${this.dfname} rows number `,number_of_cols_command,err);
+			// TODO: show error in place of a table?
+			return false;
+		}
+		
+		// ------------- 
+		const rowstart = (params.page-1)*params.size;
+		const rowend = rowstart + params.size;
+		const get_data_command = this.dfname + `.iloc[${rowstart}:${rowend}].to_json(orient='split',date_format='iso')`;
+		let dfarray = {};
+		try {
+			let output = await this.pyodide.runPythonAsync(get_data_command);
+			dfarray = JSON.parse(output);
+		} catch (err) {
+			console.error(`Error getting ${this.dfname} data`,get_data_command,err);
+			// TODO: show error in place of a table?
+			return false;
+		}
+		// -------------
+		res.last_row = last_row;
+		res.last_page = Math.ceil(last_row/params.size); 
+		res.data = this.generateTableData(dfarray);
+		
+		
+		return new Promise(function(resolve, reject){
+			//do some async data retrieval then pass the array of row data back into Tabulator
+			console.log("Promise function called");
+			resolve(res);
+			//if there is an error call this function and pass the error message or object into it
+			//reject();
+		});
+	}
 	
 }
+
+
 
 
 
