@@ -758,10 +758,10 @@ plot1`);
 						transformSteps: [
 							{
 								stepOrder: 0,
+								targetEnv: "py",
 								srcDfActionId: "",
 								srcDfActionName: "Import file",
 								scriptCode: "file = pd.ExcelFile('/app/mount_dir/onlineretail2.xlsx')",
-								targetEnv: "py",
 								targetDataframe: "df",
 								mutations: ["df","file"], 
 								lastRunStatus: true,
@@ -771,10 +771,10 @@ plot1`);
 							 },
 							 {
 								stepOrder: 1,
+								targetEnv: "py",
 								srcDfActionId: "",
 								srcDfActionName: "Import file as excel",
 								scriptCode: "df = pd.read_excel(file,sheet_name='Sheet2', skiprows=0)",
-								targetEnv: "py",
 								targetDataframe: "df",
 								mutations: ["df","file"], 
 								lastRunStatus: undefined,

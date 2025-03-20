@@ -63,6 +63,8 @@ let item5 = new GridItemCodeEditor({templateid:"#gridelementtemplatecode", grid:
 //  to compact grid
 grid.compact();
 
-// to save grid
-console.log(JSON.stringify(self.testgrid.save(saveContent = false, saveGridOpt = true)));
+// to save grid   (saveContent = false, saveGridOpt = true)
+console.log(JSON.stringify(self.testgrid.save(false, true)));  
 
+// change color of svg elements
+document.getElementById("pyloaded").querySelector("svg").style.stroke = "gray";

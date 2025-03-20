@@ -10,9 +10,9 @@ import EventBus from "./eventbus.js";
 
 export const TransformStep = {
 	stepOrder: 0,
+	targetEnv: "py",
 	srcDfAction: {},
 	scriptCode: "",
-	targetEnv: "py",
 	targetDataframe: "df",
 	mutations: ["df","file"], 
 	lastRunStatus: undefined,
@@ -115,7 +115,7 @@ export class TransformStepsControl {
 		
 		this.#tabulatorObj.on("rowAdded", function(row){
 			// row - row component
-			// tabulator.js does not set rownum correctly (appears as 0), so need to call row.move() as a workaround for a last row
+			// tabulator.js does not set rownum correctly (appears as 0), so need to call row.move() as a workaround for the last row
 			const tlen = row.getTable().getRows().length;
 			if (tlen>0) {
 				row.move(tlen-1, false);

@@ -140,19 +140,19 @@ export class DataFrameTableView {
 	generateColumnDefinitions(dfarray) {
 		// this.columnstypes
 		let res = [];
-		
-		//  rownum formatter column 
 		let colwidth = 25;
-		if (this.lastcolumnlayout) {
-			let oldlayout = this.lastcolumnlayout.find((e)=>e.formatter==="rownum");
-			if (oldlayout) {
-				colwidth = oldlayout?.width;
-			}
-		}
-		res.push({
-			formatter: "rownum",
-			width: colwidth
-		});
+		//  rownum formatter column 
+		//~ colwidth = 25;
+		//~ if (this.lastcolumnlayout) {
+			//~ let oldlayout = this.lastcolumnlayout.find((e)=>e.formatter==="rownum");
+			//~ if (oldlayout) {
+				//~ colwidth = oldlayout?.width;
+			//~ }
+		//~ }
+		//~ res.push({
+			//~ formatter: "rownum",
+			//~ width: colwidth
+		//~ });
 		//  df row index column
 		
 		colwidth = 25;
