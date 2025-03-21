@@ -22,7 +22,7 @@ const testsvg3 = `<div class="svg-container">
 let opts = {
       cellHeight: 'auto', // see other possible values (best to do in here)
       cellHeightThrottle: 100,
-      handle: '.grid-elem-header' ,
+      handle: '.grid-elem-draggable' ,
       margin: 1,
       cellHeight: 80,
       animate: true, // show immediate (animate: true is nice for user dragging though)
