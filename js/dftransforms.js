@@ -5,6 +5,7 @@
  * ---------------*/
 import { dfAction, getdfActionsArray } from "./dfaction.js";
 import EventBus from "./eventbus.js";
+import { makeCloneFromTemplate } from "./utilities.js";
 
 // filesync as a separate step?
 
@@ -67,14 +68,16 @@ export class TransformStepsControl {
 		this.#scriptname = params.scriptname;
 		this.eventbus = new EventBus(this);
 		
-		const template = document.querySelector(this.#containertemplateid);
-		const clone = template.content.cloneNode(true);
-		clone.querySelector("#loadstepsfromdisk").id = "loadstepsfromdisk"+this.#uuid;
-		clone.querySelector("#savestepstodisk").id = "savestepstodisk"+this.#uuid;
-		clone.querySelector("#transformstable").id = "transformstable"+this.#uuid;
-		clone.querySelector("#editasjson").id = "editasjson"+this.#uuid;
-		clone.querySelector("#savepyscript").id = "savepyscript"+this.#uuid;
-		clone.querySelector("#loadpyscript").id = "loadpyscript"+this.#uuid;
+		//~ const template = document.querySelector(this.#containertemplateid);
+		//~ const clone = template.content.cloneNode(true);
+		//~ clone.querySelector("#loadstepsfromdisk").id = "loadstepsfromdisk"+this.#uuid;
+		//~ clone.querySelector("#savestepstodisk").id = "savestepstodisk"+this.#uuid;
+		//~ clone.querySelector("#transformstable").id = "transformstable"+this.#uuid;
+		//~ clone.querySelector("#editasjson").id = "editasjson"+this.#uuid;
+		//~ clone.querySelector("#savepyscript").id = "savepyscript"+this.#uuid;
+		//~ clone.querySelector("#loadpyscript").id = "loadpyscript"+this.#uuid;
+		
+		const clone = makeCloneFromTemplate(this.#containertemplateid, this.#uuid);
 		
 		this.#internalContainer.appendChild(clone);
 		

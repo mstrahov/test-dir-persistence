@@ -8,6 +8,7 @@
  * FileDownLoadDialog: saves file from path to blob by URL.createObjectURL in document
  * 
  * *************************** */
+import { makeCloneFromTemplate } from "./utilities.js";
 
 export class FileUploadButton {
 	#containertemplateid;
@@ -23,10 +24,13 @@ export class FileUploadButton {
 		this.#uuid = self.crypto.randomUUID();
 		
 		this.#internalContainer = document.querySelector(this.#containerid);
-		const template = document.querySelector(this.#containertemplateid);
-		const clone = template.content.cloneNode(true);
-		clone.querySelector('#uploadfilesbutton').id = 'uploadfilesbutton'+this.#uuid;
-		clone.querySelector('#formFileMultiple').id = 'formFileMultiple'+this.#uuid;
+		
+		//~ const template = document.querySelector(this.#containertemplateid);
+		//~ const clone = template.content.cloneNode(true);
+		//~ clone.querySelector('#uploadfilesbutton').id = 'uploadfilesbutton'+this.#uuid;
+		//~ clone.querySelector('#formFileMultiple').id = 'formFileMultiple'+this.#uuid;
+		
+		const clone = makeCloneFromTemplate(this.#containertemplateid, this.#uuid);
 		this.#internalContainer.appendChild(clone);
 		
 		this.#internalContainer.querySelector('#uploadfilesbutton'+this.#uuid).addEventListener("click", this.uploadFilesButtonClick.bind(this));

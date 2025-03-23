@@ -1,6 +1,11 @@
 /*-------
  * Local files handlers
  * 
+ * export class FileSystemHandler
+ * window.localFileHandler = new FileSystemHandler({pyodidePromise: window.pyodideReadyPromise});
+ * 
+ * 
+ * 
  * ---------------*/
 
 //  using FileSystemDirectoryHandle 

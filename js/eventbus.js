@@ -1,6 +1,10 @@
 /**********************************
  * Event Bus
  * 
+ * window.testdataframe2.eventbus.subscribe('tableBuilt',()=>{ console.log("df2 table built"); });
+ * 
+ * window.testdataframe2.eventbus.subscribe('dfActionEvent',(obj,eventdata)=>{ console.log("dfActionEvent",obj,eventdata);  window.teststeps.addScriptStep(eventdata);  });
+ * that.eventbus.dispatch('dfActionEvent',that,{actionid:a.actionid, parameters:{df:"df",rownum:cell.getRow().getIndex(), colnum:colIndex-1}}  );
  * 
  * **********************************/
 

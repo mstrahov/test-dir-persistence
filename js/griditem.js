@@ -5,6 +5,8 @@
  * 
  * ****************************/
 
+import { makeCloneFromTemplate } from "./utilities.js";
+
 
 export class GridItem {
 	#templateid;
@@ -17,14 +19,9 @@ export class GridItem {
 		this.#grid = params.grid;
 		this.#uuid = self.crypto.randomUUID();
 		
-		const template = document.querySelector(this.#templateid);
-		const clone = template.content.cloneNode(true);
-		clone.querySelector('#item').id = 'item'+this.#uuid;
-		clone.querySelector('#grid-el-header').id = 'grid-el-header'+this.#uuid;
+		const clone = makeCloneFromTemplate(this.#templateid, this.#uuid);
 		clone.querySelector('#grid-el-header'+this.#uuid).querySelector('.griditemheadertext').textContent = params.headertext;
-		clone.querySelector('#grid-el-body').id = 'grid-el-body'+this.#uuid;
-		
-	
+		//--------------------
 		this.#grid.el.appendChild(clone);
 		this.#bodyelement= this.#grid.el.querySelector('#grid-el-body'+this.#uuid);
 		let opts = {

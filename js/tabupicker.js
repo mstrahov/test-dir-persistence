@@ -4,6 +4,7 @@
  * 
  * returns a promise / selected row or rows array if selectableRows is overridden and>1
  * **********************************************/
+import { makeCloneFromTemplate } from "./utilities.js";
 
 export class TabulatorPicker {
 	#templateid;
@@ -17,12 +18,18 @@ export class TabulatorPicker {
 	constructor(params) {
 		this.#templateid = params.templateid;
 		this.#uuid = self.crypto.randomUUID();
-		const template = document.querySelector(this.#templateid);
-		const clone = template.content.cloneNode(true);
-		clone.querySelector('#pickermodal').setAttribute("aria-labelledby","pickerModalLabel" +this.#uuid);
-		clone.querySelector('#pickermodal').id = 'pickermodal'+this.#uuid;
-		clone.querySelector('#pickerModalLabel').id = 'pickerModalLabel'+this.#uuid;
-		clone.querySelector('#pickermodalSelectButton').id = 'pickermodalSelectButton'+this.#uuid;
+		
+		
+		//~ const template = document.querySelector(this.#templateid);
+		//~ const clone = template.content.cloneNode(true);
+		//~ clone.querySelector('#pickermodal').setAttribute("aria-labelledby","pickerModalLabel" +this.#uuid);
+		//~ clone.querySelector('#pickermodal').id = 'pickermodal'+this.#uuid;
+		//~ clone.querySelector('#pickerModalLabel').id = 'pickerModalLabel'+this.#uuid;
+		//~ clone.querySelector('#pickermodalSelectButton').id = 'pickermodalSelectButton'+this.#uuid;
+		
+		const clone = makeCloneFromTemplate(this.#templateid, this.#uuid);
+		clone.querySelector('#pickermodal'+this.#uuid).setAttribute("aria-labelledby","pickerModalLabel" +this.#uuid);
+		
 		document.body.appendChild(clone);	
 		
 		this.#modalelement = document.getElementById('pickermodal'+this.#uuid);
