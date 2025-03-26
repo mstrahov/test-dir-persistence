@@ -8,6 +8,9 @@ console.log("test");
 window.duckdb = await (async () => {
 	try {
 		console.log('DB init...');
+		//  await window.showDirectoryPicker({mode: "readwrite"});
+		// evil shit here
+		//navigator.storage.getDirectory= async ()=> await window.showDirectoryPicker({mode: "readwrite"}); 
 		const JSDELIVR_BUNDLES = await duckdb.getJsDelivrBundles();
 		const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
 
@@ -122,6 +125,8 @@ window.duckdb = await (async () => {
 		 * https://github.com/duckdb/duckdb/blob/43c5f3489858c0377d4a6e6d6e7ed8d0502ba1df/src/planner/binder/statement/bind_export.cpp#L160
 		 * 
 		 * checkpoint(database)
+		 * await duckdb.conn.send("CHECKPOINT;");
+		 * FORCE CHECKPOINT;
 Description	Synchronize WAL with file for (optional) database without interrupting transactions.
 * 
 * 		from glob('*');
@@ -137,7 +142,36 @@ Description	Synchronize WAL with file for (optional) database without interrupti
 		 *  from duckdb_views() where internal=false;
 		 *  from duckdb_indexes();
 		 *  from duckdb_sequences();
+		 *  from duckdb_types() ?
+		 *  from duckdb_functions();  ?
 		 * 
+		 * sqlite test
+		 * let fhdb = await window.showOpenFilePicker({mode: "readwrite"});
+		 *  window.duckdb.db.registerFileHandle('sakila.db', fhdb, window.duckdb.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true)
+		 * const opfsRoot = await navigator.storage.getDirectory();
+			let fileHandle = await opfsRoot.getFileHandle('sakila.db', {create: true});
+		    window.duckdb.db.registerFileHandle('sakila.db', fhdb, window.duckdb.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true)
+		    * 
+		    let r1 = await duckdb.conn.query("select * from t1;") 
+		    * JSON.stringify(r1.toArray())
+		    * r1 = await duckdb.conn.query("ATTACH 'sakila.db' as db3 (TYPE sqlite);"); JSON.stringify(r1.toArray())
+		    * 
+let trav = async () => {
+    const fh = await navigator.storage.getDirectory();
+    const contents = await fh.entries();
+    for await (const [key,entry] of contents) {
+        //console.log(entry);
+        if (entry.kind=='file') {
+            const file = await entry.getFile();   //  FileSystemFileHandle
+            console.log(file.name,file.size,file.lastModifiedDate,file.type);
+        } else if (entry.kind=='directory') {
+            console.log('dir detected');
+        }
+    }
+}
+* 
+* 
+* 
 		*/
 		
 		

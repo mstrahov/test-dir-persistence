@@ -54,8 +54,8 @@ export const dfActionsList = [
 		description: "Promote row values to column names",
 		pytemplate: `col_counts = {}
 new_cols = []
-for index, col in enumerate({{df}}.iloc[{{rownum}}]):
-    if {{df}}.iloc[{{rownum}}].isna()[index] or len(str(col)) == 0:
+for index, col in enumerate({{df}}.loc[{{rownum}}]):
+    if {{df}}.loc[{{rownum}}].isna()[index] or len(str(col)) == 0:
         print(col)
         new_col = {{df}}.columns[index]
     else:
@@ -70,8 +70,8 @@ for index, col in enumerate({{df}}.iloc[{{rownum}}]):
 `, 
 		pyexample: `col_counts = {}
 new_cols = []
-for index, col in enumerate(df.iloc[0]):
-    if df.iloc[0].isna()[index] or len(str(col)) == 0:
+for index, col in enumerate(df.loc[0]):
+    if df.loc[0].isna()[index] or len(str(col)) == 0:
         print(col)
         new_col = df.columns[index]
     else:

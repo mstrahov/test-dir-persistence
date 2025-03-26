@@ -942,6 +942,17 @@ df.drop(df.index[2], inplace=True)
 
 df.iloc[:, 3] = df.iloc[:, 3].fillna(method='ffill')
 
+# ===================================  column types
+df = df.infer_objects()
+df.dtypes
+# pandas.to_datetime
+#  https://pandas.pydata.org/docs/user_guide/basics.html#basics-dtypes
+#  df['A'] = df['A'].astype(int)
+df[df.columns[0]] = df[df.columns[0]].astype('string')
+* df[df.columns[1]] = df[df.columns[1]].astype('string')
+df['Country'] = df['Country'].astype('string')
+df.to_parquet('/app/opfs/dftest2.parquet',engine='pyarrow', compression='zstd')
+df.to_parquet('/app/opfs/dftest3.parquet',engine='fastparquet', compression='zstd')
 
 # ===================================   filter by value
 
@@ -971,8 +982,8 @@ df = pd.DataFrame(data)
 ##
 col_counts = {}
 new_cols = []
-for index, col in enumerate(df.iloc[0]):
-    if df.iloc[0].isna()[index] or len(str(col)) == 0:
+for index, col in enumerate(df.loc[0]):
+    if df.loc[0].isna()[index] or len(str(col)) == 0:
         print(col)
         new_col = df.columns[index]
     else:
@@ -1050,6 +1061,24 @@ duckdb.sql("select count(*) from bigorderitems;")
 duckdb.sql("COPY bigorderitems TO '/app/mount_dir/bigorderitems.parquet' (FORMAT PARQUET, COMPRESSION 'zstd');")
 
 duckdb.sql("COPY bigorderitems TO '/app/mount_dir/bigorderitems.parquet' (FORMAT PARQUET, COMPRESSION 'zstd');")
+----
+#py
+duckdb.sql("COPY df TO '/app/opfs/dftrans.parquet' (FORMAT parquet, COMPRESSION zstd);")
+#syncFS
+#js
+await window.duckdb.db.registerFileHandle('dftrans.parquet', null, window.duckdb.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true)
+# duckdb
+r1 = await duckdb.conn.query("CREATE OR REPLACE TABLE t2 as (FROM 'dftrans.parquet');"); JSON.stringify(r1.toArray())
+# if table  exists: * 
+r1 = await duckdb.conn.query("COPY t2 FROM 'dftrans.parquet' (FORMAT parquet);"); JSON.stringify(r1.toArray())
+
+alt route
+* await micropip.install("fastparquet")  or await micropip.install("pyarrow")
+
+df.to_parquet('/app/opfs/df2.parquet',engine='fastparquet',compression='zstd')
+* 
+* 
+-----
 COPY lineitem TO 'zstd_v2.parquet' (COMPRESSION zstd, PARQUET_VERSION V2);  !!
 
 //  pandas df and pyarrow
