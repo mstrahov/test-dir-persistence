@@ -36,9 +36,12 @@ export class ExecTimer {
 				"lengthmilli":lengthmilli
 			}
 		);
-		console.log("Event",this.#eventslist.length-1,msgtext,lengthmilli/1000,"sec");
+		console.log("Event",this.#eventslist.length-1,msgtext,this.millitosec(lengthmilli),"sec");
 		return lengthmilli;
 	}
 	
+	millitosec(milli) {
+		return milli/1000;
+	}
 	
 }
