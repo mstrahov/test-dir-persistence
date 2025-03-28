@@ -19,13 +19,13 @@ export class PyodideLoader {
 		this.corepackeagesloaded = false;
 	}
 	
-	_statechange(newstate, addmessage='', ...params) {
+	_statechange(newstate, addmessage='', params) {
 		
 		this.state = newstate;
 		const lengthmilli = this.exectimer.timeit(`Pyodide Loader: ${newstate}`);
 		const lengthseconds = this.exectimer.millitosec(lengthmilli);
-		console.log(addmessage, ...params);
-		this.eventbus.dispatch('pyodidestatechange',this,{state:newstate, message:addmessage, lengthmilli:lengthmilli, lengthseconds: lengthseconds,  params: [...params]} );
+		console.log(addmessage, params);
+		this.eventbus.dispatch('pyodidestatechange',this,{state:newstate, message:addmessage, lengthmilli:lengthmilli, lengthseconds: lengthseconds,  ...params } );
 	}
 	
 	async init() {
