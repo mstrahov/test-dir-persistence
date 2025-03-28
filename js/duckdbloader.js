@@ -1,8 +1,8 @@
 /*******************************
- * DuckDB modules loader
+ * DuckDB module loader
  * 
  * 
- * 
+ * *********************************
  */
 import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev76.0/+esm'; 
 import EventBus from "./eventbus.js";
@@ -64,6 +64,7 @@ export class DuckDBLoader {
 			} catch (e) {
 				console.error(e);
 				this._statechange('db_initialize_error', 'DB init failed!', e);
+				throw e;
 			}
 		} 
 		
@@ -87,6 +88,7 @@ export class DuckDBLoader {
 			} catch (e) {
 				console.error(e);
 				this._statechange('db_connection_open_error', 'DB connection failed!', e);
+				throw e;
 			}
 		}
 		
