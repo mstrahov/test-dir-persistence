@@ -37,7 +37,7 @@ export class AppStatusView {
 		if (this.spinnercounter===0) {
 			this.spinnerelement.style.display = 'none';
 		} else if (this.spinnercounter>0) { 
-			this.spinnerelement.style.display = 'inline';
+			this.spinnerelement.style.display = 'block';
 		} else {
 			this.resetSpinner();
 		}
