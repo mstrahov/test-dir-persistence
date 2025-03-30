@@ -3,6 +3,7 @@ import { FileSystemHandler } from "./fileshandlers.js";
 import { DuckDBLoader } from "./duckdbloader.js";
 import { PyodideLoader } from "./pyodideloader.js";
 import { AppStatusView } from "./appstatusview.js";
+import { TabNavigationControl } from "./tabnavigationcontrol.js";
 
 console.log("test main app");
 
@@ -14,5 +15,9 @@ const appstatusview = new AppStatusView({templateid: "#statusdisplaycontroltempl
 window.duckdb.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{ /* console.log("dbstatechange",obj,eventdata); */  appstatusview.duckdbStatusChange(eventdata); });
 window.pyodideloader.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ /* console.log("pyodidestatechange",obj,eventdata); */  appstatusview.pyodideStatusChange(eventdata); });
 
-window.duckdb.init();
-window.pyodideReadyPromise = window.pyodideloader.init();
+const tabnavcontrol = new TabNavigationControl({templateid: "#navtabscontroltemplate", containerid:"#tabnavcontrol"});
+
+
+
+//window.duckdb.init();
+//window.pyodideReadyPromise = window.pyodideloader.init();

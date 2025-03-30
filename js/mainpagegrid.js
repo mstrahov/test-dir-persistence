@@ -34,6 +34,8 @@ let opts = {
       float: true,
 }
 
+// public static init(options: GridStackOptions = {}, elOrString: GridStackElement = '.grid-stack'): GridStack {
+//   https://github.com/gridstack/gridstack.js/blob/master/src/gridstack.ts
 let grid = GridStack.init(opts);
 
 window.testgrid = grid;
