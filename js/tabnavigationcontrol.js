@@ -27,44 +27,57 @@ export class TabNavigationControl {
 		//const bsTab = new bootstrap.Tab('#myTab');
 	}
 	
-	addNewTab(params) {
+	addNewTab(TabControlClass, params) {   // pass tab's position?
+		params.tabcontentelement = this.tabcontentelement;
+		params.tabslistelement = this.tabslistelement;
+		params.InsertBeforeNavItemContainer = null;
+		// where to insert the tab?
+		if (this.tabs.length>0) {
+			params.InsertBeforeNavItemContainer = this.tabs[this.tabs.length-1].element; // ?? -- need to calc the position...
+		}
+		
+		let newtab = new TabControlClass(params);
+		// insert tabs in correct order
+		
+		this.tabs.splice(this.tabs.length-1,0,newtab); // insert before the last 
+		
+		newtab.init();
 		
 	}
 	
 }
 
 
-export class TabControl {
+export class BaseTabControl {
 
 	constructor (params) {
 		//  tab body
 		this.templateid = params.templateid;
-		this.containerid = params.containerid;
+		//this.containerid = params.containerid;
 		this.uuid = self.crypto.randomUUID();	
-		this.internalContainer = document.querySelector(this.containerid);
+		//this.internalContainer = document.querySelector(this.containerid);
+		this.internalContainer = params.tabcontentelement;
 		const clone = makeCloneFromTemplate(this.templateid, this.uuid);
 		this.internalContainer.appendChild(clone);
 		
 		//  nav item (tab headers)
 		this.navitemtemplateid = params.navitemtemplateid;
-		this.navitemcontainerid = params.containerid;
-		this.NavItemInternalContainer  = document.querySelector(this.navitemcontainerid);
+		//this.navitemcontainerid = params.navitemcontainerid;
+		//this.NavItemInternalContainer  = document.querySelector(this.navitemcontainerid);
+		this.NavItemInternalContainer = params.tabslistelement;
 		
-		this.InsertBeforeNavItemContainerid = params.InsertBeforeNavItemContainerid;
-		this.InsertBeforeNavItemInternalContainer = null; 
-		if (this.InsertBeforeNavItemContainerid) {
-			this.InsertBeforeNavItemInternalContainer = document.querySelector(this.InsertBeforeNavItemContainerid);
-		}
+		this.InsertBeforeNavItemInternalContainer = params.InsertBeforeNavItemContainer; 
 		
 		const navitemclone = makeCloneFromTemplate(this.navitemtemplateid, this.uuid);
-		this.naviteminternalContainer.insertBefore(navitemclone, this.InsertBeforeNavItemInternalContainer);
+		this.NavItemInternalContainer.insertBefore(navitemclone, this.InsertBeforeNavItemInternalContainer);
 		
-		this.tabnavelement = this.naviteminternalContainer.querySelector('#tabnavlink'+this.uuid);
+		this.tabnavelement = this.NavItemInternalContainer.querySelector('#tabnavlink'+this.uuid);
 		let originalval = this.tabnavelement.getAttribute('data-bs-target');
 		this.tabnavelement.setAttribute('data-bs-target', `${originalval}${uuid}`);
 		originalval = this.tabnavelement.getAttribute('aria-controls');
 		this.tabnavelement.setAttribute('aria-controls', `${originalval}${uuid}`);
 		
+		this.element = this.NavItemInternalContainer.querySelector('#navitem'+this.uuid);
 	}
 	
 	init() {
