@@ -40,3 +40,10 @@ button {
 	background: grey;
 	opacity:0.8 !important;
 }
+
+.card-header-tabs {
+	margin: 0 !important ;
+	padding-left: 0 !important ;
+	padding-right: 0 !important ;
+
+}

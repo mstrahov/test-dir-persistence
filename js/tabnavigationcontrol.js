@@ -39,9 +39,10 @@ export class TabNavigationControl {
 		let newtab = new TabControlClass(params);
 		// insert tabs in correct order
 		
-		this.tabs.splice(this.tabs.length-1,0,newtab); // insert before the last 
+		this.tabs.splice(this.tabs.length-1,0,newtab); // insert before the last or change?
 		
 		newtab.init();
+		newtab.show();
 		
 	}
 	
@@ -52,20 +53,16 @@ export class BaseTabControl {
 
 	constructor (params) {
 		//  tab body
-		this.templateid = params.templateid;
-		//this.containerid = params.containerid;
-		this.uuid = self.crypto.randomUUID();	
-		//this.internalContainer = document.querySelector(this.containerid);
+		this.templateid = params.templateid;	
 		this.internalContainer = params.tabcontentelement;
+		
+		this.uuid = self.crypto.randomUUID();
 		const clone = makeCloneFromTemplate(this.templateid, this.uuid);
 		this.internalContainer.appendChild(clone);
 		
 		//  nav item (tab headers)
 		this.navitemtemplateid = params.navitemtemplateid;
-		//this.navitemcontainerid = params.navitemcontainerid;
-		//this.NavItemInternalContainer  = document.querySelector(this.navitemcontainerid);
 		this.NavItemInternalContainer = params.tabslistelement;
-		
 		this.InsertBeforeNavItemInternalContainer = params.InsertBeforeNavItemContainer; 
 		
 		const navitemclone = makeCloneFromTemplate(this.navitemtemplateid, this.uuid);
@@ -73,36 +70,42 @@ export class BaseTabControl {
 		
 		this.tabnavelement = this.NavItemInternalContainer.querySelector('#tabnavlink'+this.uuid);
 		let originalval = this.tabnavelement.getAttribute('data-bs-target');
-		this.tabnavelement.setAttribute('data-bs-target', `${originalval}${uuid}`);
+		this.tabnavelement.setAttribute('data-bs-target', `${originalval}${this.uuid}`);
 		originalval = this.tabnavelement.getAttribute('aria-controls');
-		this.tabnavelement.setAttribute('aria-controls', `${originalval}${uuid}`);
+		this.tabnavelement.setAttribute('aria-controls', `${originalval}${this.uuid}`);
 		
+		this.TabNavTitleElement = this.NavItemInternalContainer.querySelector('#tabnavtitle'+this.uuid);
+		this.TabBodyElement = this.internalContainer.querySelector('#tabbody'+this.uuid);
 		this.element = this.NavItemInternalContainer.querySelector('#navitem'+this.uuid);
+		
+		// set tab title and body if present.
+		if (params.tabtitle) {
+			this.setTitle(params.tabtitle);
+		}
+		if (params.tabbody) {
+			this.setBody(params.tabbody);
+		}
+		
 	}
 	
 	init() {
-	/*
-		const triggerTabList = document.querySelectorAll('#myTab button')
-		triggerTabList.forEach(triggerEl => {
-		  const tabTrigger = new bootstrap.Tab(triggerEl)
-
-		  triggerEl.addEventListener('click', event => {
-			event.preventDefault()
-			tabTrigger.show()
-		  })
-		})
-		
-		
-		then:
-		bootstrap.Tab.getInstance(triggerEl).show()
-	*/	
 		const tabTrigger = new bootstrap.Tab(this.tabnavelement);
-
-		triggerEl.addEventListener('click', event => {
+		this.tabnavelement.addEventListener('click', event => {
 			event.preventDefault();
 			tabTrigger.show();
-		})
-		
+		});
+	}
+	
+	show() {
+		bootstrap.Tab.getInstance(this.tabnavelement).show();
+	}
+	
+	setTitle(innerhtml) {
+		this.TabNavTitleElement.innerHTML = innerhtml;
+	}
+	
+	setBody(innerhtml) {
+		this.TabBodyElement.innerHTML = innerhtml;
 	}
 	
 }
