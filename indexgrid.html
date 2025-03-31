@@ -155,7 +155,8 @@ This would not be possible without these awesome opensource projects:
     <ul id="navtabs" class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
 		
 	   <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Open...</a>
+        <a class="nav-link dropdown-toggle" data-bs-auto-close="outside" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Open...</a>
+<!--
         <div class="dropdown-menu">
           <a class="dropdown-item" href="#">SQL editor</a>
           <a class="dropdown-item" href="#">Local project</a>
@@ -163,6 +164,33 @@ This would not be possible without these awesome opensource projects:
           <a class="dropdown-item" href="#">Python script</a>
           <a class="dropdown-item" href="#">Settings</a>
         </div>
+-->
+		 <ul class="dropdown-menu">
+					<li><a class="dropdown-item" href="#">Widescreen</a></li>
+					<li class="dropdown dropend">
+						<a class="dropdown-item dropdown-toggle" href="#"
+						data-bs-auto-close="outside"
+						data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Submenu 001</a>
+						<ul class="dropdown-menu">
+							<li><a class="dropdown-item" href="#">Bonjour!</a></li>
+							<li class="dropdown dropend">
+								<a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-haspopup="true" 
+								
+								aria-expanded="false">Submenu 001 001</a>
+								<ul class="dropdown-menu" >
+									<li><a class="dropdown-item" href="#">Eat</a></li>
+									<li><a class="dropdown-item" href="#">More</a></li>
+									<li><a class="dropdown-item" href="#">Beans</a></li>
+									<li><a class="dropdown-item" href="#">On Toast</a></li>
+								</ul>
+							</li>
+							<li><a class="dropdown-item" href="#">Drink Coffee</a></li>
+							<li><a class="dropdown-item" href="#">Make Friends</a></li>
+						</ul>
+					</li>
+					<li><a class="dropdown-item" href="#">Don't forget to Exercise</a></li>
+				</ul>
+
       </li>
 		
 		
@@ -177,8 +205,8 @@ This would not be possible without these awesome opensource projects:
 
       
 
-       <li class="nav-item  ms-auto">
-        <a href="#tab-app" class="nav-link" data-bs-toggle="tab">
+       <li class="nav-item  ms-auto" style="display: flex;" >
+        <a href="#tab-app" class="nav-link" data-bs-toggle="tab" >
 			Settings&nbsp;
 			<svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
             stroke-linecap="round"
@@ -244,7 +272,84 @@ This would not be possible without these awesome opensource projects:
 			</span>
 			<span id="dbrunningspinner" class="spinner-border spinner-border-sm me-2"  style="display: none;" role="status">
 			</span>
-		</a>
+			</a>
+			<!--      ---------------------------------------  -->
+			
+	
+<!--
+			  <button class="btn btn-link dropdown-toggle dropdown-toggle-split" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" style="padding-left:4px !important; padding-right: 3px !important;" aria-expanded="false">
+				  <span class="visually-hidden">Toggle Dropdown</span>
+			  </button>
+-->          
+
+			<div class="dropdown">
+								<a class="btn btn-link dropdown-toggle" data-bs-auto-close='outside' href="#" 
+				role="button" data-bs-toggle="dropdown" aria-expanded="false"></a>
+								
+								 <ul class="dropdown-menu">
+					<li><a class="dropdown-item" href="#">Widescreen</a></li>
+					<li class="dropdown dropstart">
+						<a class="dropdown-item dropdown-toggle" href="#"
+						data-bs-auto-close='outside'
+						data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Submenu 001</a>
+						<ul class="dropdown-menu">
+							<li><a class="dropdown-item" href="#">Bonjour!</a></li>
+							<li class="dropdown dropstart">
+								<a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-haspopup="true" 
+								
+								aria-expanded="false">Submenu 001 001</a>
+								<ul class="dropdown-menu" >
+									<li><a class="dropdown-item" href="#">Eat</a></li>
+									<li><a class="dropdown-item" href="#">More</a></li>
+									<li><a class="dropdown-item" href="#">Beans</a></li>
+									<li><a class="dropdown-item" href="#">On Toast</a></li>
+								</ul>
+							</li>
+							<li><a class="dropdown-item" href="#">Drink Coffee</a></li>
+							<li><a class="dropdown-item" href="#">Make Friends</a></li>
+						</ul>
+					</li>
+					<li><a class="dropdown-item" href="#">Don't forget to Exercise</a></li>
+				</ul>
+			</div>	
+				
+
+			<!--      ---------------------------------------  -->
+<!--
+			<div class="dropdown">
+				<a class="btn dropdown-toggle" data-bs-auto-close='outside' href="#" 
+				role="button" data-bs-toggle="dropdown" aria-expanded="false"> Menu </a>
+				<ul class="dropdown-menu">
+					<li><a class="dropdown-item" href="#">Widescreen</a></li>
+					<li class="dropdown dropstart">
+						<a class="dropdown-item dropdown-toggle" href="#"
+						data-bs-auto-close='outside'
+						data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Submenu 001</a>
+						<ul class="dropdown-menu">
+							<li><a class="dropdown-item" href="#">Bonjour!</a></li>
+							<li class="dropdown dropstart">
+								<a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-haspopup="true" 
+								
+								aria-expanded="false">Submenu 001 001</a>
+								<ul class="dropdown-menu" >
+									<li><a class="dropdown-item" href="#">Eat</a></li>
+									<li><a class="dropdown-item" href="#">More</a></li>
+									<li><a class="dropdown-item" href="#">Beans</a></li>
+									<li><a class="dropdown-item" href="#">On Toast</a></li>
+								</ul>
+							</li>
+							<li><a class="dropdown-item" href="#">Drink Coffee</a></li>
+							<li><a class="dropdown-item" href="#">Make Friends</a></li>
+						</ul>
+					</li>
+					<li><a class="dropdown-item" href="#">Don't forget to Exercise</a></li>
+				</ul>
+			</div>
+-->
+			
+			
+			<!--  ----------------------------------------------      -->
+		
       </li>
       
     </ul>
