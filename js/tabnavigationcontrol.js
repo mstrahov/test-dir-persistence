@@ -2,6 +2,9 @@
  *   Bootstrap 5 tab pane navigation control
  *   requires bootstrap
  * 
+ * holds a list of active tabs in this.tabs
+ * addNewTab - creates a tab of a specified type (e.g. BaseTabControl)
+ * 
  * **************/
 
 import { makeCloneFromTemplate } from "./utilities.js";

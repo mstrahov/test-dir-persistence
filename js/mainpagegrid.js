@@ -4,6 +4,7 @@
  * 
  * **************/
 import { GridItem, GridItemTabulator, GridItemCodeEditor } from  "./griditem.js";
+import {MenuEventsControl} from "./menueventscontrol.js";
 
 
 const testsvg1 = `<div class="svg-container">
@@ -70,3 +71,8 @@ console.log(JSON.stringify(self.testgrid.save(false, true)));
 
 // change color of svg elements
 document.getElementById("pyloaded").querySelector("svg").style.stroke = "gray";
+
+// test menu event
+
+let testmenucontrol = new MenuEventsControl({dropDownMenuElementId:'#testwindowmenu1',parentUUID: ''});
+testmenucontrol.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{ console.log("menuitemclick",obj,eventdata); });
