@@ -113,8 +113,6 @@ export class BaseTabControl {
 			tabTrigger.show();
 		});
 		this.tabnavelement.addEventListener('shown.bs.tab', this.tabShown.bind(this));
-		
-		
 	}
 	
 	tabShown(event) {
@@ -146,5 +144,95 @@ export class BaseTabControl {
 	get BodyElementId() {
 		return this.TabBodyElement.getAttribute('id');
 	}
+	
+}
+
+
+
+export class DropDownTabControl {
+
+	constructor (params) {
+		//  tab body
+		//~ this.templateid = params.templateid;	
+		//~ this.internalContainer = params.tabcontentelement;
+		
+		this.uuid = self.crypto.randomUUID();
+		//~ const clone = makeCloneFromTemplate(this.templateid, this.uuid);
+		//~ this.internalContainer.appendChild(clone);
+		
+		//  nav item (tab headers)
+		this.navitemtemplateid = params.navitemtemplateid;
+		this.NavItemInternalContainer = params.tabslistelement;
+		this.InsertBeforeNavItemInternalContainer = params.InsertBeforeNavItemContainer; 
+		
+		const navitemclone = makeCloneFromTemplate(this.navitemtemplateid, this.uuid);
+		// If InsertBeforeNavItemInternalContainer is null, then new node is inserted at the end of NavItemInternalContainer
+		this.NavItemInternalContainer.insertBefore(navitemclone, this.InsertBeforeNavItemInternalContainer);
+		
+		this.tabnavelement = this.NavItemInternalContainer.querySelector('#tabnavlink'+this.uuid);
+		//~ let originalval = this.tabnavelement.getAttribute('data-bs-target');
+		//~ this.tabnavelement.setAttribute('data-bs-target', `${originalval}${this.uuid}`);
+		//~ originalval = this.tabnavelement.getAttribute('aria-controls');
+		//~ this.tabnavelement.setAttribute('aria-controls', `${originalval}${this.uuid}`);
+		
+		this.TabNavTitleElement = this.NavItemInternalContainer.querySelector('#tabnavtitle'+this.uuid);
+		//~ this.TabBodyElement = this.internalContainer.querySelector('#tabbody'+this.uuid);
+		this.element = this.NavItemInternalContainer.querySelector('#navitem'+this.uuid);
+		if (!this.element) {
+			console.error('id="navitem" is missing in template: ', this.navitemtemplateid);
+		}
+		
+		// set tab title and body if present.
+		if (params.tabtitle) {
+			this.setTitle(params.tabtitle);
+		}
+		//~ if (params.tabbody) {
+			//~ this.setBody(params.tabbody);
+		//~ }
+		
+	}
+	
+	init() {
+		//~ const tabTrigger = new bootstrap.Tab(this.tabnavelement);
+		//~ this.tabnavelement.addEventListener('click', event => {
+			//~ event.preventDefault();
+			//~ tabTrigger.show();
+		//~ });
+		//~ this.tabnavelement.addEventListener('shown.bs.tab', this.tabShown.bind(this));
+	}
+	
+	//~ tabShown(event) {
+		//~ // event.target // newly activated tab
+		  //~ // event.relatedTarget // previous active tab
+		//~ console.log("Shown tab: ", this.TabNavTitleElement.textContent);
+	//~ }
+	
+	show() {
+		//~ bootstrap.Tab.getInstance(this.tabnavelement).show();
+	}
+	
+	setTitle(innerhtml) {
+		this.TabNavTitleElement.innerHTML = innerhtml;
+	}
+	
+	//~ setBody(innerhtml) {
+		//~ this.TabBodyElement.innerHTML = innerhtml;
+	//~ }
+	
+	get TabNavTitleElementId() {
+		return this.TabNavTitleElement.getAttribute('id');
+	}
+	
+	get TabNavTitleElementSelector() {
+		return '#' + this.TabNavTitleElement.getAttribute('id');
+	}
+	
+	get DropDownMenuElementSelector() {
+		return '#' + this.element.querySelector('.dropdown-menu')?.getAttribute('id');
+	}
+	
+	//~ get BodyElementId() {
+		//~ return this.TabBodyElement.getAttribute('id');
+	//~ }
 	
 }

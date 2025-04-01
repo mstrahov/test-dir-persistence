@@ -3,7 +3,8 @@ import { FileSystemHandler } from "./fileshandlers.js";
 import { DuckDBLoader } from "./duckdbloader.js";
 import { PyodideLoader } from "./pyodideloader.js";
 import { AppStatusView } from "./appstatusview.js";
-import { TabNavigationControl, BaseTabControl } from "./tabnavigationcontrol.js";
+import { TabNavigationControl, BaseTabControl, DropDownTabControl } from "./tabnavigationcontrol.js";
+import { MenuEventsControl } from "./menueventscontrol.js";
 
 console.log("test main app");
 
@@ -12,9 +13,16 @@ console.log("test main app");
 const tabnavcontrol = new TabNavigationControl({templateid: "#navtabscontroltemplate", containerid:"#tabnavcontrol"});
 //window.testtabnav = tabnavcontrol; 
 
-let tabNavStatusTab = tabnavcontrol.addNewTab(BaseTabControl, {insertBeforePosition:0, templateid: "#emptyTabContentTemplate", navitemtemplateid: "#statusTabNavItemTemplate", tabbody: "App status" },);
-tabnavcontrol.addNewTab(BaseTabControl, {insertBeforePosition:0, templateid: "#emptyTabContentTemplate", navitemtemplateid: "#emptyTabNavItemTemplate", tabtitle: "tab title 1" , tabbody: "tab 1 body here" },);
-tabnavcontrol.addNewTab(BaseTabControl, {insertBeforePosition:-1, templateid: "#emptyTabContentTemplate", navitemtemplateid: "#emptyTabNavItemTemplate", tabtitle: "tab title 2" , tabbody: "tab 2 body here" },);
+let tabNavStatusTab = tabnavcontrol.addNewTab(BaseTabControl, {insertBeforePosition:0, templateid: "#emptyTabContentTemplate", navitemtemplateid: "#statusTabNavItemTemplate", tabbody: "App status" });
+let tabNavMainMenuTab = tabnavcontrol.addNewTab(DropDownTabControl, {insertBeforePosition:0,  navitemtemplateid: "#mainmenuTabNavItemTemplate", });
+
+let mainMenuControl = new MenuEventsControl({dropDownMenuElementId:tabNavMainMenuTab.DropDownMenuElementSelector, parentUUID: tabNavMainMenuTab.uuid, multiLevelMenu:false});
+mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{ 
+		console.log("mainmenuitemclick",obj,eventdata); 
+	});
+
+//~ tabnavcontrol.addNewTab(BaseTabControl, {insertBeforePosition:-1, templateid: "#emptyTabContentTemplate", navitemtemplateid: "#emptyTabNavItemTemplate", tabtitle: "tab title 1" , tabbody: "tab 1 body here" });
+//~ tabnavcontrol.addNewTab(BaseTabControl, {insertBeforePosition:-1, templateid: "#emptyTabContentTemplate", navitemtemplateid: "#emptyTabNavItemTemplate", tabtitle: "tab title 2" , tabbody: "tab 2 body here" });
 
 const appstatusview = new AppStatusView({templateid: "#statusdisplaycontroltemplate", containerid: tabNavStatusTab.TabNavTitleElementSelector });
 // =====  duckdb & pyodide
