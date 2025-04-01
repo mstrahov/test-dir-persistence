@@ -106,7 +106,7 @@ export class TransformStepsControl {
 				{title:"Run status", field:"lastRunStatus", formatter:"tickCross", formatterParams:{ allowEmpty:true, allowTruthy:true, }, editor:false, headerSort:false, },
 				{title:"Name", field:"srcDfActionName", editor:true, headerSort:false,},
 				{title:"Type", field:"targetEnv", editor:true,headerSort:false,},
-				{title:"Code", field:"scriptCode", editor:true,headerSort:false,formatter:"textarea",},
+				{title:"Code", field:"scriptCode", editor:true, headerSort:false, formatter:"textarea",},
 				{title:"Exec time", field:"executionTime", editor:false,headerSort:false,},
 				
 

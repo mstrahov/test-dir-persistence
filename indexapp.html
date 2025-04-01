@@ -60,11 +60,15 @@ This would not be possible without these awesome opensource projects:
 <body data-bs-theme="dark">
 <noscript>You need to enable JavaScript to run this app.</noscript>
 <!-- =====  temp ========= ==================================== -->
+<!--
 Main app
 
 <div id="statusdisplaycontrol" style="display: flex;">
 </div>
+-->
 <!-- =====  /temp ========= ==================================== -->
+
+<!-- =====  app layout ========= ==================================== -->
 <div id="tabnavcontrol">
 </div>
 
@@ -102,12 +106,12 @@ Main app
   </div>
 </div>
 </template>
-<!-- =====  ========= ==================================== -->
+<!-- =====  ========= emptyTabContentTemplate ==================================== -->
 <template id="emptyTabContentTemplate">
 	<div class="tab-pane" id="tabbody">
 	</div>    
 </template>
-<!-- =====  ========= ==================================== -->
+<!-- =====  ========= emptyTabNavItemTemplate ==================================== -->
 <template id="emptyTabNavItemTemplate">
   <li class="nav-item" id="navitem" role="presentation">
     <button class="nav-link" id="tabnavlink" data-bs-toggle="tab" data-bs-target="#tabbody" type="button" role="tab" aria-controls="tabbody" aria-selected="false">
@@ -115,22 +119,17 @@ Main app
 	</button>
   </li>
 </template>
-<!-- =====  ========= ==================================== -->
-<template id="emptydropdownmenu">
-<div class="dropdown">
-  <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-    Dropdown
-  </button>
-  <ul class="dropdown-menu">
-    <li><button class="dropdown-item" type="button">Action</button></li>
-    <li><button class="dropdown-item" type="button">Another action</button></li>
-    <li><button class="dropdown-item" type="button">Something else here</button></li>
-  </ul>
-</div>
-
+<!-- =====  ========= statusTabNavItemTemplate ==================================== -->
+<template id="statusTabNavItemTemplate">
+	<li class="nav-item ms-auto" id="navitem" role="presentation" style="display: flex;">
+	 <button class="nav-link" id="tabnavlink" data-bs-toggle="tab" data-bs-target="#tabbody" type="button" role="tab" aria-controls="tabbody" aria-selected="false">
+		<span id="tabnavtitle" style="display: flex;" ></span>
+	</button>
+	</li>
 </template>
 
-
+<!-- =====  ========= emptyTabNavItemTemplate==================================== -->
+<!-- =====  ========= ==================================== -->
 
 </body>
 </html>

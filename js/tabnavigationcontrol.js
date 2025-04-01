@@ -6,8 +6,8 @@
  * addNewTab - creates a tab of a specified type (e.g. BaseTabControl)
  * 
  * **************/
-
 import { makeCloneFromTemplate } from "./utilities.js";
+import EventBus from "./eventbus.js";
 
 export class TabNavigationControl {
 	#templateid;
@@ -33,20 +33,31 @@ export class TabNavigationControl {
 	addNewTab(TabControlClass, params) {   // pass tab's position?
 		params.tabcontentelement = this.tabcontentelement;
 		params.tabslistelement = this.tabslistelement;
-		params.InsertBeforeNavItemContainer = null;
-		// where to insert the tab?
-		if (this.tabs.length>0) {
-			params.InsertBeforeNavItemContainer = this.tabs[this.tabs.length-1].element; // ?? -- need to calc the position...
+		let newtabpos = params.insertBeforePosition?params.insertBeforePosition:0; 
+		if (newtabpos<0) {
+			newtabpos = this.tabs.length + newtabpos; 
+			if (newtabpos<0) {
+				newtabpos = 0; 
+			}
+		}
+		
+		if (newtabpos>this.tabs.length) {
+			newtabpos = this.tabs.length; 
+		}
+		
+		params.InsertBeforeNavItemContainer = null;   // insert at the end of the list by default
+		// where to insert the tab
+		if (this.tabs.length>0 && newtabpos<this.tabs.length && newtabpos>=0) {
+			params.InsertBeforeNavItemContainer = this.tabs[newtabpos].element;
 		}
 		
 		let newtab = new TabControlClass(params);
-		// insert tabs in correct order
-		
-		this.tabs.splice(this.tabs.length-1,0,newtab); // insert before the last or change?
+		this.tabs.splice(newtabpos,0,newtab);
 		
 		newtab.init();
 		newtab.show();
 		
+		return newtab;
 	}
 	
 }
@@ -69,6 +80,7 @@ export class BaseTabControl {
 		this.InsertBeforeNavItemInternalContainer = params.InsertBeforeNavItemContainer; 
 		
 		const navitemclone = makeCloneFromTemplate(this.navitemtemplateid, this.uuid);
+		// If InsertBeforeNavItemInternalContainer is null, then new node is inserted at the end of NavItemInternalContainer
 		this.NavItemInternalContainer.insertBefore(navitemclone, this.InsertBeforeNavItemInternalContainer);
 		
 		this.tabnavelement = this.NavItemInternalContainer.querySelector('#tabnavlink'+this.uuid);
@@ -80,6 +92,9 @@ export class BaseTabControl {
 		this.TabNavTitleElement = this.NavItemInternalContainer.querySelector('#tabnavtitle'+this.uuid);
 		this.TabBodyElement = this.internalContainer.querySelector('#tabbody'+this.uuid);
 		this.element = this.NavItemInternalContainer.querySelector('#navitem'+this.uuid);
+		if (!this.element) {
+			console.error('id="navitem" is missing in template: ', this.navitemtemplateid);
+		}
 		
 		// set tab title and body if present.
 		if (params.tabtitle) {
@@ -97,6 +112,15 @@ export class BaseTabControl {
 			event.preventDefault();
 			tabTrigger.show();
 		});
+		this.tabnavelement.addEventListener('shown.bs.tab', this.tabShown.bind(this));
+		
+		
+	}
+	
+	tabShown(event) {
+		// event.target // newly activated tab
+		  // event.relatedTarget // previous active tab
+		console.log("Shown tab: ", this.TabNavTitleElement.textContent);
 	}
 	
 	show() {
@@ -109,6 +133,18 @@ export class BaseTabControl {
 	
 	setBody(innerhtml) {
 		this.TabBodyElement.innerHTML = innerhtml;
+	}
+	
+	get TabNavTitleElementId() {
+		return this.TabNavTitleElement.getAttribute('id');
+	}
+	
+	get TabNavTitleElementSelector() {
+		return '#' + this.TabNavTitleElement.getAttribute('id');
+	}
+	
+	get BodyElementId() {
+		return this.TabBodyElement.getAttribute('id');
 	}
 	
 }

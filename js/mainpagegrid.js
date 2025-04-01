@@ -74,5 +74,7 @@ document.getElementById("pyloaded").querySelector("svg").style.stroke = "gray";
 
 // test menu event
 
-let testmenucontrol = new MenuEventsControl({dropDownMenuElementId:'#testwindowmenu1',parentUUID: ''});
-testmenucontrol.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{ console.log("menuitemclick",obj,eventdata); });
+let testmenucontrol = new MenuEventsControl({dropDownMenuElementId:'#testwindowmenu1',parentUUID: '',multiLevelMenu:true});
+testmenucontrol.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{ 
+		console.log("menuitemclick",obj,eventdata); 
+	});
