@@ -46,6 +46,10 @@ export class GridItem {
 		return this.#bodyelement;
 	}
 	
+	get bodyElementSelector() {
+		return '#' + this.#bodyelement.getAttribute('id');
+	}
+	
 	setInnerHtml(text) {
 		this.#bodyelement.innerHTML = text;
 	}
