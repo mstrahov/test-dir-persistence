@@ -1,0 +1,86 @@
+
+/*  Tabulator  */
+.tabulator .tabulator-header .tabulator-col .tabulator-col-content .tabulator-col-title{
+    white-space: normal;
+    text-overflow: clip;
+}
+
+.monitorCellcolorRedOnBeige{
+	background-color:  rgba(251,229,214,0.5);
+	color: red;
+}
+
+
+/*  Gridstack    */
+.grid-stack { background: #101056; }
+.grid-stack-item-content { background-color: #30307E; }
+.grid-elem-header {
+  min-height: 25px;
+}
+.grid-elem-header:hover {
+  background-color: rgba(0,0,0,0.1);
+}
+.grid-elem-draggable {
+	cursor: move;
+}
+.grid-elem-body {
+	height: calc(100% - 25px);
+}
+
+
+/* ----------- Codemirror */
+.CodeMirror {
+  height: 100%;
+  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace !important;
+  font-size: 12px;
+}
+
+
+
+
+/*  tabs and svg menus  */ 
+.small-svg-button:hover {
+	background-color: rgba(0,0,0,0.2);
+	
+}
+.small-svg-button {
+	
+	
+}
+
+
+.svg-container {
+  width: 100%;
+  height: 100%;
+}
+
+.svg-container svg {
+  width: 100%;
+  height: 100%;
+}
+ 
+
+/*  ------modals  ---------  */
+.modal {
+	
+}
+.modal-backdrop {
+	background: grey;
+	opacity:0.8 !important;
+}
+
+.card-header-tabs {
+	margin: 0 !important ;
+	padding-left: 0 !important ;
+	padding-right: 0 !important ;
+
+}
+
+/* ------ text areas -------------- */
+textarea {
+      font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace !important;
+      white-space: pre;
+      overflow-x: auto;
+      height: auto;
+	  /* resize: vertical; */
+}
