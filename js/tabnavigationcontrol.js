@@ -108,8 +108,10 @@ export class BaseTabControl {
 	
 	init() {
 		const tabTrigger = new bootstrap.Tab(this.tabnavelement);
+		const that=this;
 		this.tabnavelement.addEventListener('click', event => {
 			event.preventDefault();
+			console.log("Click on tab: ", that.TabNavTitleElement.textContent);
 			tabTrigger.show();
 		});
 		this.tabnavelement.addEventListener('shown.bs.tab', this.tabShown.bind(this));

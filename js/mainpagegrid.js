@@ -78,3 +78,20 @@ let testmenucontrol = new MenuEventsControl({dropDownMenuElementId:'#testwindowm
 testmenucontrol.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{ 
 		console.log("menuitemclick",obj,eventdata); 
 	});
+
+let testloadscriptheader = document.querySelector('#testloadxlsscript');
+testloadscriptheader.addEventListener("contextmenu", (event)=>{
+		console.log("load script contextmenu");
+		
+		event.preventDefault();
+		let t0 = document.querySelector('#loadxlsscriptdropdown');
+		
+		bootstrap.Dropdown.getOrCreateInstance(t0)?.toggle();
+		//~ if (!window.testt1) {
+			//~ window.testt1 = bootstrap.Dropdown.getOrCreateInstance(t0);
+		//~ }
+		//~ window.testt1.show();
+		
+		
+		
+	});

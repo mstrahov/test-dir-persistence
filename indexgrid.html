@@ -197,7 +197,7 @@ This would not be possible without these awesome opensource projects:
 		
 		
       <li class="nav-item">
-        <a href="#tab-gridmain" class="nav-link active" data-bs-toggle="tab">
+        <a href="#tab-gridmain" id="testloadxlsscript" class="nav-link active" data-bs-toggle="tab">
 			
 			<span class="me-1" style="margin-top:-1px;display: display;" >
 								<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-journal-code" viewBox="0 0 16 16">
@@ -217,25 +217,26 @@ This would not be possible without these awesome opensource projects:
 		</a>
       </li>
       <!--   -->
-        <li class="nav-item dropdown dropdown-center">
-        <a class="nav-link ps-0 pe-0" data-bs-auto-close=true data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="width:18px;">
+      <li class="nav-item dropdown dropdown-center"  style="display:block;">
+        <a class="nav-link dropdown-toggle ps-0 pe-0" id="loadxlsscriptdropdown" data-bs-auto-close=true data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="width:18px;">
 			
 			<!--
 			<svg  xmlns="http://www.w3.org/2000/svg"  width="14"  height="24"  viewBox="0 0 14 24"  fill="none"  stroke="currentColor"  stroke-width="1.75"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-narrow-down-dashed"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 5v.5m0 3v1.5m0 3v6" /><path d="M16 15l-4 4" /><path d="M8 15l4 4" /></svg>
 			-->
-			
+			<!--
 			<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="1.75"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-corner-right-down-double"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 4h6a3 3 0 0 1 3 3v7" /><path d="M10 10l4 4l4 -4m-8 5l4 4l4 -4" /></svg>
-			
+			-->
 			     
         </a>
 
-        <div class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start">
-          <a class="dropdown-item" href="#" id="contexdrop1">SQL editor</a>
-          <a class="dropdown-item" href="#">Local project</a>
-          <a class="dropdown-item" href="#">File browser</a>
-          <a class="dropdown-item" href="#">Python script</a>
-          <a class="dropdown-item" href="#">Settings</a>
-        </div>
+        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start">
+		  <li><h6 class="dropdown-header">Load xls script</h6></li>
+          <li><a class="dropdown-item" href="#" id="contexdrop1">SQL editor</a></li>
+          <li><a class="dropdown-item" href="#">Local project</a></li>
+          <li><a class="dropdown-item" href="#">File browser</a></li>
+          <li><a class="dropdown-item" href="#">Python script</a></li>
+          <li><a class="dropdown-item" href="#">Settings</a></li>
+        </ul>
 
       </li>
       
