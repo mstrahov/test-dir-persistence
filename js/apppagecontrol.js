@@ -100,6 +100,12 @@ export class AppPageControl {
 	topDropDownEventHandler(obj,eventdata) {
 		console.log("main drop down menu item click",obj,eventdata); 
 		
+		if (eventdata?.menuItemId === 'compactview') {
+			this.grid.compact();
+		} else if (eventdata?.menuItemId === 'savelayout') {
+			console.log(this.layoutToJSON());
+		}
+		
 	}
 	
 	destroy() {
@@ -108,9 +114,10 @@ export class AppPageControl {
 		
 	}
 	
-	saveToJSON() {
-	
-		
+	layoutToJSON() {
+		// to save grid   grid.save(saveContent = false, saveGridOpt = true)
+		let res = JSON.stringify(this.grid.save(false, true));
+		return res;
 	}
 	
 }

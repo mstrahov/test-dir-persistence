@@ -38,8 +38,6 @@ const newAppPage = new AppPageControl( {
 			DropDownMenuTemplateID: "#menuAppTab01",
 		});
 
-
-
 // =====  duckdb & pyodide
 
 window.duckdb = new DuckDBLoader();
