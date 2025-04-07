@@ -52,7 +52,7 @@ grid.load(items);
 let item1 = new GridItem({templateid:"#gridelementtemplate", grid: grid, headertext: "item1",});
 item1.setInnerHtml(testsvg1);
 
-let item2 = new GridItem({templateid:"#gridelementtemplate", grid: grid, headertext: "chart 2",});
+let item2 = new GridItem({templateid:"#gridelementtemplate", grid: grid, headertext: "chart 2", griditemoptions: {w:2,h:2,} });
 item2.setInnerHtml(testsvg2);
 
 let item3 = new GridItem({templateid:"#gridelementtemplate", grid: grid, headertext: "chart 3",});

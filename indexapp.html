@@ -80,6 +80,8 @@ Main app
 <!-- =====  ========= ==================================== -->
 <!-- =====  templates ==================================== -->
 <!-- =====  ========= ==================================== -->
+
+<!-- =====  ========= statusdisplaycontroltemplate ==================================== -->
 <template id="statusdisplaycontroltemplate">
 	<!-- 
 	<span id="statusloading"  style="display: none;">
@@ -97,7 +99,7 @@ Main app
 	</span>
 	
 </template>
-<!-- =====  ========= ==================================== -->
+<!-- =====  ========= navtabscontroltemplate ==================================== -->
 <template id="navtabscontroltemplate">
 <div class="card" >
   <div class="card-header pt-0 pb-0 ps-1 pe-1">
@@ -148,7 +150,7 @@ Main app
 <template id="menuAppTab01">
 <li class="nav-item dropdown dropdown-center"  id="navitem"  style="display:block;">
 	<a class="nav-link dropdown-toggle ps-0 pe-0" id="tabnavlink"  data-bs-auto-close=true data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" style="width:18px;">
-	<span id="tabnavtitle"></span>
+		<span id="tabnavtitle"></span>
 	</a>
 	<ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start" id="mainmenu">
 	  <li><a class="dropdown-item" href="#" id="refreshbutton">Refresh</a></li>
@@ -158,6 +160,40 @@ Main app
 	</ul>
 </li>
 </template>
+<!-- =====  ========= gridItemPythonCodeEditor ==================================== -->
+<template id="gridItemPythonCodeEditor">
+	<div class="grid-stack-item" id="gridstackitem">
+		<div class="grid-stack-item-content">
+			<div class="grid-elem-header d-flex" id="grid-el-header">
+				<span class="griditemheadertext ms-1"></span>
+				<div class="ms-auto d-flex" id="controlelements">					
+					<span class="btn-ghost small-svg-button" id="runcodeaction" data-bs-toggle="tooltip" data-bs-placement="top" title="Click to run the code." style="display: display;">
+						<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" /></svg>
+					</span>
+					<div class="dropdown small-svg-button">
+						<div id="menuaction" style="display: display;" class="small-svg-button" data-bs-toggle="dropdown">
+							<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="1.75"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-menu-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 6l16 0" /><path d="M4 12l16 0" /><path d="M4 18l16 0" /></svg>
+						</div>
+						 <div class="dropdown-menu" id="mainmenu">
+							<a class="dropdown-item" href="#" id="cleareditorgriditem">Clear Editor</a>
+							<a class="dropdown-item" href="#" id="shortcutshelpgriditem">Shortcuts Help</a>
+							<a class="dropdown-item" href="#" id="closegriditem">Close</a>
+						  </div>
+					</div>
+					<span id="moveaction" class="small-svg-button grid-elem-draggable" style="margin-top:-1px;display: display;" data-bs-toggle="tooltip" data-bs-placement="top" title="Click and drag around to a new position.">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrows-move  " viewBox="0 0 16 16" stroke-width="1.75"  stroke-linecap="round"  stroke-linejoin="round">
+						  <path fill-rule="evenodd" d="M7.646.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 1.707V5.5a.5.5 0 0 1-1 0V1.707L6.354 2.854a.5.5 0 1 1-.708-.708zM8 10a.5.5 0 0 1 .5.5v3.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 14.293V10.5A.5.5 0 0 1 8 10M.146 8.354a.5.5 0 0 1 0-.708l2-2a.5.5 0 1 1 .708.708L1.707 7.5H5.5a.5.5 0 0 1 0 1H1.707l1.147 1.146a.5.5 0 0 1-.708.708zM10 8a.5.5 0 0 1 .5-.5h3.793l-1.147-1.146a.5.5 0 0 1 .708-.708l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L14.293 8.5H10.5A.5.5 0 0 1 10 8"/>
+						</svg>
+					</span>
+				</div>
+			</div>
+			<div class="grid-elem-body" id="grid-el-body">
+				<textarea class="code-editor"></textarea>
+			</div>
+		</div>
+	</div>
+</template>
+<!-- =====  ========= ==================================== -->
 <!-- =====  ========= ==================================== -->
 <!-- =====  ========= ==================================== -->
 </body>

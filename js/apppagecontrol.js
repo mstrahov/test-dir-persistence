@@ -93,7 +93,8 @@ export class AppPageControl {
 		
 	}
 	
-	addGridControl() {
+	addGridControl(griditemparams) {
+		// let item2 = new GridItem({templateid:"#gridelementtemplate", grid: grid, headertext: "chart 2", griditemoptions: {w:2,h:2,} });
 		
 	}
 	

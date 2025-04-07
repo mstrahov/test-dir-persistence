@@ -24,11 +24,11 @@ export class GridItem {
 		//--------------------
 		this.#grid.el.appendChild(clone);
 		this.#bodyelement= this.#grid.el.querySelector('#grid-el-body'+this.#uuid);
-		let opts = {
-			w: 3,
-			h: 3,
-			id : this.#uuid,
-		}
+		
+		let opts = { ...params.griditemoptions };
+		if (!opts.w) { opts.w = 6; };
+		if (!opts.h) { opts.h = 5; };
+		opts.id = this.#uuid;
 		
 		this.#grid.makeWidget('item'+this.#uuid,opts);
 		
@@ -55,6 +55,10 @@ export class GridItem {
 	}
 	
 }
+
+// -----------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------
+// -------test classes----------------------------------------------
 
 
 export class GridItemTabulator extends GridItem {
@@ -123,7 +127,7 @@ export class GridItemTabulator extends GridItem {
 	
 }
 
-
+// -----------------------------------------------------------------------------------------
 export class GridItemCodeEditor extends GridItem {
 	#codeEditorObj;
 	
