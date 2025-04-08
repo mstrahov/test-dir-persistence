@@ -15,7 +15,7 @@ export class GridItemWithMenu extends GridItem {
 		
 		this.dropdownMenuElementSelector = '#' + this.headerelement.querySelector('.dropdown-menu')?.getAttribute('id');
 		this.dropdownMenuControl = new MenuEventsControl({dropDownMenuElementId:this.dropdownMenuElementSelector, parentUUID: this.uuid, multiLevelMenu:false});
-		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.headerControlEventHandler.bind(this));
+		
 		
 		// clickable-item-action - top svg action items events:
 		
@@ -25,8 +25,13 @@ export class GridItemWithMenu extends GridItem {
 			//console.log("menuitem ",menuitem);
 			menuitem.addEventListener("click", this.onClickClickableActionEvent.bind(this));
 		},this);
-		this.eventbus.subscribe('clickableactionclick',this.headerControlEventHandler.bind(this));
 		
+		
+	}
+	
+	init() {
+		//~ this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.headerControlEventHandler.bind(this));
+		//~ this.eventbus.subscribe('clickableactionclick',this.headerControlEventHandler.bind(this));
 	}
 	
 	onClickClickableActionEvent(evt) {
@@ -43,7 +48,7 @@ export class GridItemWithMenu extends GridItem {
 	
 	
 	headerControlEventHandler(obj,eventdata) {
-		console.log("widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
+		console.log("GridItemWithMenu widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
 		
 		//~ if (eventdata?.menuItemId === 'compactview') {
 			//~ this.grid.compact();

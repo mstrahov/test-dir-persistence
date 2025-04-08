@@ -8,6 +8,8 @@ import { MenuEventsControl } from "./menueventscontrol.js";
 import { AppPageControl }  from "./apppagecontrol.js";
 import { GridItem } from  "./griditem.js";
 import { GridItemWithMenu } from  "./griditemwithmenu.js";
+import { GridItemPyEditor } from  "./griditempyeditor.js";
+
 
 
 console.log("test main app");
@@ -41,7 +43,7 @@ const newAppPage = new AppPageControl( {
 			DropDownMenuTemplateID: "#menuAppTab01",
 		});
 
-newAppPage.addGridItem(GridItemWithMenu, {templateid:"#gridItemPythonCodeEditor", headertext: "Py code editor", griditemoptions: {w:6,h:5,} });
+newAppPage.addGridItem(GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Py code editor", griditemoptions: {w:6,h:5,} });
 
 
 // =====  duckdb & pyodide

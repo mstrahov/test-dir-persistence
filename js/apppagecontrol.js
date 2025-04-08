@@ -103,7 +103,7 @@ export class AppPageControl {
 		params.grid = this.grid;
 		let newgriditem = new gridItemType(params);
 		this.gridItems.push(newgriditem);
-		newgriditem.init();   //??
+		//newgriditem.init();   //??
 		return newgriditem;
 	}
 	
