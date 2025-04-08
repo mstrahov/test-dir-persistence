@@ -13,9 +13,11 @@
 
 /*  Gridstack    */
 .grid-stack { background: #101056; }
+
 .grid-stack-item-content { background-color: #30307E; }
+
 .grid-elem-header {
-  min-height: 25px;
+  min-height: 20px;
 }
 .grid-elem-header:hover {
   background-color: rgba(0,0,0,0.1);

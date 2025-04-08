@@ -162,13 +162,16 @@ Main app
 </template>
 <!-- =====  ========= gridItemPythonCodeEditor ==================================== -->
 <template id="gridItemPythonCodeEditor">
-	<div class="grid-stack-item" id="gridstackitem">
+	<div class="grid-stack-item" id="item">
 		<div class="grid-stack-item-content">
 			<div class="grid-elem-header d-flex" id="grid-el-header">
 				<span class="griditemheadertext ms-1"></span>
 				<div class="ms-auto d-flex" id="controlelements">					
-					<span class="btn-ghost small-svg-button" id="runcodeaction" data-bs-toggle="tooltip" data-bs-placement="top" title="Click to run the code." style="display: display;">
+					<span id="runcodeaction" class="btn-ghost small-svg-button clickable-item-action"  data-bs-toggle="tooltip" data-bs-placement="top" title="Click to run the code." style="display: display;">
 						<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="currentColor"  class="icon icon-tabler icons-tabler-filled icon-tabler-player-play"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 4v16a1 1 0 0 0 1.524 .852l13 -8a1 1 0 0 0 0 -1.704l-13 -8a1 1 0 0 0 -1.524 .852z" /></svg>
+					</span>
+					<span id="arrowupaction"  class="small-svg-button clickable-item-action" data-bs-toggle="tooltip" data-bs-placement="top" title="Previous command."  style="display: display;">
+						<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="1.75"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-corner-up-left-double"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 18v-6a3 3 0 0 0 -3 -3h-7" /><path d="M13 13l-4 -4l4 -4m-5 8l-4 -4l4 -4" /></svg>
 					</span>
 					<div class="dropdown small-svg-button">
 						<div id="menuaction" style="display: display;" class="small-svg-button" data-bs-toggle="dropdown">
@@ -188,7 +191,7 @@ Main app
 				</div>
 			</div>
 			<div class="grid-elem-body" id="grid-el-body">
-				<textarea class="code-editor"></textarea>
+				<textarea class="code-editor" style="height: 100%;width:100%;"></textarea>
 			</div>
 		</div>
 	</div>

@@ -6,6 +6,9 @@ import { AppStatusView } from "./appstatusview.js";
 import { TabNavigationControl, BaseTabControl, DropDownTabControl } from "./tabnavigationcontrol.js";
 import { MenuEventsControl } from "./menueventscontrol.js";
 import { AppPageControl }  from "./apppagecontrol.js";
+import { GridItem } from  "./griditem.js";
+import { GridItemWithMenu } from  "./griditemwithmenu.js";
+
 
 console.log("test main app");
 
@@ -37,6 +40,9 @@ const newAppPage = new AppPageControl( {
 			tabtitle: "New App Page 1" , 
 			DropDownMenuTemplateID: "#menuAppTab01",
 		});
+
+newAppPage.addGridItem(GridItemWithMenu, {templateid:"#gridItemPythonCodeEditor", headertext: "Py code editor", griditemoptions: {w:6,h:5,} });
+
 
 // =====  duckdb & pyodide
 

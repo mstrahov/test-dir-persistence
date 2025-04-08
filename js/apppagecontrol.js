@@ -11,6 +11,7 @@ import EventBus from "./eventbus.js";
 import { TabNavigationControl, BaseTabControl, DropDownTabControl } from "./tabnavigationcontrol.js";
 import { MenuEventsControl } from "./menueventscontrol.js";
 
+
 export class AppPageControl {
 	constructor (params) {
 		this.uuid = self.crypto.randomUUID();
@@ -78,14 +79,14 @@ export class AppPageControl {
 		}
 		
 		this.grid = GridStack.init(opts,'#gridcontainer'+this.contenttab.uuid);
-		var items = [
-			{w: 6, h:5, content: 'Test widget number one'}, 
-			{w: 6, h:5, content: 'another longer widget!'} 
-		];
-		this.grid.load(items);
+		//~ var items = [
+			//~ {w: 6, h:5, content: 'Test widget number one'}, 
+			//~ {w: 6, h:5, content: 'another longer widget!'} 
+		//~ ];
+		//~ this.grid.load(items);
 		
-		// list of grid controls on a page
-		this.gridControls = [];
+		// list of grid items on a page
+		this.gridItems = [];
 		
 	}
 	
@@ -93,9 +94,17 @@ export class AppPageControl {
 		
 	}
 	
-	addGridControl(griditemparams) {
+	addGridItem(gridItemType, gridItemParams) {
 		// let item2 = new GridItem({templateid:"#gridelementtemplate", grid: grid, headertext: "chart 2", griditemoptions: {w:2,h:2,} });
-		
+		let params = {...gridItemParams};
+		if (gridItemParams.griditemoptions) {
+			params.griditemoptions = {...gridItemParams.griditemoptions};
+		}
+		params.grid = this.grid;
+		let newgriditem = new gridItemType(params);
+		this.gridItems.push(newgriditem);
+		newgriditem.init();   //??
+		return newgriditem;
 	}
 	
 	topDropDownEventHandler(obj,eventdata) {

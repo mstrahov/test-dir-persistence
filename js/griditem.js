@@ -13,6 +13,7 @@ export class GridItem {
 	#grid;
 	#uuid;
 	#bodyelement;
+	#headerelement;
 	
 	constructor (params) {
 		this.#templateid = params.templateid;
@@ -24,13 +25,28 @@ export class GridItem {
 		//--------------------
 		this.#grid.el.appendChild(clone);
 		this.#bodyelement= this.#grid.el.querySelector('#grid-el-body'+this.#uuid);
+		this.#headerelement= this.#grid.el.querySelector('#grid-el-header'+this.#uuid);
+		if (!this.#bodyelement) {
+			console.error('grid cannot make widget, id="grid-el-body" is missing in template: ', this.#templateid);
+		}
+		if (!this.#headerelement) {
+			console.error('grid cannot make widget, id="grid-el-header" is missing in template: ', this.#templateid);
+		}
 		
 		let opts = { ...params.griditemoptions };
 		if (!opts.w) { opts.w = 6; };
 		if (!opts.h) { opts.h = 5; };
 		opts.id = this.#uuid;
 		
+		if (!this.#grid.el.querySelector('#item'+this.#uuid)) {
+			console.error('grid cannot make widget, id="item" is missing in template: ', this.#templateid);
+		}
+		
 		this.#grid.makeWidget('item'+this.#uuid,opts);
+		
+	}
+	
+	init() {
 		
 	}
 	
@@ -46,8 +62,24 @@ export class GridItem {
 		return this.#bodyelement;
 	}
 	
+	get headerelement() {
+		return this.#headerelement;
+	}
+	
+	get headerText() {
+		return this.#headerelement.querySelector('.griditemheadertext').textContent;
+	}
+	
+	set headerText(newval) {
+		this.#headerelement.querySelector('.griditemheadertext').textContent = newval;
+	}
+	
 	get bodyElementSelector() {
 		return '#' + this.#bodyelement.getAttribute('id');
+	}
+	
+	get headerElementSelector() {
+		return '#' + this.#headerelement.getAttribute('id');
 	}
 	
 	setInnerHtml(text) {

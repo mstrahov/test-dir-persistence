@@ -30,7 +30,8 @@ export class TabNavigationControl {
 		//const bsTab = new bootstrap.Tab('#myTab');
 	}
 	
-	addNewTab(TabControlClass, params) {   // pass tab's position?
+	addNewTab(TabControlClass, tabcontrolparams) {   // pass tab's position?
+		let params = {...tabcontrolparams};
 		params.tabcontentelement = this.tabcontentelement;
 		params.tabslistelement = this.tabslistelement;
 		let newtabpos = params.insertBeforePosition?params.insertBeforePosition:0; 
