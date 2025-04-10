@@ -1180,6 +1180,10 @@ with open('/app/mount_dir/onlineretail2.xlsx', "rb") as f:
 #file_hash.digest()
 file_hash.hexdigest() 
 
+--------------------------
+crypto
+await micropip.install('cryptography')   #https://cryptography.io/en/latest/fernet/
+
 ------------------------------------
 #filestats
 import pathlib
@@ -1194,5 +1198,8 @@ fname.stat().st_size
 let g1 = pyodide.globals.toJs()
 g1.keys()
 g1.get("df").type			
+
+
+
 
 			*/

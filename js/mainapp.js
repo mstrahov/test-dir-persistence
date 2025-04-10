@@ -9,6 +9,7 @@ import { AppPageControl }  from "./apppagecontrol.js";
 import { GridItem } from  "./griditem.js";
 import { GridItemWithMenu } from  "./griditemwithmenu.js";
 import { GridItemPyEditor } from  "./griditempyeditor.js";
+import  { CodeRunner } from "./coderunner.js";
 
 
 
@@ -54,6 +55,9 @@ window.pyodideloader = new PyodideLoader();
 window.duckdb.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{ /* console.log("dbstatechange",obj,eventdata); */  appstatusview.duckdbStatusChange(eventdata); });
 window.pyodideloader.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ /* console.log("pyodidestatechange",obj,eventdata); */  appstatusview.pyodideStatusChange(eventdata); });
 
+window.coderunner = new CodeRunner({duckdbloader: window.duckdb, pyodideloader: window.pyodideloader});
+window.coderunner.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{ /* console.log("dbstatechange",obj,eventdata); */  appstatusview.duckdbStatusChange(eventdata); });
+window.coderunner.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ /* console.log("pyodidestatechange",obj,eventdata); */  appstatusview.pyodideStatusChange(eventdata); });
 
 
 window.dbconnReadyPromise = window.duckdb.init();
