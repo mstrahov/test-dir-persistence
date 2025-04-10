@@ -1,6 +1,6 @@
 /*******************
  * Grid item to be created in grid stack
- * Python editorr
+ * Python editor
  * depends: bootstrap, codemirror
  *
  * 

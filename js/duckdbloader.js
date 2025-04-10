@@ -10,11 +10,17 @@ import { ExecTimer } from "./exectimer.js";
 
 
 export class DuckDBLoader {
-	
+	#defer;
+	#resolve;
+	#reject;
 	constructor(params) {
 		
 		this.eventbus = new EventBus(this);
 		this.state = 'not_loaded';
+		this.#defer = new Promise((res, rej) => {
+			this.#resolve = res;
+			this.#reject = rej;
+		});
 		this.duckdb = duckdb;
 		this.conn = undefined;
 		this.db = undefined;
@@ -64,7 +70,8 @@ export class DuckDBLoader {
 			} catch (e) {
 				console.error(e);
 				this._statechange('db_initialize_error', 'DB init failed!', e);
-				throw e;
+				//throw e;
+				this.#reject(e);
 			}
 		} 
 		
@@ -88,10 +95,19 @@ export class DuckDBLoader {
 			} catch (e) {
 				console.error(e);
 				this._statechange('db_connection_open_error', 'DB connection failed!', e);
-				throw e;
+				//throw e;
+				this.#reject(e);
 			}
 		}
 		
+		this.#resolve();
+		return this.conn;
+		
+	}
+	
+	async getdbconn() {
+		await this.#defer;
+		return this.conn;
 	}
 	
  }

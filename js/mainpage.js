@@ -37,7 +37,6 @@
 					console.log("additional_char: string ", add_string);
 				}
 				
-				
 				window.exectimer.timeit("running command...");
 				document.getElementById("pyrunningspinner").style.display = 'block';
 				let completedWithError = false;
@@ -54,22 +53,49 @@
 					window.pylasterror = err;
 					
 					const errarr = err?.message?.split("\n").filter(e=>e.length>0);
-					const pyerrmessageshort = errarr?.length>0 ? errarr[errarr.length-1] : "";
-					//  extract line number of the eval'ed script from the errarr[errarr.length-2]:    "File "<exec>", line 1, in <module>"
-					// TODO: extract line with  error from input script
+					//~ const pyerrmessageshort = errarr?.length>0 ? errarr[errarr.length-1] : "";
+					//~ //  extract line number of the eval'ed script from the errarr[errarr.length-2]:    "File "<exec>", line 1, in <module>"
+					//~ // TODO: extract line with  error from input script
+					//~ let pyerrorline = "";
+					//~ if (errarr?.length>1) {
+						//~ const re = /line (\d+)/gi;
+						//~ const matcharr = errarr[errarr.length-2].match(re);
+						//~ if (matcharr!==null && matcharr.length>0) {
+							//~ pyerrorline = matcharr[0].replace("line ","");
+						//~ }
+					//~ }
+					/*
+import pyodide_js
+await pyodide_js.loadPackage('micropip')
+import micropip
+await micropip.install('s3')
+					 * 
+					 * 
+					 */ 
+					//
+					let pyerrmessageshort = "";
 					let pyerrorline = "";
-					if (errarr?.length>1) {
-						const re = /line (\d+)/gi;
-						const matcharr = errarr[errarr.length-2].match(re);
+					let lastline = 0;
+					const re = /line (\d+)/gi;
+					for (let i=0;i<errarr?.length;i++) {
+						const matcharr = errarr[i].match(re);
 						if (matcharr!==null && matcharr.length>0) {
-							pyerrorline = matcharr[0].replace("line ","");
+							lastline = i;
+							if (errarr[i].includes('<exec>')) {
+								pyerrorline = matcharr[0].replace("line ","");
+							}
 						}
 					}
+					for (let i=lastline+1;i<errarr?.length;i++) {
+						pyerrmessageshort+=errarr[i]+'\n';
+					}
+					
+					
 					const pyerrtype = err?.type;  //  e.g. ZeroDivisionError
 					const pyerrmessage = err?.message?.toString() //  medium with stacktrace
 					const pyerrstack = err?.stack?.toString().length;   // longest output
 					
-					console.log("Short error: ", pyerrmessageshort, "line", pyerrorline);
+					console.log("Short error: ", "line", pyerrorline,"\n", pyerrmessageshort);
 					
 					completedWithError = true;
 				}

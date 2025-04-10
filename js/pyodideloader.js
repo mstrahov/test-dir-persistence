@@ -9,7 +9,9 @@ import EventBus from "./eventbus.js";
 import { ExecTimer } from "./exectimer.js"; 
 
 export class PyodideLoader {
-	
+	#defer;
+	#resolve;
+	#reject;
 	constructor(params) {
 		
 		this.eventbus = new EventBus(this);
@@ -17,6 +19,10 @@ export class PyodideLoader {
 		this.exectimer = new ExecTimer('Pyodide Loader Started...');
 		this.pyodide = undefined;
 		this.corepackeagesloaded = false;
+		this.#defer = new Promise((res, rej) => {
+			this.#resolve = res;
+			this.#reject = rej;
+		});
 	}
 	
 	_statechange(newstate, addmessage='', params) {
@@ -43,11 +49,13 @@ export class PyodideLoader {
 							pythonversion: pyversion,
 						}
 					);
-				this.loadcorepackages();				
+				this.loadcorepackages();
+				this.#resolve();			
 			} catch (e) {
 				console.error(e);
 				this._statechange('pyodide_load_error', 'Pyodide loading failed!', e);
-				throw e;
+				this.#reject(e);
+				//throw e;
 			}
 		}
 		return this.pyodide;
@@ -74,6 +82,12 @@ await micropip.install('sqlite3')
 		}
 		return true;
 	}
+	
+	async pyodideReadyPromise() {
+		await this.#defer;
+		return this.pyodide;
+	}
+	
 }
 
 

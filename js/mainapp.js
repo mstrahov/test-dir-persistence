@@ -56,5 +56,5 @@ window.pyodideloader.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ 
 
 
 
-//~ window.duckdb.init();
-//~ window.pyodideReadyPromise = window.pyodideloader.init();
+window.dbconnReadyPromise = window.duckdb.init();
+window.pyodideReadyPromise = window.pyodideloader.init();
