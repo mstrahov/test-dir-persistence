@@ -98,6 +98,10 @@ export class DuckDBLoader {
 				//throw e;
 				this.#reject(e);
 			}
+			// TODO:  actually try to write to db file to test opfs restrictions in private browsing mode (chrome).
+			//  if restricted - reconnect to in-memory db
+			//  try let res2 = await window.coderunner.runSQLAsync("CREATE OR REPLACE SCHEMA testwritemode01; CHECKPOINT;")
+			
 		}
 		
 		this.#resolve();
