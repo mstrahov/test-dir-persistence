@@ -30,18 +30,18 @@ export class CodeRunner {
 	// --------------------------------------------------------------------------
 	// --------------------------------------------------------------------------
 	
-	_pystatechange(newstate, addmessage='', params) {
+	_pystatechange(newstate, addmessage='', params={}) {
 		this.pystate = newstate;
 		console.log(addmessage, params);
-		this.eventbus.dispatch('pyodidestatechange',this,{state:newstate, message:addmessage, lengthmilli:params.lengthmilli||0, lengthseconds: params.lengthseconds||0,  ...params } );
+		this.eventbus.dispatch('pyodidestatechange',this,{state:newstate, message:addmessage, lengthmilli:params?.lengthmilli||0, lengthseconds: params?.lengthseconds||0,  ...params } );
 	}
 	
 	// --------------------------------------------------------------------------
 	
-	_dbstatechange(newstate, addmessage='', params) {
+	_dbstatechange(newstate, addmessage='', params={}) {
 		this.dbstate = newstate;
 		console.log(addmessage, params);
-		this.eventbus.dispatch('dbstatechange',this,{state:newstate, message:addmessage, lengthmilli:params.lengthmilli||0, lengthseconds: params.lengthseconds||0,  ...params } );
+		this.eventbus.dispatch('dbstatechange',this,{state:newstate, message:addmessage, lengthmilli:params?.lengthmilli||0, lengthseconds: params?.lengthseconds||0,  ...params } );
 	}
 	
 	// --------------------------------------------------------------------------
@@ -216,7 +216,11 @@ export class CodeRunner {
 			res.errormessage = err?.message?.toString();
 			const re = /LINE (\d+)/gi;
 			const matcharr = res.errormessage?.match(re);
-			res.errorline = matcharr[0]?.replace("LINE ","");
+			if (matcharr && matcharr.length>0) {
+						res.errorline = matcharr[0]?.replace("LINE ","");
+					} else {
+						res.errorline = '';
+					}
 			res.error = err;
 			res.errorshort = res.errormessage;
 		}
@@ -249,7 +253,7 @@ export class CodeRunner {
 	
 	// --------------------------------------------------------------------------
 	
-	async runAsyncBatch(cmdarr, appuuid="globals", namespace="globals") {
+	async runAsyncBatch(cmdarr, appuuid="globals", namespace="") {
 		// cmdarr - array of type [ {	targetEnv: "py", scriptCode: "", stepOrder: 0,}, ... ]
 		// then execute all returning last statement, show spinner for the whole run
 		// should return an array with results for each step in a batch, but not output for each step, output should be returned only from a last step 
@@ -317,7 +321,7 @@ export class CodeRunner {
 			
 		for (let i=0;i<cmdarr.length;i++) {
 			const stepstarttime = performance.now(); 
-			stepres = {
+			let stepres = {
 				stepindex: i,
 				targetEnv: cmdarr[i].targetEnv,
 				cmd: cmdarr[i].scriptCode,
@@ -382,7 +386,11 @@ export class CodeRunner {
 					res.errormessage = err?.message?.toString();
 					const re = /LINE (\d+)/gi;
 					const matcharr = res.errormessage?.match(re);
-					res.errorline = matcharr[0]?.replace("LINE ","");
+					if (matcharr && matcharr.length>0) {
+						res.errorline = matcharr[0]?.replace("LINE ","");
+					} else {
+						res.errorline = '';
+					}
 					res.error = err;
 					res.errorshort = res.errormessage;
 				}

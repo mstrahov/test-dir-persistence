@@ -80,7 +80,7 @@ export class DuckDBLoader {
 				this._statechange('db_connecting', 'DB opening...');
 				await this.db.open({
 						path: this.dbconnectionpath,
-						accessMode: duckdb.DuckDBAccessMode.READ_WRITE
+						accessMode: this.duckdb.DuckDBAccessMode.READ_WRITE
 				});
 				this.conn = await this.db.connect();
 				const duckdbversion = await this.db.getVersion();
