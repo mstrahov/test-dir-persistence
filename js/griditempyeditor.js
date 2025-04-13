@@ -96,6 +96,9 @@ Set the cursor position. You can either pass a single {line, ch} object, or the 
 	
 	getSelection() {
 		/*
+		 * doc.somethingSelected() → boolean
+Return true if any text is selected.
+* 
 		 * doc.getSelection(?lineSep: string) → string
 Get the currently selected code. Optionally pass a line separator to put between the lines in the output. When multiple selections are present, they are concatenated with instances of lineSep in between.
 *   */

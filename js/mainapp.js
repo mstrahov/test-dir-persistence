@@ -10,6 +10,7 @@ import { GridItem } from  "./griditem.js";
 import { GridItemWithMenu } from  "./griditemwithmenu.js";
 import { GridItemPyEditor } from  "./griditempyeditor.js";
 import  { CodeRunner } from "./coderunner.js";
+import { GridItemTextOutput } from "./griditemtextoutput.js";
 
 
 
@@ -44,7 +45,8 @@ const newAppPage = new AppPageControl( {
 			DropDownMenuTemplateID: "#menuAppTab01",
 		});
 
-newAppPage.addGridItem(GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Py code editor", griditemoptions: {w:6,h:5,} });
+const pyeditor = newAppPage.addGridItem(GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Py Code Editor", griditemoptions: {w:6,h:5,} });
+const textoutput = newAppPage.addGridItem(GridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Py Output", griditemoptions: {w:6,h:5,} });
 
 
 // =====  duckdb & pyodide
@@ -59,6 +61,6 @@ window.coderunner = new CodeRunner({duckdbloader: window.duckdb, pyodideloader: 
 window.coderunner.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{ /* console.log("dbstatechange",obj,eventdata); */  appstatusview.duckdbStatusChange(eventdata); });
 window.coderunner.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ /* console.log("pyodidestatechange",obj,eventdata); */  appstatusview.pyodideStatusChange(eventdata); });
 
-
+// =====  duckdb & pyodide init
 window.dbconnReadyPromise = window.duckdb.init();
 window.pyodideReadyPromise = window.pyodideloader.init();

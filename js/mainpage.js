@@ -25,6 +25,7 @@
 			// ------------------------------------------------------------------------   
 			function addToOutput(s,editorvalue="") {
 				output.value += ">>>" + editorvalue + "\n" + s + "\n";
+				output.scrollTop = output.scrollHeight;
 			}
 			// ------------------------------------------------------------------------
 			async function evaluatePython(additional_char) {

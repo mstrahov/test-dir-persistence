@@ -86,6 +86,10 @@ export class GridItem {
 		this.#bodyelement.innerHTML = text;
 	}
 	
+	getElementByTemplateID(templateid) {
+		return this.#grid.el.querySelector('#'+templateid+this.#uuid);
+	}
+	
 }
 
 // -----------------------------------------------------------------------------------------
