@@ -32,6 +32,9 @@ export class AppStatusView {
 		this.resetSpinner();
 	}
 	
+	get uuid() {
+		return this.#uuid;
+	}
 	
 	updateSpinner() {
 		if (this.spinnercounter===0) {
