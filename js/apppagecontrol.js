@@ -15,6 +15,7 @@ import { MenuEventsControl } from "./menueventscontrol.js";
 export class AppPageControl {
 	constructor (params) {
 		this.uuid = self.crypto.randomUUID();
+		this.appuuid = this.uuid;
 		this.eventbus = new EventBus();
 		
 		// tabnavcontrol 
@@ -87,6 +88,7 @@ export class AppPageControl {
 		
 		// list of grid items on a page
 		this.gridItems = [];
+		this.coderunner	= params.coderunner;
 		
 	}
 	
@@ -103,7 +105,7 @@ export class AppPageControl {
 		params.grid = this.grid;
 		let newgriditem = new gridItemType(params);
 		this.gridItems.push(newgriditem);
-		//newgriditem.init();   //??
+		newgriditem.init();  
 		return newgriditem;
 	}
 	
@@ -130,4 +132,8 @@ export class AppPageControl {
 		return res;
 	}
 	
+	async runAsync(targetEnv, cmd) {
+		let res = await this.coderunner.runAsync(targetEnv, cmd, this.appuuid); 
+		return res;
+	}
 }

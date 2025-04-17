@@ -35,7 +35,7 @@ export class DuckDBLoader {
 		this.state = newstate;
 		const lengthmilli = this.exectimer.timeit(`DuckDB Loader: ${newstate}`);
 		const lengthseconds = this.exectimer.millitosec(lengthmilli);
-		console.log(addmessage, params);
+		//console.log(addmessage, params);
 		this.eventbus.dispatch('dbstatechange',this,{state:newstate, message:addmessage, lengthmilli:lengthmilli, lengthseconds: lengthseconds,  ...params } );
 	}
 	
@@ -43,7 +43,7 @@ export class DuckDBLoader {
 		
 		if (!this.db) {
 			try {	
-				this._statechange('db_initializing', 'DB init...');
+				this._statechange('db_initializing', 'Duckdb loading ...');
 				const JSDELIVR_BUNDLES = await duckdb.getJsDelivrBundles();
 				const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
 				console.log(bundle.mainWorker);
@@ -58,7 +58,7 @@ export class DuckDBLoader {
 				URL.revokeObjectURL(worker_url);	
 				//  end cdn init
 				const duckdbversion = await this.db.getVersion();
-				this._statechange('db_initialize_success', 'DB init success!',
+				this._statechange('db_initialize_success', 'Duckdb loading success!',
 					{
 						fullversionstring: `Running DuckDB: ${duckdbversion} ${duckdb.PACKAGE_NAME} ${duckdb.PACKAGE_VERSION}`, 
 						duckdbversion: duckdbversion,
@@ -69,7 +69,7 @@ export class DuckDBLoader {
 				);
 			} catch (e) {
 				console.error(e);
-				this._statechange('db_initialize_error', 'DB init failed!', e);
+				this._statechange('db_initialize_error', 'Duckdb loading failed!', e);
 				//throw e;
 				this.#reject(e);
 			}

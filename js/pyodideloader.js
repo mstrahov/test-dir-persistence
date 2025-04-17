@@ -30,7 +30,7 @@ export class PyodideLoader {
 		this.state = newstate;
 		const lengthmilli = this.exectimer.timeit(`Pyodide Loader: ${newstate}`);
 		const lengthseconds = this.exectimer.millitosec(lengthmilli);
-		console.log(addmessage, params);
+		//console.log(addmessage, params);
 		this.eventbus.dispatch('pyodidestatechange',this,{state:newstate, message:addmessage, lengthmilli:lengthmilli, lengthseconds: lengthseconds,  ...params } );
 	}
 	

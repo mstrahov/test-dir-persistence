@@ -16,6 +16,7 @@ export default class EventBus {
 		this.eventobj = eventobj;
 		this.dispatch = debug ? this._debugDispatch.bind(this) : this._dispatch.bind(this);
 		this.debug = debug;
+		this.eventsources = [];
 	}
 
 	subscriptionChange(key, callback){
@@ -30,13 +31,15 @@ export default class EventBus {
 		}
 	}
 
-	subscribe(key, callback){
+	subscribe(key, callback, srcuuid=''){
 		if(!this.events[key]){
 			this.events[key] = [];
 		}
 
 		this.events[key].push(callback);
-
+		
+		this.eventsources.push({callback: callback, srcuuid: srcuuid, key: key });
+		
 		this._notifySubscriptionChange(key, true);
 	}
 
