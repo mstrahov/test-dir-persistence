@@ -16,7 +16,6 @@ export class GridItemWithMenu extends GridItem {
 		this.dropdownMenuElementSelector = '#' + this.headerelement.querySelector('.dropdown-menu')?.getAttribute('id');
 		this.dropdownMenuControl = new MenuEventsControl({dropDownMenuElementId:this.dropdownMenuElementSelector, parentUUID: this.uuid, multiLevelMenu:false});
 		
-		
 		// clickable-item-action - top svg action items events:
 		
 		this.eventbus = new EventBus(this);

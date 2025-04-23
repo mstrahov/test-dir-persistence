@@ -132,8 +132,27 @@ export class AppPageControl {
 		return res;
 	}
 	
+	
+	async runCmdFromGridItem(targetEnv, caller, cmdparams) {
+		// this,{cmd: this.getValue(), successcallback: this.clearEditor.bind(this), }
+		let res = null;
+		try {
+			res = await this.runAsync(targetEnv, cmdparams.cmd);
+			console.log("Command run res: ", res);
+			if (res?.runStatus) {
+				this.eventbus.dispatch('CmdExecutionSuccess', this, { targetEnv: targetEnv, cmd: cmdparams.cmd, result: res });
+				cmdparams.successcallback();
+			} else {
+				this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: targetEnv, cmd: cmdparams.cmd, result: res });
+			}
+		} catch (err) {
+			console.log("Command run err ",err);
+			this.eventbus.dispatch('CmdExecutionFailed', this, { targetEnv: targetEnv, cmd: cmdparams.cmd, result: null, error: err });
+		}
+		
+	}
+	
 	async runAsync(targetEnv, cmd) {
-		let res = await this.coderunner.runAsync(targetEnv, cmd, this.appuuid); 
-		return res;
+		return 	await this.coderunner.runAsync(targetEnv, cmd, this.appuuid); 
 	}
 }

@@ -12,22 +12,15 @@ import { GridItemPyEditor } from  "./griditempyeditor.js";
 import  { CodeRunner } from "./coderunner.js";
 import { GridItemTextOutput, StatusGridItemTextOutput } from "./griditemtextoutput.js";
 
-
-
-//console.log("test main app", bootstrap);
-
-
+//console.log("test main app");
 // =====  Interface layout
-
 const tabnavcontrol = new TabNavigationControl({templateid: "#navtabscontroltemplate", containerid:"#tabnavcontrol"});
-
-
 // ======  DuckDB & Pyodide
 window.duckdb = new DuckDBLoader();
 window.pyodideloader = new PyodideLoader();
 window.coderunner = new CodeRunner({duckdbloader: window.duckdb, pyodideloader: window.pyodideloader});
 
-//  --------- Status Tab (right-most)
+//  --------- Status Tab (right-most tab under spinner)
 const tabNavStatusTab = new AppPageControl( { 
 			tabnavcontrol: tabnavcontrol,  
 			baseTabControlType:BaseTabControl, 
@@ -50,9 +43,34 @@ mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{
 		console.log("mainmenuitemclick",obj,eventdata); 
 	});
 
-//tabnavcontrol.addNewTab(BaseTabControl, {insertBeforePosition:-1, templateid: "#emptyTabContentTemplate", navitemtemplateid: "#emptyTabNavItemTemplate", tabtitle: "tab title 1" , tabbody: "tab 1 body here" });
-
+//  === spinner visual init
 const appstatusview = new AppStatusView({templateid: "#statusdisplaycontroltemplate", containerid: tabNavStatusTab.contenttab.TabNavTitleElementSelector });
+
+// =====  duckdb & pyodide events
+
+window.duckdb.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{ /* console.log("dbstatechange",obj,eventdata); */  appstatusview.duckdbStatusChange(eventdata); }, appstatusview.uuid);
+window.pyodideloader.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ /* console.log("pyodidestatechange",obj,eventdata); */  appstatusview.pyodideStatusChange(eventdata); }, appstatusview.uuid);
+
+window.duckdb.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{  statusTabOutput.statusUpdate(eventdata); }, statusTabOutput.uuid);
+window.pyodideloader.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{  statusTabOutput.statusUpdate(eventdata); }, statusTabOutput.uuid);
+
+// ======  coderunner events
+window.coderunner.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{ /* console.log("dbstatechange",obj,eventdata); */  appstatusview.duckdbStatusChange(eventdata); }, appstatusview.uuid);
+window.coderunner.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ /* console.log("pyodidestatechange",obj,eventdata); */  appstatusview.pyodideStatusChange(eventdata); }, appstatusview.uuid);
+
+// =====  duckdb & pyodide init
+window.dbconnReadyPromise = window.duckdb.init();
+window.pyodideReadyPromise = window.pyodideloader.init();
+
+// =====  py editor/ output events in tabnavcontrol
+//tabNavStatusTab
+pyeditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.runCmdFromGridItem('py',obj,eventdata);  }, tabNavStatusTab.uuid);
+console.log("PYEDITOR:", pyeditor.widgetName);
+tabNavStatusTab.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{   statusTabOutput.runExecutionUpdate(eventdata);  }, statusTabOutput.uuid);
+tabNavStatusTab.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{  statusTabOutput.runExecutionUpdate(eventdata);  }, statusTabOutput.uuid);
+tabNavStatusTab.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{   statusTabOutput.runExecutionFailure(eventdata);  }, statusTabOutput.uuid);
+
+
 
 // -------------------------------------------------------------------------------------------------
 // newAppMenu templates :  #menuAppTab01
@@ -73,23 +91,5 @@ const appstatusview = new AppStatusView({templateid: "#statusdisplaycontroltempl
 //~ //  --------   / New app page test
 // -------------------------------------------------------------------------------------------------
 
-// =====  duckdb & pyodide
-
-
-
-window.duckdb.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{ /* console.log("dbstatechange",obj,eventdata); */  appstatusview.duckdbStatusChange(eventdata); }, appstatusview.uuid);
-window.pyodideloader.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ /* console.log("pyodidestatechange",obj,eventdata); */  appstatusview.pyodideStatusChange(eventdata); }, appstatusview.uuid);
-
-window.duckdb.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{  statusTabOutput.statusUpdate(eventdata); }, statusTabOutput.uuid);
-window.pyodideloader.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{  statusTabOutput.statusUpdate(eventdata); }, statusTabOutput.uuid);
-
-
-window.coderunner.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{ /* console.log("dbstatechange",obj,eventdata); */  appstatusview.duckdbStatusChange(eventdata); });
-window.coderunner.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ /* console.log("pyodidestatechange",obj,eventdata); */  appstatusview.pyodideStatusChange(eventdata); });
-
-// =====  duckdb & pyodide init
-window.dbconnReadyPromise = window.duckdb.init();
-window.pyodideReadyPromise = window.pyodideloader.init();
-
-
-// ===== pyodide 
+//  new tab example
+//tabnavcontrol.addNewTab(BaseTabControl, {insertBeforePosition:-1, templateid: "#emptyTabContentTemplate", navitemtemplateid: "#emptyTabNavItemTemplate", tabtitle: "tab title 1" , tabbody: "tab 1 body here" });

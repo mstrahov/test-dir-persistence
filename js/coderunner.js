@@ -48,9 +48,9 @@ export class CodeRunner {
 	
 	async runAsync(targetEnv, cmd, appuuid="globals", namespace="") {
 		if (targetEnv=="py") {
-			return await runPythonAsync(cmd,appuuid,namespace);
+			return await this.runPythonAsync(cmd,appuuid,namespace);
 		} else if (targetEnv=="sql") {
-			return await runSQLAsync(cmd,appuuid,namespace);
+			return await this.runSQLAsync(cmd,appuuid,namespace);
 		} else {
 			const err_msg = 'Coderunner.runAsync: Wrong targetenv (should be py or sql) in command.';
 			console.error(err_msg,cmd,appuuid,namespace)

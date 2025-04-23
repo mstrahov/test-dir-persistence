@@ -36,7 +36,9 @@ export class GridItemTextOutput extends GridItemWithMenu {
 		if (textMessageWithPromptSymbols) {
 			this.textoutput.value += this.promptsymbols + textMessageWithPromptSymbols + "\n";
 		}
-		this.textoutput.value += textMessage + "\n";
+		if (textMessage) {
+			this.textoutput.value += textMessage + "\n";
+		}
 		this.textoutput.scrollTop = this.textoutput.scrollHeight;
 	}
 	
@@ -75,7 +77,42 @@ export class StatusGridItemTextOutput extends GridItemTextOutput {
 			this.addToOutput('Connected to db: '+ eventdata?.dbconnected);
 		}
 		
+	}
+	
+	runExecutionUpdate(eventdata) {
+		//  { targetEnv: targetEnv, cmd: cmdparams.cmd, result: res }
+				//~ let res = {
+			//~ targetEnv: 'py', 
+			//~ output: null,
+			//~ runStatus: undefined,
+			//~ runResult: "",
+			//~ error: null,
+			//~ errormessage: null,
+			//~ errorshort: null,
+			//~ errortype: null,
+			//~ errorline: null,
+			//~ lengthmilli: 0,
+			//~ lengthseconds: 0,
+			//~ executionTime: 0,
+			//~ uuid:  self.crypto.randomUUID(),  
+		//~ }
+		if (eventdata?.result?.runStatus) {
+			//this.addToOutput('>>>' + eventdata?.cmd);
+			this.addToOutput(eventdata?.result?.output, eventdata?.cmd);
+		} else {
+			this.addToOutput(null,' ');
+			this.addToOutput(`${eventdata?.result?.errorshort}`);
+			console.log("Command execution error:",eventdata?.targetEnv, eventdata?.cmd, eventdata?.result?.error);
+		}
+		this.addToOutput(`Execution time: ${eventdata?.result?.executionTime} sec`);
 		
+	}
+	
+	runExecutionFailure(eventdata) {
+		//{ targetEnv: targetEnv, cmd: cmdparams.cmd, result: null, error: err }
+		this.addToOutput(null,' ');
+		console.error("Command execution failed:",eventdata?.targetEnv, eventdata?.cmd,eventdata?.error);
+		this.addToOutput(eventdata?.error?.toString());
 	}
 	
 	

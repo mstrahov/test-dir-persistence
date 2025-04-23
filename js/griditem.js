@@ -58,6 +58,10 @@ export class GridItem {
 		return this.#uuid;
 	}
 	
+	get widgetName() {
+		return this.__proto__?.constructor?.name
+	}
+	
 	get bodyelement() {
 		return this.#bodyelement;
 	}
