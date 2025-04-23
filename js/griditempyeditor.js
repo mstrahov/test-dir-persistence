@@ -10,7 +10,233 @@
  
 import { GridItemWithMenu } from "./griditemwithmenu.js";
 
+export class GridItemEditorWithHistory extends GridItemWithMenu {
 
+	constructor (params) {
+		super(params);
+		this.cmdhistory = [];
+		this.cmdhistoryPosition = 0;
+		this.contentsChanged = false;
+		this.codeEditorObj = null;
+	}
+
+	//~ get widgetName() {
+		//~ return this.__proto__?.constructor?.name
+	//~ }
+	
+	codeEditorObjOnChange(instance, changeObj) {
+		console.log("Changes",changeObj);
+		if (changeObj.origin !=='setValue') {
+			this.contentsChanged = true;
+		}
+		console.log(this.contentsChanged,this.cmdhistoryPosition,this.cmdhistory);
+	}
+	
+	
+	clearEditor() {
+		let editorcontents = this.getValue();
+		if (editorcontents && editorcontents.trim().length>0) {
+			if (!editorcontents.endsWith("\n")) { editorcontents+="\n"}
+			this.cmdhistory.push(editorcontents);
+			this.cmdhistoryPosition = this.cmdhistory.length;
+		}
+		this.setValue('');		
+		this.contentsChanged = false;
+	}
+	
+	setCursorToLastLine() {
+	/*
+		 * doc.setCursor(pos: {line, ch}|number, ?ch: number, ?options: object)
+	Set the cursor position. You can either pass a single {line, ch} object, or the line and the character as two separate parameters.
+	* editor.lineCount();
+	* */	
+		this.codeEditorObj.setCursor(this.codeEditorObj.lastLine());
+		this.codeEditorObj.scrollIntoView(this.codeEditorObj.lastLine(),0);
+		this.codeEditorObj.focus();
+	}
+	
+	getSelection() {
+		/*
+		 * doc.somethingSelected() boolean
+		Return true if any text is selected.
+		* 
+				 * doc.getSelection(?lineSep: string) string
+		Get the currently selected code. Optionally pass a line separator to put between the lines in the output. When multiple selections are present, they are concatenated with instances of lineSep in between.
+		*   */
+		if ( this.codeEditorObj.somethingSelected() ) {
+			return this.codeEditorObj.getSelection("\n");
+		} 
+		return '';
+	}
+	
+	getValue() {
+		//~ doc.getValue(?separator: string) → string
+		//~ Get the current editor content. You can pass it an optional argument to specify the string to be used to separate lines (defaults to "\n").
+		return this.codeEditorObj.getValue()
+	}
+	
+	setValue(valstr) {
+		//~ doc.setValue(content: string)    Set the editor content.
+		this.codeEditorObj.setValue(valstr);
+	}
+	
+	showPreviousCommand() {
+		if (this.cmdhistory.length===0) { return;}
+		this.cmdhistoryPosition--;
+		if (this.cmdhistoryPosition<0) {this.cmdhistoryPosition = this.cmdhistory.length-1; }
+		
+		if (this.contentsChanged) {
+			let editorcontents = this.getValue();
+			if (editorcontents && editorcontents.trim().length>0) {
+				this.cmdhistory.push(editorcontents);
+			}
+		}
+		this.setValue(this.cmdhistory[this.cmdhistoryPosition]);
+		this.setCursorToLastLine();
+		this.contentsChanged = false;
+	}
+	
+	showNextCommand() {
+		if (this.cmdhistory.length===0) { return;}
+		this.cmdhistoryPosition++;
+		if (this.cmdhistoryPosition>=this.cmdhistory.length) {this.cmdhistoryPosition = 0; }
+		
+		if (this.contentsChanged) {
+			let editorcontents = this.getValue();
+			if (editorcontents && editorcontents.trim().length>0) {
+				this.cmdhistory.push(editorcontents);
+			}
+		}
+		this.setValue(this.cmdhistory[this.cmdhistoryPosition]);
+		this.setCursorToLastLine();
+		this.contentsChanged = false;
+	} 
+	
+	showAllHistory() {
+		if (this.cmdhistory.length===0) { return;}
+		if (this.contentsChanged) {
+			let editorcontents = this.getValue();
+			if (editorcontents && editorcontents.trim().length>0) {
+				this.cmdhistory.push(editorcontents);
+			}
+		}
+		this.cmdhistoryPosition=this.cmdhistory.length;
+		const historystr =  this.cmdhistory.reduce(
+					(accumulator, currentValue) => accumulator + currentValue,
+				'');
+		
+		this.setValue(historystr);
+		this.setCursorToLastLine();
+		this.contentsChanged = false;
+	} 
+	
+	
+}
+
+// -------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------
+
+
+export class GridItemPyEditor extends GridItemEditorWithHistory {
+
+	constructor (params) {
+		super(params);
+		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.menuEventHandler.bind(this));
+		this.eventbus.subscribe('clickableactionclick',this.menuEventHandler.bind(this));
+		
+		let that = this;
+		this.codeEditorObj = CodeMirror.fromTextArea(this.bodyelement.querySelector('.code-editor'), {
+				mode: {name: "python",
+					   version: 3,
+					   singleLineStringErrors: false},
+				lineNumbers: true,
+				indentUnit: 4,
+				matchBrackets: true,
+				theme: "cobalt",
+				autofocus: true,
+				
+				extraKeys: {
+				  "Ctrl-Space": "autocomplete",
+				  "Shift-Enter": function(cm) {
+					console.log("shift-enter pressed (codemirror)"); 
+					that.runSelectedEditorCode("\n");
+				  },
+				  "Ctrl-Enter": function(cm) {
+					console.log("ctrl-enter pressed (codemirror)"); 
+					that.runEditorCode("\n");
+				  },
+				  "Tab": function(cm) {
+					var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
+					cm.replaceSelection(spaces);
+				  },
+				  "Alt-A": "toggleComment",
+				  "Alt-Up": function(cm) {
+					console.log("ALT-UP pressed (codemirror)"); 
+					that.showPreviousCommand();
+				  },
+				  "Shift-Alt-Up": function(cm) {
+					console.log("SHIFT-ALT-UP pressed (codemirror)"); 
+					//that.runEditorCode("\n");
+				  },
+				  "Alt-Down": function(cm) {
+					console.log("ALT-DOWN pressed (codemirror)"); 
+					that.showNextCommand();
+				  },
+				  "Shift-Alt-Down": function(cm) {
+					console.log("SHIFT-ALT-DOWN pressed (codemirror)"); 
+					//that.runEditorCode("\n");
+				  },
+				  
+				}
+			});
+		this.codeEditorObj.on("change", this.codeEditorObjOnChange.bind(this));
+	}
+
+	
+
+	menuEventHandler(obj,eventdata) {
+		//console.log("GridItemPyEditor widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
+		
+		if (eventdata?.menuItemId === 'runcodeaction') {
+			this.runEditorCode();
+		} else if (eventdata?.menuItemId === "arrowupaction") {
+			this.showPreviousCommand();
+		} else if (eventdata?.menuItemId === "cleareditorgriditem") {
+			this.clearEditor();
+		} else if (eventdata?.menuItemId === "prevcommandmenuitem") {
+			this.showPreviousCommand();
+		} else if (eventdata?.menuItemId === "nextcommandmenuitem") {
+			this.showNextCommand();
+		} else if (eventdata?.menuItemId === "runselectedcommandmenuitem") {
+			this.runSelectedEditorCode("\n");
+		} else if (eventdata?.menuItemId === "runcommandmenuitem") {
+			this.runEditorCode("\n");
+		} else if (eventdata?.menuItemId === "dumpallhistory") {
+			this.showAllHistory();
+		}
+		
+	}
+	
+	runEditorCode() {
+		//console.log("py code run from editor");
+		this.eventbus.dispatch('runeditorcode', this, {cmd: this.getValue(), successcallback: this.clearEditor.bind(this), });
+		
+		// maybe myCodeMirror.setOption("readOnly", false); until callback ? 
+	}
+	
+	runSelectedEditorCode() {
+		//  codeEditorObj.somethingSelected()   Return true if any text is selected.
+		if ( this.codeEditorObj.somethingSelected() ) {
+			this.eventbus.dispatch('runeditorcode', this, {cmd: this.getSelection(), successcallback: ()=>{},});
+		} else {
+			this.runEditorCode();
+		}	
+	}
+	
+}
+
+/* 000000000000000000000
 export class GridItemPyEditor extends GridItemWithMenu {
 
 	constructor (params) {
@@ -134,11 +360,10 @@ export class GridItemPyEditor extends GridItemWithMenu {
 	}
 	
 	setCursorToLastLine() {
-	/*
-		 * doc.setCursor(pos: {line, ch}|number, ?ch: number, ?options: object)
-	Set the cursor position. You can either pass a single {line, ch} object, or the line and the character as two separate parameters.
-	* editor.lineCount();
-	* */	
+		 // doc.setCursor(pos: {line, ch}|number, ?ch: number, ?options: object)
+		// Set the cursor position. You can either pass a single {line, ch} object, or the line and the character as two separate parameters.
+		// * editor.lineCount();
+	
 		this.codeEditorObj.setCursor(this.codeEditorObj.lastLine());
 		this.codeEditorObj.scrollIntoView(this.codeEditorObj.lastLine(),0);
 		this.codeEditorObj.focus();
@@ -147,13 +372,12 @@ export class GridItemPyEditor extends GridItemWithMenu {
 	
 	
 	getSelection() {
-		/*
-		 * doc.somethingSelected() boolean
-		Return true if any text is selected.
-		* 
-				 * doc.getSelection(?lineSep: string) string
-		Get the currently selected code. Optionally pass a line separator to put between the lines in the output. When multiple selections are present, they are concatenated with instances of lineSep in between.
-		*   */
+		
+		//doc.somethingSelected() boolean
+		//Return true if any text is selected.
+		//		 * doc.getSelection(?lineSep: string) string
+		//Get the currently selected code. Optionally pass a line separator to put between the lines in the output. When multiple selections are present, they are concatenated with instances of lineSep in between.
+		
 		if ( this.codeEditorObj.somethingSelected() ) {
 			return this.codeEditorObj.getSelection("\n");
 		} 
@@ -228,6 +452,7 @@ export class GridItemPyEditor extends GridItemWithMenu {
 	
 }
 
+// 000000000000      */
 
 // ------------shortcuts ------------------
 /*
