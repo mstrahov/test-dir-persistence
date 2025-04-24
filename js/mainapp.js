@@ -9,6 +9,7 @@ import { AppPageControl }  from "./apppagecontrol.js";
 import { GridItem } from  "./griditem.js";
 import { GridItemWithMenu } from  "./griditemwithmenu.js";
 import { GridItemPyEditor } from  "./griditempyeditor.js";
+import { GridItemSQLEditor } from  "./griditemsqleditor.js";
 import  { CodeRunner } from "./coderunner.js";
 import { GridItemTextOutput, StatusGridItemTextOutput } from "./griditemtextoutput.js";
 
@@ -33,8 +34,10 @@ const tabNavStatusTab = new AppPageControl( {
 		});
 tabNavStatusTab.appuuid="globals";
 
-const pyeditor = tabNavStatusTab.addGridItem(GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Python", griditemoptions: {w:6,h:5,} });
+const pyeditor = tabNavStatusTab.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Python", griditemoptions: {w:6,h:5,} });
 const statusTabOutput = tabNavStatusTab.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output:", griditemoptions: {w:6,h:5,} });
+const sqleditor = tabNavStatusTab.addGridItem( GridItemSQLEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "SQL", griditemoptions: {w:6,h:5,} });
+
 
 //  ---------- Menu tab (left-most)
 let tabNavMainMenuTab = tabnavcontrol.addNewTab(DropDownTabControl, {insertBeforePosition:0,  navitemtemplateid: "#mainmenuTabNavItemTemplate", });
@@ -65,11 +68,12 @@ window.pyodideReadyPromise = window.pyodideloader.init();
 // =====  py editor/ output events in tabnavcontrol
 //tabNavStatusTab
 pyeditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.runCmdFromGridItem('py',obj,eventdata);  }, tabNavStatusTab.uuid);
-console.log("PYEDITOR:", pyeditor.widgetName);
+//console.log("PYEDITOR:", pyeditor.widgetName);
 tabNavStatusTab.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{   statusTabOutput.runExecutionUpdate(eventdata);  }, statusTabOutput.uuid);
 tabNavStatusTab.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{  statusTabOutput.runExecutionUpdate(eventdata);  }, statusTabOutput.uuid);
 tabNavStatusTab.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{   statusTabOutput.runExecutionFailure(eventdata);  }, statusTabOutput.uuid);
 
+sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.runCmdFromGridItem('sql',obj,eventdata);  }, tabNavStatusTab.uuid);
 
 
 // -------------------------------------------------------------------------------------------------
