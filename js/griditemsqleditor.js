@@ -113,4 +113,11 @@ export class GridItemSQLEditor extends GridItemEditorWithHistory {
 		}	
 	}
 	
+	updateHintOptions() {
+			// this.codeEditorObj.setOption('hintOptions',val)
+			//~ select table_name, column_name from duckdb_columns where internal = false order by table_name, column_name;
+
+	}
+	
+	
 }

@@ -27,6 +27,7 @@ export class DuckDBLoader {
 		this.worker = undefined;
 		this.logger = undefined;
 		this.dbconnectionpath = 'opfs://mainapp.db';
+		this.dbconnectiontype = 'opfs';   //  or 'memory'
 		this.exectimer = new ExecTimer('DuckDB Loader Started...');
 	}
 	
@@ -45,8 +46,8 @@ export class DuckDBLoader {
 			try {	
 				this._statechange('db_initializing', 'Duckdb loading ...');
 				const JSDELIVR_BUNDLES = await duckdb.getJsDelivrBundles();
-				const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
-				console.log(bundle.mainWorker);
+				let bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+				//console.log(bundle.mainWorker);
 				const worker_url = URL.createObjectURL(
 					new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
 				);
@@ -83,6 +84,52 @@ export class DuckDBLoader {
 						accessMode: this.duckdb.DuckDBAccessMode.READ_WRITE
 				});
 				this.conn = await this.db.connect();
+				
+				// TODO:  actually try to write to db file to test opfs restrictions in private browsing mode (chrome).
+				//  if restricted - reconnect to in-memory db
+				//  try let res2 = await window.coderunner.runSQLAsync("CREATE OR REPLACE SCHEMA testwritemode01; CHECKPOINT;")
+				
+				let opfsIsWritable = true;
+				try {
+					let res2 = await this.conn.query("CREATE OR REPLACE SCHEMA testwritemode01;CHECKPOINT;");
+					
+				} catch (err) {
+					//console.log(err);
+					opfsIsWritable = false;					
+				}
+				if (!opfsIsWritable) {
+					console.log('OPFS connection is not writable. Connecting to in-memory database.');
+					await this.conn.close();
+					this.dbconnectiontype = 'memory';  
+					this.dbconnectionpath = ':memory:';
+					
+					//  as per https://github.com/duckdb/duckdb-wasm/blob/main/packages/duckdb-wasm/test/opfs.test.ts
+					//  terminate the db, initialize as in-memory.???   is there a better way?
+					//~ await this.db.terminate();
+					// ================================
+					//~ const JSDELIVR_BUNDLES = await duckdb.getJsDelivrBundles();
+					//~ let bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+					//~ //console.log(bundle.mainWorker);
+					//~ const worker_url = URL.createObjectURL(
+						//~ new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
+					//~ );
+							
+					//~ this.worker = new Worker(worker_url);
+					//~ this.logger = new duckdb.ConsoleLogger();
+					//~ this.db = new duckdb.AsyncDuckDB(this.logger, this.worker);
+					//~ await this.db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+					//~ URL.revokeObjectURL(worker_url);
+					//~ //================================  init an in-memory db connection
+					
+					await this.db.open({
+						path: this.dbconnectionpath,
+						accessMode: this.duckdb.DuckDBAccessMode.READ_WRITE
+					});
+					
+					this.conn = await this.db.connect();
+			
+				}
+				
 				const duckdbversion = await this.db.getVersion();
 				this._statechange('db_connected_success', 'DB connection success!', 
 						{
@@ -95,12 +142,10 @@ export class DuckDBLoader {
 			} catch (e) {
 				console.error(e);
 				this._statechange('db_connection_open_error', 'DB connection failed!', e);
-				//throw e;
 				this.#reject(e);
+				throw e;
 			}
-			// TODO:  actually try to write to db file to test opfs restrictions in private browsing mode (chrome).
-			//  if restricted - reconnect to in-memory db
-			//  try let res2 = await window.coderunner.runSQLAsync("CREATE OR REPLACE SCHEMA testwritemode01; CHECKPOINT;")
+		
 			
 		}
 		
