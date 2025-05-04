@@ -134,7 +134,7 @@ export class FileDownLoadDialog {
 	  setTimeout(() => {
 		URL.revokeObjectURL(blobURL);
 		a.remove();
-	  }, 5000);
+	  }, 10000);
 	}
 	
 }

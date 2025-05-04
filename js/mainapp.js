@@ -12,6 +12,7 @@ import { GridItemPyEditor } from  "./griditempyeditor.js";
 import { GridItemSQLEditor } from  "./griditemsqleditor.js";
 import  { CodeRunner } from "./coderunner.js";
 import { GridItemTextOutput, StatusGridItemTextOutput } from "./griditemtextoutput.js";
+import { FileIOHandler } from "./fileiohandler.js"
 
 //console.log("test main app");
 // =====  Interface layout
@@ -20,6 +21,7 @@ const tabnavcontrol = new TabNavigationControl({templateid: "#navtabscontroltemp
 window.duckdb = new DuckDBLoader();
 window.pyodideloader = new PyodideLoader();
 window.coderunner = new CodeRunner({duckdbloader: window.duckdb, pyodideloader: window.pyodideloader});
+window.fileiohandler = new FileIOHandler({duckdbloader: window.duckdb, pyodideloader: window.pyodideloader});
 
 //  --------- Status Tab (right-most tab under spinner)
 const tabNavStatusTab = new AppPageControl( { 
@@ -61,9 +63,14 @@ window.pyodideloader.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ 
 window.coderunner.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{ /* console.log("dbstatechange",obj,eventdata); */  appstatusview.duckdbStatusChange(eventdata); }, appstatusview.uuid);
 window.coderunner.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ /* console.log("pyodidestatechange",obj,eventdata); */  appstatusview.pyodideStatusChange(eventdata); }, appstatusview.uuid);
 
-// =====  duckdb & pyodide init
+//  fileio dbfileStatusChange events
+window.fileiohandler.eventbus.subscribe('iostatechange',(obj,eventdata)=>{  appstatusview.dbfileStatusChange(eventdata); }, appstatusview.uuid);
+window.fileiohandler.eventbus.subscribe('iostatechange',(obj,eventdata)=>{  statusTabOutput.statusUpdate(eventdata); }, statusTabOutput.uuid);
+
+// =====  duckdb & pyodide & fileiohandler init
 window.dbconnReadyPromise = window.duckdb.init();
 window.pyodideReadyPromise = window.pyodideloader.init();
+window.fileiohandler.init();
 
 // =====  py editor/ output events in tabnavcontrol
 //tabNavStatusTab

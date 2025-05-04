@@ -100,8 +100,6 @@ export class FileSystemHandler {
 		return res;
 	}
 	
-	
-
 	async readFile(path) {
 		// returns a new Uint8Array buffer (encoding is binary)
 		// https://emscripten.org/docs/api_reference/Filesystem-API.html#FS.readFile
@@ -120,10 +118,7 @@ export class FileSystemHandler {
 	 */
 	async genFileTreePyFS(path) {
 		let pyodide = await this.#pyodidePromise;
-		let filePath = path;
-		if (filePath.length===0) {
-			filePath = "/";
-		}
+		let filePath = path || '/';
 		
 		console.log("file tree generator");
 		const FSNode = pyodide.FS.analyzePath(path)?.object;

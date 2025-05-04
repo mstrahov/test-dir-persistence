@@ -65,7 +65,7 @@ export class StatusGridItemTextOutput extends GridItemTextOutput {
 	
 	statusUpdate(eventdata) {
 		
-		if (eventdata?.state?.includes('_loading') || eventdata?.state?.includes('db_initializing')) {
+		if (eventdata?.state?.includes('_loading') || eventdata?.state?.includes('db_initializing') || eventdata?.state?.includes('files_io_initializing') ) {
 			this.addToOutput(eventdata?.message);
 		} else if (eventdata?.state?.includes('pyodide_load_success') || eventdata?.state?.includes('db_initialize_success') ) {
 			this.addToOutput(eventdata?.message + ' ('+ Math.round(eventdata?.lengthseconds*1000)/1000 +' sec)');
@@ -75,8 +75,10 @@ export class StatusGridItemTextOutput extends GridItemTextOutput {
 		} else if (eventdata?.state?.includes('db_connected_success')) {
 			this.addToOutput(eventdata?.message + ' ('+ Math.round(eventdata?.lengthseconds*1000)/1000 +' sec)');
 			this.addToOutput('Connected to db: '+ eventdata?.dbconnected);
+		} else if (eventdata?.state?.includes('files_io_init_success')) {
+			this.addToOutput(eventdata?.message);
+			this.addToOutput('Mounted: '+ eventdata?.directoriesmounted);
 		}
-		
 	}
 	
 	runExecutionUpdate(eventdata) {
