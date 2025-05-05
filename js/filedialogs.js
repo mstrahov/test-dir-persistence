@@ -93,7 +93,7 @@ export class FileDownLoadDialog {
 		if (blob) {
 			await this.saveFileFromBlob(new Blob([blob], { type: 'application/octet-stream' }), suggestedName);
 		} else {
-			console.error('Cannot save or not a file',path);
+			console.error('Cannot save or not a file', path);
 		}
 	}
 	

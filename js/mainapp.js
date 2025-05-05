@@ -13,6 +13,7 @@ import { GridItemSQLEditor } from  "./griditemsqleditor.js";
 import  { CodeRunner } from "./coderunner.js";
 import { GridItemTextOutput, StatusGridItemTextOutput } from "./griditemtextoutput.js";
 import { FileIOHandler } from "./fileiohandler.js"
+import { gridItemFileDialog } from "./griditemfiledialog.js"
 
 //console.log("test main app");
 // =====  Interface layout
@@ -37,9 +38,9 @@ const tabNavStatusTab = new AppPageControl( {
 tabNavStatusTab.appuuid="globals";
 
 const pyeditor = tabNavStatusTab.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Python", griditemoptions: {w:6,h:5,} });
-const statusTabOutput = tabNavStatusTab.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output:", griditemoptions: {w:6,h:5,} });
+const statusTabOutput = tabNavStatusTab.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:5,} });
 const sqleditor = tabNavStatusTab.addGridItem( GridItemSQLEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "SQL", griditemoptions: {w:6,h:5,} });
-
+const filedialog = tabNavStatusTab.addGridItem( gridItemFileDialog, {templateid:"#gridItemFileDialog", headertext: "Local files", griditemoptions: {w:6,h:5,}, fileIOHandler: window.fileiohandler });
 
 //  ---------- Menu tab (left-most)
 let tabNavMainMenuTab = tabnavcontrol.addNewTab(DropDownTabControl, {insertBeforePosition:0,  navitemtemplateid: "#mainmenuTabNavItemTemplate", });
@@ -82,6 +83,8 @@ tabNavStatusTab.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{   sta
 
 sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.runCmdFromGridItem('sql',obj,eventdata);  }, tabNavStatusTab.uuid);
 
+
+//filedialog.init();
 
 // -------------------------------------------------------------------------------------------------
 // newAppMenu templates :  #menuAppTab01

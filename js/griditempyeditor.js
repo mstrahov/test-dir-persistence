@@ -10,7 +10,6 @@
  
 import { GridItemEditorWithHistory } from "./griditemwithmenu.js";
 
-
 export class GridItemPyEditor extends GridItemEditorWithHistory {
 
 	constructor (params) {
