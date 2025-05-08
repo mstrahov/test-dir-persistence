@@ -242,6 +242,15 @@ export class FileIOHandler {
 	}
 	// ------------------------------------------------------------------
 	
+	async mountDirectory() {
+		const opts = {
+			id: "mountdirid",
+			mode: "readwrite",
+		};
+		
+	}
+	
+	
 }
 
 

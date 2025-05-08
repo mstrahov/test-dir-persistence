@@ -20,10 +20,11 @@ export class gridItemFileDialog extends GridItemWithMenu {
 	menuEventHandler(obj,eventdata) {
 		console.log("gridItemFileDialog widget",this.__proto__?.constructor?.name, this.headerText, "item click: ",obj,eventdata); 
 		
-		//~ if (eventdata?.menuItemId === 'runcodeaction') {
-			//~ this.runEditorCode();
-		//~ } else if (eventdata?.menuItemId === "arrowupaction") {
-			//~ this.showPreviousCommand();
+		if (eventdata?.menuItemId === 'openmntdir') {
+			//this.runEditorCode();
+			
+		} else if (eventdata?.menuItemId === "refreshgriditem" || eventdata?.menuItemId ===  "refreshaction") {
+			//this.showPreviousCommand();
 		//~ } else if (eventdata?.menuItemId === "cleareditorgriditem") {
 			//~ this.clearEditor();
 		//~ } else if (eventdata?.menuItemId === "prevcommandmenuitem") {
@@ -36,7 +37,7 @@ export class gridItemFileDialog extends GridItemWithMenu {
 			//~ this.runEditorCode("\n");
 		//~ } else if (eventdata?.menuItemId === "dumpallhistory") {
 			//~ this.showAllHistory();
-		//~ }
+		}
 		
 	}
 	// --------------------------------------------------------------------------
