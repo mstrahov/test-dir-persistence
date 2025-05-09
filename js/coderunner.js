@@ -25,6 +25,9 @@ export class CodeRunner {
 		this.dbstate = 'not_running';
 		this.pyNameSpaces = new Map();
 		this.cmdhistory = [];
+		this.recordpystdout = false;
+		this.pystdout = { strOutput: '', };
+		
 	}
 	
 	// --------------------------------------------------------------------------
@@ -100,7 +103,17 @@ export class CodeRunner {
 			executionTime: 0,
 			uuid:  self.crypto.randomUUID(),  
 		}
+		
+		if (typeof cmd === "string" && (cmd.toLowerCase().includes("print") || cmd.toLowerCase().includes("stdout.write"))) {
+			this.recordpystdout = true;
+		}
+		
 		try {
+			
+			if (this.recordpystdout) {
+				this.pystdout.strOutput = '';
+				pyodide.setStdout({ batched: this.stdoutPyBatched.bind(this) });
+			}
 			if (appuuid==="globals" || namespace==="globals") {
 				res.namespaceuuid = "globals";
 				res.output = await pyodide.runPythonAsync(cmd);   //  await pyodide.pyodide_py.code.eval_code_async(code, pyodide.globals);
@@ -118,8 +131,10 @@ export class CodeRunner {
 				res.output = await pyodide.pyodide_py.code.eval_code_async(cmd, pyodideNameSpace);
 				
 			}
+			res.stdoutString = this.pystdout.strOutput;
 			res.runStatus = true;
 			res.runResult = "success";
+			
 			//console.log(res.output);      //  res.output.toJs()  
 		} catch (err) {
 			console.error(err);
@@ -460,6 +475,12 @@ export class CodeRunner {
 		}
 		res.runresults = resarr;
 		return res;
+	}
+	
+	// --------------------------------------------------------------------------
+	
+	stdoutPyBatched(output) {
+		this.pystdout.strOutput += output + "\n";	
 	}
 	
 	

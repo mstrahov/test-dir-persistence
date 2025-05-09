@@ -100,7 +100,12 @@ export class StatusGridItemTextOutput extends GridItemTextOutput {
 		//~ }
 		if (eventdata?.result?.runStatus) {
 			//this.addToOutput('>>>' + eventdata?.cmd);
-			this.addToOutput(eventdata?.result?.output, eventdata?.cmd);
+			
+			if (eventdata?.result?.stdoutString) {
+				this.addToOutput(eventdata?.result?.stdoutString + "\n" + eventdata?.result?.output, eventdata?.cmd);
+			} else {
+				this.addToOutput(eventdata?.result?.output, eventdata?.cmd);
+			}
 		} else {
 			this.addToOutput(null,' ');
 			this.addToOutput(`${eventdata?.result?.errorshort}`);
