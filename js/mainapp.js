@@ -69,7 +69,10 @@ window.fileiohandler.eventbus.subscribe('iostatechange',(obj,eventdata)=>{  apps
 window.fileiohandler.eventbus.subscribe('iostatechange',(obj,eventdata)=>{  statusTabOutput.statusUpdate(eventdata); }, statusTabOutput.uuid);
 
 window.fileiohandler.eventbus.subscribe('ioDirRefreshNeeded',(obj,eventdata)=>{  filedialog.refreshData(eventdata); }, filedialog.uuid);
-
+// ioError  ioUnsupportedError  ioMessage
+window.fileiohandler.eventbus.subscribe('ioError',(obj,eventdata)=>{  statusTabOutput.ioMessageUpdate(eventdata); }, statusTabOutput.uuid);
+window.fileiohandler.eventbus.subscribe('ioUnsupportedError',(obj,eventdata)=>{  statusTabOutput.ioMessageUpdate(eventdata); }, statusTabOutput.uuid);
+window.fileiohandler.eventbus.subscribe('ioMessage',(obj,eventdata)=>{  statusTabOutput.ioMessageUpdate(eventdata); }, statusTabOutput.uuid);
 
 // =====  duckdb & pyodide & fileiohandler init
 window.dbconnReadyPromise = window.duckdb.init();

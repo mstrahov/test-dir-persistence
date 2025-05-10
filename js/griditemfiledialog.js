@@ -15,6 +15,7 @@ export class gridItemFileDialog extends GridItemWithMenu {
 		this.filesaveasdialog = new FileDownLoadDialog({fileSystemHandler: this.fileIOHandler});
 		this.tabulatorProperties = undefined;
 		this.tabulatorObj = undefined;
+		this.awaitingrefresh = false;
 	}
 	// --------------------------------------------------------------------------
 	menuEventHandler(obj,eventdata) {
@@ -24,7 +25,9 @@ export class gridItemFileDialog extends GridItemWithMenu {
 			this.fileIOHandler.mountDirectory();
 			
 		} else if (eventdata?.menuItemId === "refreshgriditem" || eventdata?.menuItemId ===  "refreshaction") {
+			this.awaitingrefresh = true;
 			this.fileIOHandler.syncFS();
+			
 			
 		//~ } else if (eventdata?.menuItemId === "cleareditorgriditem") {
 			//~ this.clearEditor();
@@ -147,8 +150,24 @@ export class gridItemFileDialog extends GridItemWithMenu {
 	// --------------------------------------------------------------------------
 	
 	async refreshData(eventdata) {
+		console.log(eventdata);
+		// source: 'syncFS',  source: 'mountDirectory'
+		let resetGrid = true;
+		let eventSource = '';
+		if (eventdata?.source) {
+			eventSource = eventdata?.source;
+		}
+		// do not refresh grid on syncFS unless specifically requested earlier
+		// TODO: when no dirs added, should re-open branches of the grid if files not changed?
+		if (this.awaitingrefresh) {
+			this.awaitingrefresh = false;
+		} else {
+			if (eventSource==='syncFS') {
+				resetGrid = false;
+			}
+		}
 		
-		if  (this.tabulatorObj) {
+		if  (this.tabulatorObj && resetGrid) {
 			let filetree = await this.fileIOHandler.genFileTreePyFS(this.fileIOHandler.APP_ROOT_DIR);
 			this.tabulatorObj.setData(filetree);
 		}

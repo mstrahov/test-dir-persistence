@@ -98,14 +98,14 @@ export class FileIOHandler {
 					};
 					permissionStatus = await this.dirmountpoints[0].dirHandle.requestPermission(opts);
 				} catch (err) {
-					this.eventbus.dispatch('ioError', this, { source: "init", error: err, errortext: "Directory handle opening error." });
+					this.eventbus.dispatch('ioError', this, { source: "init", error: err, msg: "Directory handle opening error." });
 					console.error(err);
 					dirmountsuccess = false;	
 				}
 						
 				if (dirmountsuccess && permissionStatus !== "granted") {
 					msg = `Readwrite access to directory ${directoryHandle?.name} not granted`;
-					this.eventbus.dispatch('ioError', this, { source: "init", errortext: msg, error: undefined });
+					this.eventbus.dispatch('ioError', this, { source: "init", msg: msg, error: undefined });
 					console.error(msg);
 					dirmountsuccess = false;
 				}
@@ -123,7 +123,7 @@ export class FileIOHandler {
 						msg = `Error mounting directory ${directoryHandle.name}.`;
 						console.error(msg, err);
 						// empty list of user dirs mounts (allowing only one dir for now)
-						this.eventbus.dispatch('ioError', this, { source: "init", errortext: msg, error: err });
+						this.eventbus.dispatch('ioError', this, { source: "init", msg: msg, error: err });
 						dirmountsuccess = false;
 					}
 				}
@@ -210,23 +210,36 @@ export class FileIOHandler {
 		
 		let pyodide = await this.#pyodidePromise;
 		let that = this;
-		if (populate === undefined) {
-			pyodide.FS.syncfs(false, (err)=>{
-					console.log('Sync FS (false: disk->FS)',err);
-					pyodide.FS.syncfs(true, (err)=> { 
-							console.log('Sync FS (true: FS->disk)',err);
-							that.eventbus.dispatch('ioDirRefreshNeeded', that, { source: "syncFS", msg: "syncFS done" });
-					});
-			});
-			
-		} else {
-			const populatedir = populate?'FS->disk':'disk->FS';
-			pyodide.FS.syncfs(populate, (err)=> { 
-					console.log('Sync FS with populate:',populate,populatedir,err);
-					that.eventbus.dispatch('ioDirRefreshNeeded', that, { source: "syncFS", msg: "syncFS done" });
+		
+		return new Promise((resolve, reject) => {
+			if (populate === undefined) {
+				pyodide.FS.syncfs(false, (err)=>{
+						console.log('Sync FS (false: disk->FS)',err);
+						pyodide.FS.syncfs(true, (err)=> { 
+								console.log('Sync FS (true: FS->disk)',err);
+								if (!err) {
+									that.eventbus.dispatch('ioDirRefreshNeeded', that, { source: "syncFS", msg: "syncFS done" });
+									resolve();
+								} else {
+									reject(err);
+								}
+						});
 				});
-		}
-		console.log("Pyodide sync FS done");
+				
+			} else {
+				const populatedir = populate?'FS->disk':'disk->FS';
+				pyodide.FS.syncfs(populate, (err)=> { 
+						console.log('Sync FS with populate:',populate,populatedir,err);
+						if (!err) {
+							that.eventbus.dispatch('ioDirRefreshNeeded', that, { source: "syncFS", msg: "syncFS done" });
+							resolve();
+						} else {
+							reject(err);
+						};
+					});
+			}
+			console.log("Pyodide sync FS done");
+		});
 	}
 	// ------------------------------------------------------------------
 	async pathExists(path) {
@@ -323,7 +336,7 @@ export class FileIOHandler {
 		if (!this.browserSupportsDirectoryPicker) {
 			const msg = "File System Access API is not supported!";
 			console.error(msg);
-			this.eventbus.dispatch('ioUnsupportedError', this, { source: "mountDirectory", errortext: msg });
+			this.eventbus.dispatch('ioUnsupportedError', this, { source: "mountDirectory", msg: msg });
 			return false;
 		}
 		
@@ -337,14 +350,14 @@ export class FileIOHandler {
 			permissionStatus = await directoryHandle.requestPermission(opts);
 		} catch (err) {
 			//  SecurityError: Failed to execute 'showDirectoryPicker' on 'Window': Must be handling a user gesture to show a file picker.
-			this.eventbus.dispatch('ioError', this, { source: "mountDirectory", error: err, errortext: "Directory handle opening error." });
+			this.eventbus.dispatch('ioError', this, { source: "mountDirectory", error: err, msg: "Directory handle opening error." });
 			console.error(err);
 			return false;
 		}
 				
 		if (permissionStatus !== "granted") {
 			msg = `Readwrite access to directory ${directoryHandle?.name} not granted`;
-			this.eventbus.dispatch('ioError', this, { source: "mountDirectory", errortext: msg, error: undefined });
+			this.eventbus.dispatch('ioError', this, { source: "mountDirectory", msg: msg, error: undefined });
 			console.error(msg);
 			return false;
 		}
@@ -360,6 +373,7 @@ export class FileIOHandler {
 			}
 			
 			// unmount current directory handle
+			//  !!!! TODO !!!   syncFS is not a proper promise
 			await this.syncFS();
 			await pyodide.FS.unmount(this.dirmountpoints[0].dirPath);
 			msg = `Directory ${this.dirmountpoints[0].dirHandle.name} is unmounted.`;
@@ -382,7 +396,7 @@ export class FileIOHandler {
 			console.error(msg, err);
 			// empty list of user dirs mounts (allowing only one dir for now)
 			this.dirmountpoints = [];
-			this.eventbus.dispatch('ioError', this, { source: "mountDirectory", errortext: msg, error: err });
+			this.eventbus.dispatch('ioError', this, { source: "mountDirectory", msg: msg, error: err });
 			return false;
 		}
 		

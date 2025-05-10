@@ -75,7 +75,7 @@ export class StatusGridItemTextOutput extends GridItemTextOutput {
 		} else if (eventdata?.state?.includes('db_connected_success')) {
 			this.addToOutput(eventdata?.message + ' ('+ Math.round(eventdata?.lengthseconds*1000)/1000 +' sec)');
 			this.addToOutput('Connected to db: '+ eventdata?.dbconnected);
-		} else if (eventdata?.state?.includes('files_io_init_success')) {
+		} else if (eventdata?.state?.includes('files_io_init_success') || eventdata?.state?.includes('dir_mount_success') ) {   
 			this.addToOutput(eventdata?.message);
 			this.addToOutput('Mounted: '+ eventdata?.directoriesmounted);
 		}
@@ -119,6 +119,11 @@ export class StatusGridItemTextOutput extends GridItemTextOutput {
 		//{ targetEnv: targetEnv, cmd: cmdparams.cmd, result: null, error: err }
 		this.addToOutput(null,' ');
 		console.error("Command execution failed:",eventdata?.targetEnv, eventdata?.cmd,eventdata?.error);
+		this.addToOutput(eventdata?.error?.toString());
+	}
+	
+	ioMessageUpdate(eventdata) {
+		this.addToOutput(eventdata?.msg?.toString());
 		this.addToOutput(eventdata?.error?.toString());
 	}
 	
