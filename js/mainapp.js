@@ -68,6 +68,9 @@ window.coderunner.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ /* 
 window.fileiohandler.eventbus.subscribe('iostatechange',(obj,eventdata)=>{  appstatusview.dbfileStatusChange(eventdata); }, appstatusview.uuid);
 window.fileiohandler.eventbus.subscribe('iostatechange',(obj,eventdata)=>{  statusTabOutput.statusUpdate(eventdata); }, statusTabOutput.uuid);
 
+window.fileiohandler.eventbus.subscribe('ioDirRefreshNeeded',(obj,eventdata)=>{  filedialog.refreshData(eventdata); }, filedialog.uuid);
+
+
 // =====  duckdb & pyodide & fileiohandler init
 window.dbconnReadyPromise = window.duckdb.init();
 window.pyodideReadyPromise = window.pyodideloader.init();

@@ -20,11 +20,12 @@ export class gridItemFileDialog extends GridItemWithMenu {
 	menuEventHandler(obj,eventdata) {
 		console.log("gridItemFileDialog widget",this.__proto__?.constructor?.name, this.headerText, "item click: ",obj,eventdata); 
 		
-		if (eventdata?.menuItemId === 'openmntdir') {
-			//this.runEditorCode();
+		if (eventdata?.menuItemId === "mountlocaldirectoryitem") {
+			this.fileIOHandler.mountDirectory();
 			
 		} else if (eventdata?.menuItemId === "refreshgriditem" || eventdata?.menuItemId ===  "refreshaction") {
-			//this.showPreviousCommand();
+			this.fileIOHandler.syncFS();
+			
 		//~ } else if (eventdata?.menuItemId === "cleareditorgriditem") {
 			//~ this.clearEditor();
 		//~ } else if (eventdata?.menuItemId === "prevcommandmenuitem") {
@@ -144,6 +145,17 @@ export class gridItemFileDialog extends GridItemWithMenu {
 		
 	}
 	// --------------------------------------------------------------------------
+	
+	async refreshData(eventdata) {
+		
+		if  (this.tabulatorObj) {
+			let filetree = await this.fileIOHandler.genFileTreePyFS(this.fileIOHandler.APP_ROOT_DIR);
+			this.tabulatorObj.setData(filetree);
+		}
+	}
+	
+	
+	// ---------------------------------------------------------------------------
 	minMaxFilterEditor(cell, onRendered, success, cancel, editorParams) {
 		let end;
 		let container = document.createElement("span");

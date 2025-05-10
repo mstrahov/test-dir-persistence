@@ -67,7 +67,7 @@ export class FileIOHandler {
 		directoriesmounted+='OPFS root as ' + this.opfsmountpoint.dirPath + "\n";		
 		
 		if (this.browserSupportsDirectoryPicker() && this.dirmountpoints) {
-			for (let i=0;i<this.dirmountpoints.length;i++) {
+			//~ for (let i=0;i<this.dirmountpoints.length;i++) {
 				
 				//~ let localmountdirpath = this.APP_ROOT_DIR + this.USER_DIR + i===0?'':i;
 				//~ await pyodide.FS.mkdir(localmountdirpath);
@@ -82,7 +82,61 @@ export class FileIOHandler {
 						//~ directoryHandle,
 					  //~ );
 				
+			//~ }
+			if (this.dirmountpoints.length>0) {
+				// attempt to remount saved user directory		
+				let dirmountsuccess = true;		
+				this.dirmountpoints[0].dirPath = this.APP_ROOT_DIR + this.USER_DIR;
+				
+				// request user permissions for the session:
+				// ------------------------------------------------
+				let permissionStatus;
+				try {
+					let opts = {
+						id: "mountdirid",
+						mode: "readwrite",
+					};
+					permissionStatus = await this.dirmountpoints[0].dirHandle.requestPermission(opts);
+				} catch (err) {
+					this.eventbus.dispatch('ioError', this, { source: "init", error: err, errortext: "Directory handle opening error." });
+					console.error(err);
+					dirmountsuccess = false;	
+				}
+						
+				if (dirmountsuccess && permissionStatus !== "granted") {
+					msg = `Readwrite access to directory ${directoryHandle?.name} not granted`;
+					this.eventbus.dispatch('ioError', this, { source: "init", errortext: msg, error: undefined });
+					console.error(msg);
+					dirmountsuccess = false;
+				}
+						
+				
+				
+				// ----------------------------------------------------------------
+				
+				// this.dirmountpoints[0].dirHandle = directoryHandle;
+				if (dirmountsuccess) {	
+					try {
+						this.dirmountpoints[0].mountPoint = await pyodide.mountNativeFS(this.dirmountpoints[0].dirPath, this.dirmountpoints[0].dirHandle);
+					}
+					catch (err) {
+						msg = `Error mounting directory ${directoryHandle.name}.`;
+						console.error(msg, err);
+						// empty list of user dirs mounts (allowing only one dir for now)
+						this.eventbus.dispatch('ioError', this, { source: "init", errortext: msg, error: err });
+						dirmountsuccess = false;
+					}
+				}
+				
+				if (dirmountsuccess) {
+					directoriesmounted += 'Mounted local directory: "' + this.dirmountpoints[0].dirHandle.name + '" as ' + this.dirmountpoints[0].dirPath + "\n";
+				} else {
+					this.dirmountpoints = []; 
+				}
+				await this.saveBrowserState();
 			}
+			
+			
 		}
 		
 		
@@ -113,8 +167,19 @@ export class FileIOHandler {
 	}
 	// ------------------------------------------------------------------
 	async saveBrowserState() {
+		
+		let dirmounts = [];
+		for (let i=0; i<this.dirmountpoints.length; i++) {
+			dirmounts.push(
+				{
+					dirHandle: this.dirmountpoints[i].dirHandle,
+					mountPoint: 0,
+					dirPath: this.dirmountpoints[i].dirPath
+				});
+		}
+		
 		const ioState = {
-			dirmountpoints: [...this.dirmountpoints],
+			dirmountpoints: dirmounts,
 			projectfile: this.projectfile,
 		};
 		await set(this.KEYVAL_KEY, ioState);
@@ -144,15 +209,22 @@ export class FileIOHandler {
 		
 		
 		let pyodide = await this.#pyodidePromise;
+		let that = this;
 		if (populate === undefined) {
 			pyodide.FS.syncfs(false, (err)=>{
 					console.log('Sync FS (false: disk->FS)',err);
-					pyodide.FS.syncfs(true, (err)=>console.log('Sync FS (true: FS->disk)',err));
+					pyodide.FS.syncfs(true, (err)=> { 
+							console.log('Sync FS (true: FS->disk)',err);
+							that.eventbus.dispatch('ioDirRefreshNeeded', that, { source: "syncFS", msg: "syncFS done" });
+					});
 			});
 			
 		} else {
 			const populatedir = populate?'FS->disk':'disk->FS';
-			pyodide.FS.syncfs(populate, (err)=>console.log('Sync FS with populate:',populate,populatedir,err));
+			pyodide.FS.syncfs(populate, (err)=> { 
+					console.log('Sync FS with populate:',populate,populatedir,err);
+					that.eventbus.dispatch('ioDirRefreshNeeded', that, { source: "syncFS", msg: "syncFS done" });
+				});
 		}
 		console.log("Pyodide sync FS done");
 	}
@@ -248,10 +320,90 @@ export class FileIOHandler {
 			mode: "readwrite",
 		};
 		
+		if (!this.browserSupportsDirectoryPicker) {
+			const msg = "File System Access API is not supported!";
+			console.error(msg);
+			this.eventbus.dispatch('ioUnsupportedError', this, { source: "mountDirectory", errortext: msg });
+			return false;
+		}
+		
+		let directoryHandle;
+		let permissionStatus;
+		let directoriesmounted = '';
+		let pyodide = await this.#pyodidePromise;
+		let msg = '';
+		try {
+			directoryHandle = await showDirectoryPicker(opts);
+			permissionStatus = await directoryHandle.requestPermission(opts);
+		} catch (err) {
+			//  SecurityError: Failed to execute 'showDirectoryPicker' on 'Window': Must be handling a user gesture to show a file picker.
+			this.eventbus.dispatch('ioError', this, { source: "mountDirectory", error: err, errortext: "Directory handle opening error." });
+			console.error(err);
+			return false;
+		}
+				
+		if (permissionStatus !== "granted") {
+			msg = `Readwrite access to directory ${directoryHandle?.name} not granted`;
+			this.eventbus.dispatch('ioError', this, { source: "mountDirectory", errortext: msg, error: undefined });
+			console.error(msg);
+			return false;
+		}
+		
+		if (this.dirmountpoints.length>0) {
+			// check if the same dir is chosen again
+			const sameentry = await directoryHandle.isSameEntry(this.dirmountpoints[0].dirHandle);
+			if (sameentry) {
+				msg = `Directory ${directoryHandle?.name} is already mounted as ${this.dirmountpoints[0].dirPath}`;
+				this.eventbus.dispatch('ioMessage', this, { source: "mountDirectory", msg: msg, });
+				console.log(msg);
+				return false;
+			}
+			
+			// unmount current directory handle
+			await this.syncFS();
+			await pyodide.FS.unmount(this.dirmountpoints[0].dirPath);
+			msg = `Directory ${this.dirmountpoints[0].dirHandle.name} is unmounted.`;
+			console.log(msg);
+			this.eventbus.dispatch('ioMessage', this, { source: "mountDirectory", msg: msg, });
+			this.dirmountpoints[0].dirHandle = undefined;
+			this.dirmountpoints[0].mountPoint = undefined;
+			this.dirmountpoints[0].dirPath = undefined;
+			
+		} else {
+			this.dirmountpoints.push({dirHandle: undefined, dirPath:undefined, mountPoint:undefined  });
+		}
+		
+		this.dirmountpoints[0].dirHandle = directoryHandle;
+		this.dirmountpoints[0].dirPath = this.APP_ROOT_DIR + this.USER_DIR;
+		try {
+			this.dirmountpoints[0].mountPoint = await pyodide.mountNativeFS(this.dirmountpoints[0].dirPath, this.dirmountpoints[0].dirHandle);
+		} catch (err) {
+			msg = `Error mounting directory ${directoryHandle.name}.`;
+			console.error(msg, err);
+			// empty list of user dirs mounts (allowing only one dir for now)
+			this.dirmountpoints = [];
+			this.eventbus.dispatch('ioError', this, { source: "mountDirectory", errortext: msg, error: err });
+			return false;
+		}
 		
 		
+		// ----------------------------------------------------------
+		//  save dir state
+		await this.saveBrowserState();
+		// success
+		directoriesmounted += this.dirmountpoints[0].dirHandle.name + ' as ' + this.dirmountpoints[0].dirPath + "\n";	
+		console.log("Mounted: " + directoriesmounted);
+		this._iostatechange('dir_mount_success', 'Directory mount success!',
+						{
+							lengthmilli: 0,
+							lengthseconds: 0,
+							directoriesmounted: directoriesmounted,
+						}
+					);
+		this.eventbus.dispatch('ioDirRefreshNeeded', this, { source: "mountDirectory", msg: "New dir mounted, refresh" });
 		
 		
+		// -------------------
 	}
 	
 	
@@ -259,7 +411,30 @@ export class FileIOHandler {
 
 
 
+//~ if ('showDirectoryPicker' in self) {
+					//~ // The `showDirectoryPicker()` method of the File System Access API is supported.
 
+					  //~ if (!directoryHandle) {
+						//~ directoryHandle = await showDirectoryPicker(opts);
+						//~ await set(directoryKey, directoryHandle);
+					  //~ }
+					  //~ const permissionStatus = await directoryHandle.requestPermission(opts);
+					  //~ if (permissionStatus !== "granted") {
+						//~ throw new Error("readwrite access to directory not granted");
+					  //~ }
+					  
+					  //~ var { syncfsres } = await pyodide.mountNativeFS(
+						//~ localmountdirpath,
+						//~ directoryHandle,
+					  //~ );
+					  //~ window.mountdirhandle = directoryHandle;
+					  //~ console.log("Mounted ", localmountdirpath, directoryHandle, syncfsres);
+					  
+				//~ } else {
+					//~ console.error("File System Access API is not supported!");
+				//~ }
+
+				
 
 
 /*
