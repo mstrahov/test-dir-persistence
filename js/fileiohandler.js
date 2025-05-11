@@ -38,6 +38,7 @@ export class FileIOHandler {
 		this.dirmountpoints = [];
 		this.opfsmountpoint = {};
 		this.projectfile = "";
+		this.duckdbfilehandles = [];
 		
 		
 		
@@ -420,6 +421,22 @@ export class FileIOHandler {
 		// -------------------
 	}
 	
+	
+	async createDuckDBHandleFromFile(filenamestr) {
+		// must be files in the form "/app/*"
+		// this.duckdbfilehandles
+		// window.duckdb.db.registerFileHandle('/app/opfs/onlineretail.csv', fileHandle, window.duckdb.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true)
+	}
+	
+	async checkHandlesForFileName(filenamestr) {
+		
+		let flname = filenamestr.trim();
+		if (flname.startsWith('/app/')) {
+			
+			
+		}
+		
+	}
 	
 }
 

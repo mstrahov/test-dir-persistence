@@ -12,6 +12,7 @@ export class CodeRunner {
 	//#dbconnPromise;
 	#duckdbloader;
 	#pyodideloader;
+	#fileiohandler;
 	
 	constructor (params) {
 		this.eventbus = new EventBus(this);
@@ -20,6 +21,7 @@ export class CodeRunner {
 		this.#duckdbloader = params.duckdbloader;
 		this.#pyodideloader = params.pyodideloader;
 		this.#pyodidePromise = this.#pyodideloader.pyodideReadyPromise();
+		this.#fileiohandler = params.fileIOHandler;
 		
 		this.pystate = 'not_running';
 		this.dbstate = 'not_running';
@@ -218,6 +220,8 @@ export class CodeRunner {
 			uuid:  self.crypto.randomUUID(),  
 		}
 		
+		// look for file references, register file handlers in duckdb for file names like '/app/*' in sql cmd.
+		this.checkFileHandlersInSQLcmd(cmd);
 		try {
 			res.output = await conn.query(cmd);
 			res.runStatus = true;
@@ -482,6 +486,26 @@ export class CodeRunner {
 	stdoutPyBatched(output) {
 		this.pystdout.strOutput += output + "\n";	
 	}
+	
+	// ----------------------------------------------------------------------------
+	checkFileHandlersInSQLcmd(inputString) {
+		// file names expected inside single or double quotes
+		const regex = /(['"])(.*?)\1/g;
+		const matches = [];
+		let match;
+		try {
+			while ((match = regex.exec(inputString)) !== null) {
+				matches.push(match[2]); // match[2] contains the text inside the quotes
+			}
+		} catch (err) {
+			console.error('Error processing file names/handle in sql.');
+		}
+		return matches;
+	}
+
+	// ------------------------------------------------------------------------------
+	
+	
 	
 	
 }

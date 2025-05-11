@@ -21,8 +21,8 @@ const tabnavcontrol = new TabNavigationControl({templateid: "#navtabscontroltemp
 // ======  DuckDB & Pyodide
 window.duckdb = new DuckDBLoader();
 window.pyodideloader = new PyodideLoader();
-window.coderunner = new CodeRunner({duckdbloader: window.duckdb, pyodideloader: window.pyodideloader});
 window.fileiohandler = new FileIOHandler({duckdbloader: window.duckdb, pyodideloader: window.pyodideloader});
+window.coderunner = new CodeRunner({duckdbloader: window.duckdb, pyodideloader: window.pyodideloader, fileIOHandler: window.fileiohandler });
 
 //  --------- Status Tab (right-most tab under spinner)
 const tabNavStatusTab = new AppPageControl( { 
