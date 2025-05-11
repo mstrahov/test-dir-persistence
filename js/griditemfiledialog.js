@@ -27,10 +27,10 @@ export class gridItemFileDialog extends GridItemWithMenu {
 		} else if (eventdata?.menuItemId === "refreshgriditem" || eventdata?.menuItemId ===  "refreshaction") {
 			this.awaitingrefresh = true;
 			this.fileIOHandler.syncFS();
+		} else if (eventdata?.menuItemId === "uploadfiletoopfsitem") {
+			this.awaitingrefresh = true;
+			this.fileuploaddialog.uploadFilesButtonClick();
 			
-			
-		//~ } else if (eventdata?.menuItemId === "cleareditorgriditem") {
-			//~ this.clearEditor();
 		//~ } else if (eventdata?.menuItemId === "prevcommandmenuitem") {
 			//~ this.showPreviousCommand();
 		//~ } else if (eventdata?.menuItemId === "nextcommandmenuitem") {
@@ -143,6 +143,9 @@ export class gridItemFileDialog extends GridItemWithMenu {
 			(async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
 		});
 		
+		
+		
+		this.fileuploaddialog = new FileUploadButton({containertemplateid: "#hiddenuploadbuttontemplate", containerid:"#fileuploaddialogplaceholder"+this.uuid,  fileSystemHandler: this.fileIOHandler });
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.menuEventHandler.bind(this));
 		this.eventbus.subscribe('clickableactionclick',this.menuEventHandler.bind(this));
 		

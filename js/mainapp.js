@@ -45,9 +45,7 @@ const filedialog = tabNavStatusTab.addGridItem( gridItemFileDialog, {templateid:
 //  ---------- Menu tab (left-most)
 let tabNavMainMenuTab = tabnavcontrol.addNewTab(DropDownTabControl, {insertBeforePosition:0,  navitemtemplateid: "#mainmenuTabNavItemTemplate", });
 let mainMenuControl = new MenuEventsControl({dropDownMenuElementId:tabNavMainMenuTab.DropDownMenuElementSelector, parentUUID: tabNavMainMenuTab.uuid, multiLevelMenu:false});
-mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{ 
-		console.log("mainmenuitemclick",obj,eventdata); 
-	});
+
 
 //  === spinner visual init
 const appstatusview = new AppStatusView({templateid: "#statusdisplaycontroltemplate", containerid: tabNavStatusTab.contenttab.TabNavTitleElementSelector });
@@ -89,8 +87,16 @@ tabNavStatusTab.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{   sta
 
 sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.runCmdFromGridItem('sql',obj,eventdata);  }, tabNavStatusTab.uuid);
 
+// ====== tabNavMainMenuTab - main left menu actions in tabs events
 
-//filedialog.init();
+mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{ 
+		console.log("mainmenuitemclick",obj,eventdata); 
+		if (eventdata?.menuItemId === "openmntdir") {
+			window.fileiohandler.mountDirectory();
+			
+		//~ } else if (eventdata?.menuItemId === "refreshgriditem" || eventdata?.menuItemId ===  "refreshaction") {
+		}
+	});
 
 // -------------------------------------------------------------------------------------------------
 // newAppMenu templates :  #menuAppTab01
