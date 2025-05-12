@@ -6,6 +6,7 @@ import { AppStatusView } from "./appstatusview.js";
 import { TabNavigationControl, BaseTabControl, DropDownTabControl } from "./tabnavigationcontrol.js";
 import { MenuEventsControl } from "./menueventscontrol.js";
 import { AppPageControl }  from "./apppagecontrol.js";
+import { AppPageScriptControl }  from "./apppagescriptcontrol.js";
 import { GridItem } from  "./griditem.js";
 import { GridItemWithMenu } from  "./griditemwithmenu.js";
 import { GridItemPyEditor } from  "./griditempyeditor.js";
@@ -87,14 +88,33 @@ tabNavStatusTab.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{   sta
 
 sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.runCmdFromGridItem('sql',obj,eventdata);  }, tabNavStatusTab.uuid);
 
+// ==================================================================
+let activetabs = [];
+const OpenNewScriptTab = ()=>{   
+	let newtab = new AppPageScriptControl( { 
+			tabnavcontrol: tabnavcontrol,  
+			baseTabControlType:BaseTabControl, 
+			insertBeforePosition:-1, 
+			templateid: "#emptyTabContentTemplate", 
+			navitemtemplateid: "#emptyTabNavItemTemplate", 
+			coderunner: window.coderunner,
+			tabtitle: "New Script" , 
+			DropDownMenuTemplateID: "#menuAppTab01",
+		});
+	activetabs.push(newtab);
+};
+
+
 // ====== tabNavMainMenuTab - main left menu actions in tabs events
 
 mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{ 
 		console.log("mainmenuitemclick",obj,eventdata); 
 		if (eventdata?.menuItemId === "openmntdir") {
 			window.fileiohandler.mountDirectory();
-			
-		//~ } else if (eventdata?.menuItemId === "refreshgriditem" || eventdata?.menuItemId ===  "refreshaction") {
+		} else if (eventdata?.menuItemId === "newscriptmenuaction") { 	
+			//console.log("NEW SCRIPT");
+			OpenNewScriptTab();
+		//~ } else if (eventdata?.menuItemId === "refreshgriditem" || eventdata?.menuItemId ===  "refreshaction") {      
 		}
 	});
 
