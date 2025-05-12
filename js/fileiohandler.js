@@ -312,6 +312,9 @@ export class FileIOHandler {
 					} else {
 						nodeObj.type = 'directory';
 						nodeObj.filetype = ' ';
+						if (nodeObj.fullpath === (this.APP_ROOT_DIR+this.USER_DIR) && this.dirmountpoints.length>0) {
+							nodeObj.name += ' (' + this.dirmountpoints[0]?.dirHandle?.name + ')';
+						}
 						nodeObj['_children'] = treeTraverse(nodeObj.fullpath,node);		
 					}
 					fileTree.push(nodeObj);
@@ -422,21 +425,35 @@ export class FileIOHandler {
 	}
 	
 	
-	async createDuckdbFileHandle(filenamestr, filehandle) {
+	async createDuckdbFileHandle(filenamestr, filehandle,filesource='') {
 		// must be files in the form "/app/*"
 		// this.duckdbfilehandles
 		// window.duckdb.db.registerFileHandle('/app/opfs/onlineretail.csv', fileHandle, window.duckdb.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true)
+		// let h1 = await window.duckdb.db.registerFileHandle('/app/mount_dir/onlineretail.csv', await window.testfilehandle.getFile(), window.duckdb.duckdb.DuckDBDataProtocol.BROWSER_FILEREADER, true)
+
 		if (this.duckdbFileHandleExists(filenamestr)) {
 			return true;
 		}
 		await this.FileIOinitialized();
 		await this.#duckdbloader.getdbconn();
-		try {
-			await this.#duckdbloader.db.registerFileHandle(filenamestr, filehandle, this.#duckdbloader.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true);
-			this.duckdbfilehandles.push(filenamestr);
-		} catch (err) {
-			console.error('Error registering duckdb file handle ',filenamestr, filehandle, err);
-			return false;
+		if (filesource===this.APP_ROOT_DIR+this.USER_DIR) {
+			// currently only opfs and memfs? are supported by duckdb for sync access to filehandles, mounted dir works only in read-only mode via filehandle.getFile()
+			try {
+				await this.#duckdbloader.db.registerFileHandle(filenamestr, await filehandle.getFile(), this.#duckdbloader.duckdb.DuckDBDataProtocol.BROWSER_FILEREADER, true);
+				this.duckdbfilehandles.push(filenamestr);
+			} catch (err) {
+				console.error('Error registering duckdb file handle ',filenamestr, filehandle, err);
+				return false;
+			}
+		} else {
+			// for opfs/ memory attempt to open read-write handle
+			try {
+				await this.#duckdbloader.db.registerFileHandle(filenamestr, filehandle, this.#duckdbloader.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true);
+				this.duckdbfilehandles.push(filenamestr);
+			} catch (err) {
+				console.error('Error registering duckdb file handle ',filenamestr, filehandle, err);
+				return false;
+			}
 		}
 		return true;
 	}
@@ -454,13 +471,16 @@ export class FileIOHandler {
 		let flname = filenamestr.trim();
 		await this.FileIOinitialized();
 		let rootFH = undefined;
+		let filesource = '';
 		if (flname.startsWith(this.APP_ROOT_DIR+'/')) {
 			if (flname.startsWith(this.OPFS_DIR+'/')) {
 				rootFH = this.opfsmountpoint.dirHandle;
 				flname = flname.replace(this.OPFS_DIR+'/','');
+				filesource = this.OPFS_DIR;
 			} else if (flname.startsWith(this.APP_ROOT_DIR+this.USER_DIR+'/') && this.dirmountpoints.length>0) {
 				rootFH = this.dirmountpoints[0].dirHandle;
 				flname = flname.replace(this.APP_ROOT_DIR+this.USER_DIR+'/','');
+				filesource = this.APP_ROOT_DIR+this.USER_DIR;
 			}
 		}
 		if (!rootFH) {
@@ -481,6 +501,7 @@ export class FileIOHandler {
 				} else {
 					try {
 						filehandle = await curdirhandle.getFileHandle(filepath[i], { create: true });
+						window.testfilehandle = filehandle;
 					} catch (err) {
 						console.error('Error getting file handle for ', filepath[i], err);
 					}
@@ -490,7 +511,7 @@ export class FileIOHandler {
 		if (!filehandle) {
 			return false;
 		}
-		await this.createDuckdbFileHandle(filenamestr,filehandle);
+		await this.createDuckdbFileHandle(filenamestr,filehandle,filesource);
 		return true;
 	}
 	
