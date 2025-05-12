@@ -422,20 +422,76 @@ export class FileIOHandler {
 	}
 	
 	
-	async createDuckDBHandleFromFile(filenamestr) {
+	async createDuckdbFileHandle(filenamestr, filehandle) {
 		// must be files in the form "/app/*"
 		// this.duckdbfilehandles
 		// window.duckdb.db.registerFileHandle('/app/opfs/onlineretail.csv', fileHandle, window.duckdb.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true)
+		if (this.duckdbFileHandleExists(filenamestr)) {
+			return true;
+		}
+		await this.FileIOinitialized();
+		await this.#duckdbloader.getdbconn();
+		try {
+			await this.#duckdbloader.db.registerFileHandle(filenamestr, filehandle, this.#duckdbloader.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true);
+			this.duckdbfilehandles.push(filenamestr);
+		} catch (err) {
+			console.error('Error registering duckdb file handle ',filenamestr, filehandle, err);
+			return false;
+		}
+		return true;
 	}
 	
-	async checkHandlesForFileName(filenamestr) {
-		
-		let flname = filenamestr.trim();
-		if (flname.startsWith('/app/')) {
-			
-			
+	duckdbFileHandleExists(filenamestr) {
+		return this.duckdbfilehandles.findIndex((el)=>el===filenamestr)>-1;
+	}
+	
+	async checkDuckdbHandleForFileName(filenamestr) {
+		// trying to automatically create duckdb file handles for every filename like '/app/*/*'
+		// TODO: handle directory change when different is mounted to /app/mount_dir.  delete duckdb file handles?
+		if (this.duckdbFileHandleExists(filenamestr)) {
+			return true;
 		}
-		
+		let flname = filenamestr.trim();
+		await this.FileIOinitialized();
+		let rootFH = undefined;
+		if (flname.startsWith(this.APP_ROOT_DIR+'/')) {
+			if (flname.startsWith(this.OPFS_DIR+'/')) {
+				rootFH = this.opfsmountpoint.dirHandle;
+				flname = flname.replace(this.OPFS_DIR+'/','');
+			} else if (flname.startsWith(this.APP_ROOT_DIR+this.USER_DIR+'/') && this.dirmountpoints.length>0) {
+				rootFH = this.dirmountpoints[0].dirHandle;
+				flname = flname.replace(this.APP_ROOT_DIR+this.USER_DIR+'/','');
+			}
+		}
+		if (!rootFH) {
+			return false;
+		}
+		let filepath = flname.split('/');
+		let filehandle = undefined;
+		let curdirhandle = rootFH;
+		for (let i=0;i<filepath.length;i++) {
+			if (filepath[i]?.length>0) {
+				if (i<(filepath.length-1)) {
+					try {
+						curdirhandle = await curdirhandle.getDirectoryHandle(filepath[i], { create: true });
+					} catch (err) {
+						console.error('Error getting dir handle for ', filepath[i], err);
+						break;
+					};
+				} else {
+					try {
+						filehandle = await curdirhandle.getFileHandle(filepath[i], { create: true });
+					} catch (err) {
+						console.error('Error getting file handle for ', filepath[i], err);
+					}
+				}		
+			}
+		}
+		if (!filehandle) {
+			return false;
+		}
+		await this.createDuckdbFileHandle(filenamestr,filehandle);
+		return true;
 	}
 	
 }

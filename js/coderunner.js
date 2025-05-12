@@ -221,7 +221,7 @@ export class CodeRunner {
 		}
 		
 		// look for file references, register file handlers in duckdb for file names like '/app/*' in sql cmd.
-		this.checkFileHandlersInSQLcmd(cmd);
+		await this.checkFileHandlersInSQLcmd(cmd);
 		try {
 			res.output = await conn.query(cmd);
 			res.runStatus = true;
@@ -488,19 +488,28 @@ export class CodeRunner {
 	}
 	
 	// ----------------------------------------------------------------------------
-	checkFileHandlersInSQLcmd(inputString) {
-		// file names expected inside single or double quotes
-		const regex = /(['"])(.*?)\1/g;
-		const matches = [];
+	async checkFileHandlersInSQLcmd(inputString) {
+		// file names expected inside single or double quotes, or $$__$$
+		// trying to automatically create duckdb file handles for every filename like '/app/*/*'
+		const regex = /(['"])(.*?)\1|\$\$(.*?)\$\$/g;
+		//const matches = [];
 		let match;
-		try {
+		try {			
 			while ((match = regex.exec(inputString)) !== null) {
-				matches.push(match[2]); // match[2] contains the text inside the quotes
+				// Check which group matched and push the corresponding substring
+				if (match[2] !== undefined) {
+					//matches.push(match[2]); // For '' and ""
+					await this.#fileiohandler.checkDuckdbHandleForFileName(match[2]);
+				} else if (match[3] !== undefined) {
+					//matches.push(match[3]); // For $$
+					await this.#fileiohandler.checkDuckdbHandleForFileName(match[3]);
+				}
 			}
 		} catch (err) {
 			console.error('Error processing file names/handle in sql.');
 		}
-		return matches;
+		
+		return true;
 	}
 
 	// ------------------------------------------------------------------------------
