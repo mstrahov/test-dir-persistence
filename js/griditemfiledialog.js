@@ -1,9 +1,9 @@
-/* ********
+/**********
  * gridItemFileDialog
  * depends: Tabulator.js
  * 
  * 
- *   */
+ ***********************************   */
 import { GridItemWithMenu } from "./griditemwithmenu.js";
 import { FileUploadButton, FileDownLoadDialog } from "./filedialogs.js";
 

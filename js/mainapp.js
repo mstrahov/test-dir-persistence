@@ -100,6 +100,7 @@ const OpenNewScriptTab = ()=>{
 			coderunner: window.coderunner,
 			tabtitle: "New Script" , 
 			DropDownMenuTemplateID: "#menuAppTab01",
+			fileIOHandler: window.fileiohandler,
 		});
 	activetabs.push(newtab);
 };
