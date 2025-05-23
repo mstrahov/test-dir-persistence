@@ -37,6 +37,24 @@ export const TransformScript = {
 };
 
 
+export function TransformScriptInit() {
+	return {
+		srcfiles: [],
+		destfiles: [],
+		pyodideobject: undefined,
+		duckdbconn: undefined,
+		filesdirectory: "",
+		transformSteps: [],
+		lastRunStepNum: 0,
+		lastRunStatus: "",
+		lastRunResult: "",
+		executionTime: 0,
+	}
+}
+
+
+
+
 export class gridItemScript extends GridItemWithMenu {
 	#transformscript;
 	#scriptname;

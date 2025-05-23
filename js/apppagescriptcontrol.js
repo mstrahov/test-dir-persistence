@@ -10,7 +10,7 @@ import { AppPageControl } from "./apppagecontrol.js";
 import { GridItemPyEditor } from  "./griditempyeditor.js";
 //import { GridItemSQLEditor } from  "./griditemsqleditor.js";
 import { StatusGridItemTextOutput } from "./griditemtextoutput.js";
-import { gridItemScript, TransformScript } from "./griditemscript.js";
+import { gridItemScript, TransformScriptInit } from "./griditemscript.js";
 import { gridItemSelectFileDialog } from "./griditemselectfiledialog.js";
 
 export class AppPageScriptControl extends AppPageControl {
@@ -20,7 +20,7 @@ export class AppPageScriptControl extends AppPageControl {
 		super(params);
 		this.fileIOHandler = params.fileIOHandler;
 		this.#tablePickerDialog = params.tablePickerDialog;
-		this.transformScript = params.transformScript?params.transformScript:{...TransformScript};
+		this.scriptObject = params.transformScript?params.transformScript:TransformScriptInit();
 		
 		
 		this.scriptControl = this.addGridItem( gridItemScript, 
@@ -28,7 +28,7 @@ export class AppPageScriptControl extends AppPageControl {
 				templateid:"#gridItemScriptDialog", 
 				headertext: "Script", 
 				griditemoptions: {w:6,h:5,},
-				transformscript: this.transformScript,
+				transformscript: this.scriptObject,
 				scriptname: "",
 			}
 		);
