@@ -15,6 +15,7 @@ import  { CodeRunner } from "./coderunner.js";
 import { GridItemTextOutput, StatusGridItemTextOutput } from "./griditemtextoutput.js";
 import { FileIOHandler } from "./fileiohandler.js"
 import { gridItemFileDialog } from "./griditemfiledialog.js"
+import { TabulatorPicker } from "./tabupicker.js";
 
 //console.log("test main app");
 // =====  Interface layout
@@ -25,7 +26,10 @@ window.pyodideloader = new PyodideLoader();
 window.fileiohandler = new FileIOHandler({duckdbloader: window.duckdb, pyodideloader: window.pyodideloader});
 window.coderunner = new CodeRunner({duckdbloader: window.duckdb, pyodideloader: window.pyodideloader, fileIOHandler: window.fileiohandler });
 
-//  --------- Status Tab (right-most tab under spinner)
+// ============= user dialogs ====================================
+let tablePicker = new TabulatorPicker({templateid:"#tabulatorpickertemplate"});
+
+//  ======================== Status Tab (right-most tab under spinner)
 const tabNavStatusTab = new AppPageControl( { 
 			tabnavcontrol: tabnavcontrol,  
 			baseTabControlType:BaseTabControl, 
@@ -88,6 +92,9 @@ tabNavStatusTab.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{   sta
 
 sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.runCmdFromGridItem('sql',obj,eventdata);  }, tabNavStatusTab.uuid);
 
+
+
+
 // ==================================================================
 let activetabs = [];
 const OpenNewScriptTab = ()=>{   
@@ -101,6 +108,7 @@ const OpenNewScriptTab = ()=>{
 			tabtitle: "New Script" , 
 			DropDownMenuTemplateID: "#menuAppTab01",
 			fileIOHandler: window.fileiohandler,
+			tablePickerDialog: tablePicker,
 		});
 	activetabs.push(newtab);
 };

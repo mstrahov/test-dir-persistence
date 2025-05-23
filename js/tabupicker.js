@@ -9,6 +9,7 @@ import { makeCloneFromTemplate } from "./utilities.js";
 export class TabulatorPicker {
 	#templateid;
 	#modalelement;
+	#modalelementtitle;
 	#modalobject;
 	#modaltabulatorcontainer;
 	#optionselected;
@@ -41,18 +42,32 @@ export class TabulatorPicker {
 		this.#optionselected = false;
 		
 		this.#modaltabulatorcontainer = document.getElementById('pickermodal'+this.#uuid).querySelector('.modal-body');
+		this.#modalelementtitle = document.getElementById('pickerModalLabel'+this.#uuid);
 		
 		this.promise = null;
 		this.resolve = null;
 		this.reject = null;
 	}
 	
+	// -------------------------------------------------------------
 	show() {
 		this.#modalobject.show();
 		this.#optionselected = false;
 	}
 	
+	// -------------------------------------------------------------
+	setTitle(strTitle) {
+		this.#modalelementtitle.innerText = strTitle;
+	}
+	// -------------------------------------------------------------
 	async showoptions(tabulatorprops) {
+		try {
+			if (this.#tabulatorobj) {
+				this.#tabulatorobj.destroy();
+			} 
+		} catch (err) {
+			console.log("Error dialog tabulator destroy.", err);
+		}
 		
 		this.promise = new Promise((resolve, reject) => {
 			this.resolve = resolve;
@@ -83,6 +98,9 @@ export class TabulatorPicker {
 		this.#tabulatorobj.on("rowDblClick", this.eventTabulatorRowDblClick.bind(this));
 		this.#tabulatorobj.on("rowDblTap", this.eventTabulatorRowDblClick.bind(this));
 		
+		if (tabulatorprops?.dialogTitle) { 
+			this.setTitle(tabulatorprops.dialogTitle);
+		}
 		this.#modalobject.show();
 		this.#optionselected = false;
 		
@@ -91,8 +109,12 @@ export class TabulatorPicker {
 	}
 	
 	eventModalDismissed() {
-		if (this.#tabulatorobj) {
-			this.#tabulatorobj.destroy();
+		try {
+			if (this.#tabulatorobj) {
+				this.#tabulatorobj.destroy();
+			} 
+		} catch (err) {
+			console.log("Error dialog tabulator destroy.", err);
 		}
 		if (!this.#optionselected) {
 			//console.log('Modal dismissed/ closed');

@@ -559,6 +559,7 @@ df = pd.concat([df, pd.read_excel(file,sheet_name='Sheet2', skiprows=0)], ignore
 				let tabulatoroptions = {
 					data: data,
 					columns: columns,
+					dialogTitle : "Select something from a list:"
 				};
 				try {
 					const selectedOption = await picker.showoptions(tabulatoroptions);

@@ -96,7 +96,7 @@ export class gridItemSelectFileDialog extends gridItemFileDialog {
 					label:"Import to dataframe",
 					action:function(e, row){
 						console.log("Import file ...",row.getData().filetype, row.getData().fullpath );
-						this.eventbus.dispatch('importfiletodf', this, {fullpath: row.getData().fullpath, filetype: row.getData().filetype   });
+						that.eventbus.dispatch('importfiletodf', that, {fullpath: row.getData().fullpath, filetype: row.getData().filetype   });
 					}
 				},
 				

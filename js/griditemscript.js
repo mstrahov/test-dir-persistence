@@ -29,7 +29,7 @@ export const TransformScript = {
 	pyodideobject: undefined,
 	duckdbconn: undefined,
 	filesdirectory: "/mount_dir",
-	transformSteps: [{},{}],
+	transformSteps: [],
 	lastRunStepNum: 0,
 	lastRunStatus: "success",
 	lastRunResult: "",
@@ -124,6 +124,7 @@ export class gridItemScript extends GridItemWithMenu {
 	
 	// --------------------------------------------------------------------------------
 	
+
 	btnEditAsJsonClick(e) {
 		console.log("editasjson click");
 		//this.#outputcodefunc(JSON.stringify(this.#transformscript,null,4));
@@ -207,7 +208,7 @@ export class gridItemScript extends GridItemWithMenu {
 	}
 	
 	// --------------------------------------------------------------------------------
-	
+	// --------------------------------------------------------------------------------
 	
 }
 

@@ -19,6 +19,7 @@ export const dfActionsList = [
 		actiontype: ["column","cell"],
 		parameters: { df: "string", colnum: "number"},
 	},
+	// -------------------------------------------------------------------------------
 	{
 		actionid: "DeleteRowByIndex",
 		name: "Delete row",
@@ -28,6 +29,7 @@ export const dfActionsList = [
 		actiontype: ["row","cell"],
 		parameters: { df: "string", rownum: "number"},
 	},
+	// -------------------------------------------------------------------------------
 	{
 		actionid: "PythonScript",
 		name: "Add python script",
@@ -37,7 +39,7 @@ export const dfActionsList = [
 		actiontype: ["column","row","cell"],
 		parameters: { df: "string"}
 	},
-	
+	// -------------------------------------------------------------------------------
 	{
 		actionid: "FillDownColumnValues",
 		name: "Fill down column values",
@@ -47,7 +49,7 @@ export const dfActionsList = [
 		actiontype: ["column","cell"],
 		parameters: { df: "string", colnum: "number"},
 	},
-	
+	// -------------------------------------------------------------------------------
 	{
 		actionid: "PromoteRowValuesToColumnNames",
 		name: "Promote row values to column names",
@@ -85,6 +87,19 @@ for index, col in enumerate(df.loc[0]):
 df.columns = new_cols`,
 		actiontype: ["row"],
 		parameters: { df: "string", rownum: "number"},
+	},
+	// -------------------------------------------------------------------------------
+	{
+		actionid: "ImportExcelFileToDF",
+		name: "Import Excel File To Dataframe",
+		description: "Import Excel File To Dataframe",
+		pytemplate: `import pandas as pd
+import openpyxl
+file = pd.ExcelFile('{{filepath}}')
+{{df}} = pd.read_excel(file,sheet_name='{{sheetname}}', skiprows=0)`,
+		pyexample: `df = pd.read_excel(file,sheet_name='Sheet2', skiprows=0)`,
+		actiontype: ["import"],
+		parameters: { df: "string", filepath: "string", sheetname: "string",  }
 	},
 	
 ];
