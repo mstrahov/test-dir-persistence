@@ -12,6 +12,7 @@ import { GridItemPyEditor } from  "./griditempyeditor.js";
 import { StatusGridItemTextOutput } from "./griditemtextoutput.js";
 import { gridItemScript, TransformScriptInit } from "./griditemscript.js";
 import { gridItemSelectFileDialog } from "./griditemselectfiledialog.js";
+import { griditemTableDFPaged } from "./griditemtabledfpaged.js";
 
 export class AppPageScriptControl extends AppPageControl {
 	#tablePickerDialog;
@@ -33,13 +34,25 @@ export class AppPageScriptControl extends AppPageControl {
 			}
 		);
 		this.pyeditor = this.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Python", griditemoptions: {w:6,h:5,} });
+		this.dfview = this.addGridItem( griditemTableDFPaged, {templateid:"#gridItemDFtransformview", headertext: "DataFrame view", griditemoptions: {w:6,h:5,},
+			coderunner: this.coderunner,
+			parentuuid: this.uuid
+		});
+		
+		
 		this.statusTabOutput = this.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:5,} });
 		this.selectFileDialog = this.addGridItem( gridItemSelectFileDialog, {templateid:"#gridItemFileDialog", headertext: "File selection", griditemoptions: {w:6,h:5,}, 
-			fileIOHandler: this.fileIOHandler });
+			fileIOHandler: this.fileIOHandler 
+		});
 		
 		let that = this; 
 		this.fileIOHandler.eventbus.subscribe('ioDirRefreshNeeded',(obj,eventdata)=>{  that.selectFileDialog.refreshData(eventdata); }, this.selectFileDialog.uuid);
 		this.selectFileDialog.eventbus.subscribe('importfiletodf',(obj,eventdata)=>{  that.addImportFileStep(eventdata); }, this.scriptControl.uuid);
+		
+		this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ this.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+		this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ this.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+		this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ this.statusTabOutput.runExecutionFailure(eventdata);  }, this.statusTabOutput.uuid);
+		
 		
 	}
 	// --------------------------------------------------------------------------------
@@ -86,12 +99,12 @@ sheetinfo`;
 					sheetlist.push({id: i, sheetname: r1[i].sheetname, numrows: r1[i].numrows, numcols: r1[i].numcols });
 				}
 			} else {
-				//this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: targetEnv, cmd: cmdparams.cmd, result: res });
+				this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: targetEnv, cmd: sheetinfocmd, result: res });
 				console.log("error fetching sheets from excel or not an excel");
 			}
 		} catch (err) {
 			console.log("Excel import run err ",err);
-			//this.eventbus.dispatch('CmdExecutionFailed', this, { targetEnv: targetEnv, cmd: cmdparams.cmd, result: null, error: err });
+			this.eventbus.dispatch('CmdExecutionFailed', this, { targetEnv: targetEnv, cmd: sheetinfocmd, result: null, error: err });
 		}
 		console.log(sheetlist);
 		let selectedOption;
@@ -106,11 +119,15 @@ sheetinfo`;
 				columns: columns,
 				dialogTitle : `Select a sheet from ${eventdata.fullpath} :`, 
 			};
-			try {
-				selectedOption = await this.#tablePickerDialog.showoptions(tabulatoroptions);
-				console.log('Selected option:', selectedOption);
-			} catch (error) {
-				console.error('Error:', error.message);
+			if (sheetlist.length>1) {    //  show select sheet dialog only if there're more than one sheet in a file
+				try {
+					selectedOption = await this.#tablePickerDialog.showoptions(tabulatoroptions);
+					console.log('Selected option:', selectedOption);
+				} catch (error) {
+					console.error('Error:', error.message);
+				}
+			} else {
+				selectedOption = sheetlist[0];
 			}
 			// ------------------
 			if (selectedOption) {

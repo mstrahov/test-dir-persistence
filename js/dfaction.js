@@ -37,7 +37,7 @@ export const dfActionsList = [
 		pytemplate: '{{df}}={{df}}',
 		pyexample: 'df=df',
 		actiontype: ["column","row","cell"],
-		parameters: { df: "string"}
+		parameters: { df: "string" }
 	},
 	// -------------------------------------------------------------------------------
 	{

@@ -51,6 +51,11 @@ export class CodeRunner {
 	
 	// --------------------------------------------------------------------------
 	
+	getpyodidePromise() {
+		return this.#pyodidePromise;
+	}
+	
+	// --------------------------------------------------------------------------
 	async runAsync(targetEnv, cmd, appuuid="globals", namespace="") {
 		if (targetEnv=="py") {
 			return await this.runPythonAsync(cmd,appuuid,namespace);
@@ -77,6 +82,29 @@ export class CodeRunner {
 	
 	// --------------------------------------------------------------------------
 	
+	async runPythonAsyncDirect(cmd, appuuid="globals", namespace="") {
+		
+		let pyodide = await this.#pyodidePromise;
+		if (appuuid==="globals" || namespace==="globals") {
+			return await pyodide.runPythonAsync(cmd);   
+		} else {
+			let namespaceuuid = appuuid;
+			if (namespace && namespace?.length>0) {
+				namespaceuuid = namespace;	
+			}
+			let pyodideNameSpace = this.pyNameSpaces.get(namespaceuuid); 
+			if (!pyodideNameSpace) {
+				pyodideNameSpace = pyodide.globals.get("dict")();
+				this.pyNameSpaces.set(namespaceuuid, pyodideNameSpace); 
+			}
+
+			return await pyodide.pyodide_py.code.eval_code_async(cmd, pyodideNameSpace);
+		}
+		
+	}
+	
+	
+	// ---------------------------------------------------------------------------
 	async runPythonAsync(cmd, appuuid="globals", namespace="") {
 		/* cmd - python command
 		 * appuuid - uuid of the app tab/script to get a separate namespace

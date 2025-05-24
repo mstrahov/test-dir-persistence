@@ -65,6 +65,9 @@ export class gridItemScript extends GridItemWithMenu {
 		this.#transformscript = {...params.transformscript};
 		this.#scriptname = params.scriptname;
 		
+		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.menuEventHandler.bind(this));
+		this.eventbus.subscribe('clickableactionclick',this.menuEventHandler.bind(this));
+		
 		this.tabulatorProperties = {
 			//height:"311px", 
 			movableRows:true,
@@ -76,12 +79,12 @@ export class gridItemScript extends GridItemWithMenu {
 				  formatter: "rownum",
 				  width: 20
 				},
-				{title:"stepOrder", field:"stepOrder", editor:false, headerSort:false,},
-				{title:"Run status", field:"lastRunStatus", formatter:"tickCross", formatterParams:{ allowEmpty:true, allowTruthy:true, }, editor:false, headerSort:false, },
-				{title:"Name", field:"srcDfActionName", editor:true, headerSort:false,},
-				{title:"Type", field:"targetEnv", editor:true,headerSort:false,},
-				{title:"Code", field:"scriptCode", editor:true, headerSort:false, formatter:"textarea",},
-				{title:"Exec time", field:"executionTime", editor:false,headerSort:false,},
+				{title:"stepOrder", field:"stepOrder", editor:false, headerSort:false,width:50,visible:true,},
+				{title:"Run status", field:"lastRunStatus", formatter:"tickCross", formatterParams:{ allowEmpty:true, allowTruthy:true, }, editor:false, headerSort:false, width:50, },
+				{title:"Name", field:"srcDfActionName", editor:true, headerSort:false, formatter:"textarea",width:90,},
+				{title:"Type", field:"targetEnv", editor:true,headerSort:false,width:50,},
+				{title:"Code", field:"scriptCode", editor:true, headerSort:false, formatter:"textarea",width:210,},
+				{title:"Exec time", field:"executionTime", editor:false,headerSort:false, width:50,},
 				
 
 			],
@@ -108,8 +111,31 @@ export class gridItemScript extends GridItemWithMenu {
 		
 		
 	}
-	// --------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------------
+	menuEventHandler(obj,eventdata) {
+		console.log("GridItemPyEditor widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
+		
+		if (eventdata?.menuItemId === "addpythonscriptstep") {
+			this.addScriptStep({actionid:'PythonScript', parameters:{df:"df"}});
+		} else if (eventdata?.menuItemId === "addsqlscriptstep") {
+			
+		} else if (eventdata?.menuItemId === "cleareditorgriditem") {
+			
+		} else if (eventdata?.menuItemId === "prevcommandmenuitem") {
+			
+		} else if (eventdata?.menuItemId === "nextcommandmenuitem") {
+			
+		} else if (eventdata?.menuItemId === "runselectedcommandmenuitem") {
+			
+		} else if (eventdata?.menuItemId === "runcommandmenuitem") {
+			
+		} else if (eventdata?.menuItemId === "dumpallhistory") {
+			
+		}
+		
+	}
 	
+	// -----------------------------------------------------------------------------------------------------------
 	addScriptStep(stepdata) {
 			let newaction = new dfAction(stepdata);
 			let newstep = {
@@ -131,7 +157,9 @@ export class gridItemScript extends GridItemWithMenu {
 			// first update steporders to sync with actual row moves
 			let rows = this.#tabulatorObj.getRows();
 			for (let i=0;i<rows.length;i++) {
-				rows[i].update({"stepOrder":rows[i].getPosition()});	
+				if (rows[i].getPosition()>0) {
+					rows[i].update({"stepOrder":rows[i].getPosition()});	
+				}
 			}
 			
 			// tabulator is set as reactive here, so it adds a new row on push
@@ -140,7 +168,7 @@ export class gridItemScript extends GridItemWithMenu {
 			
 	}
 	
-	// --------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------------
 	
 
 	btnEditAsJsonClick(e) {
@@ -148,7 +176,7 @@ export class gridItemScript extends GridItemWithMenu {
 		//this.#outputcodefunc(JSON.stringify(this.#transformscript,null,4));
 		
 	}
-	// --------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------------
 	btnSavePyScriptClick(e) {
 		console.log("savepyscript click");
 		const scriptheader = { ...this.#transformscript, transformSteps: undefined };
@@ -171,7 +199,7 @@ export class gridItemScript extends GridItemWithMenu {
 		
 		//this.#outputcodefunc(pycode);
 	}
-	// --------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------------
 	btnLoadPyScriptClick(pycode) {
 		console.log("loadpyscript click");
 		//let pycode = this.#getcodefunc();
@@ -225,8 +253,8 @@ export class gridItemScript extends GridItemWithMenu {
 		}
 	}
 	
-	// --------------------------------------------------------------------------------
-	// --------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------------
 	
 }
 
