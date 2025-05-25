@@ -5,14 +5,14 @@
  *
  * 
  * ****************************/
-import { dfAction, getdfActionsArray } from "./dfaction.js";
+import { cmdAction, getcmdActionsArray } from "./cmdactiontemplates.js";
 import { GridItemWithMenu } from "./griditemwithmenu.js";
 
 
 export const TransformStep = {
 	stepOrder: 0,
 	targetEnv: "py",
-	srcDfAction: {},
+	srccmdAction: {},
 	scriptCode: "",
 	targetDataframe: "df",
 	mutations: ["df","file"], 
@@ -81,7 +81,7 @@ export class gridItemScript extends GridItemWithMenu {
 				},
 				{title:"stepOrder", field:"stepOrder", editor:false, headerSort:false,width:50,visible:true,},
 				{title:"Run status", field:"lastRunStatus", formatter:"tickCross", formatterParams:{ allowEmpty:true, allowTruthy:true, }, editor:false, headerSort:false, width:50, },
-				{title:"Name", field:"srcDfActionName", editor:true, headerSort:false, formatter:"textarea",width:90,},
+				{title:"Name", field:"srccmdActionName", editor:true, headerSort:false, formatter:"textarea",width:90,},
 				{title:"Type", field:"targetEnv", editor:true,headerSort:false,width:50,},
 				{title:"Code", field:"scriptCode", editor:true, headerSort:false, formatter:"textarea",width:210,},
 				{title:"Exec time", field:"executionTime", editor:false,headerSort:false, width:50,},
@@ -118,7 +118,7 @@ export class gridItemScript extends GridItemWithMenu {
 		if (eventdata?.menuItemId === "addpythonscriptstep") {
 			this.addScriptStep({actionid:'PythonScript', parameters:{df:"df"}});
 		} else if (eventdata?.menuItemId === "addsqlscriptstep") {
-			
+			this.addScriptStep({actionid:'SQLScript', parameters:{df:"df"}});
 		} else if (eventdata?.menuItemId === "cleareditorgriditem") {
 			
 		} else if (eventdata?.menuItemId === "prevcommandmenuitem") {
@@ -137,14 +137,14 @@ export class gridItemScript extends GridItemWithMenu {
 	
 	// -----------------------------------------------------------------------------------------------------------
 	addScriptStep(stepdata) {
-			let newaction = new dfAction(stepdata);
+			let newaction = new cmdAction(stepdata);
 			let newstep = {
 				//rownum: this.#transformscript.transformSteps.length+1,
 				stepOrder: this.#transformscript.transformSteps.length+1,
-				srcDfActionId: stepdata.actionid,
-				srcDfActionName: newaction.actionTemplateObj.name,
-				scriptCode: newaction.pycode(),
-				targetEnv: "py",
+				srccmdActionId: stepdata.actionid,
+				srccmdActionName: newaction.actionTemplateObj.name,
+				scriptCode: newaction.cmdcode(),
+				targetEnv: newaction.actionTemplateObj.targetEnv,
 				targetDataframe: stepdata.parameters.df,
 				mutations: [stepdata.parameters.df], 
 				lastRunStatus: undefined,
