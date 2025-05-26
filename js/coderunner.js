@@ -144,6 +144,9 @@ export class CodeRunner {
 				this.pystdout.strOutput = '';
 				pyodide.setStdout({ batched: this.stdoutPyBatched.bind(this) });
 			}
+			// attempt to auto load imports
+			await pyodide.loadPackagesFromImports(cmd);
+			
 			if (appuuid==="globals" || namespace==="globals") {
 				res.namespaceuuid = "globals";
 				res.output = await pyodide.runPythonAsync(cmd);   //  await pyodide.pyodide_py.code.eval_code_async(code, pyodide.globals);
@@ -298,7 +301,7 @@ export class CodeRunner {
 		return res;
 	}
 	
-	// --------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------------------------------------
 	
 	async runAsyncBatch(cmdarr, appuuid="globals", namespace="") {
 		// cmdarr - array of type [ {	targetEnv: "py", scriptCode: "", stepOrder: 0,}, ... ]
@@ -311,8 +314,10 @@ export class CodeRunner {
 		let res = {
 			targetEnv: '',   //  returns targetEnv of the last executed cmdarr item
 			output: null,    //  returns the output of the last executed cmdarr item
-			runStatus: undefined,
+			runStatus: null,
 			runResult: "",
+			stepID: '',
+			stepOrder : -1,
 			error: null,
 			errormessage: null,
 			errorshort: null,
@@ -372,6 +377,8 @@ export class CodeRunner {
 				stepindex: i,
 				targetEnv: cmdarr[i].targetEnv,
 				cmd: cmdarr[i].scriptCode,
+				stepID: cmdarr[i].stepID,
+				stepOrder: cmdarr[i].stepOrder,
 				runStatus: true,
 				runResult: "success",
 				error: null,
@@ -384,10 +391,13 @@ export class CodeRunner {
 				executionTime: 0,
 			};
 			
-			res.targetEnv = cmdarr[i].targetEnv;   
+			res.targetEnv = cmdarr[i].targetEnv; 
+			res.stepID = cmdarr[i].stepID;
+			res.stepOrder = cmdarr[i].stepOrder;  
 			
 			if (cmdarr[i].targetEnv==='py') {
 				
+				await pyodide.loadPackagesFromImports(cmdarr[i].scriptCode);
 				try {
 					res.output = await pyodide.pyodide_py.code.eval_code_async(cmdarr[i].scriptCode, pyodideNameSpace);
 					
@@ -423,6 +433,7 @@ export class CodeRunner {
 				
 				
 			} else if (cmdarr[i].targetEnv==='sql') {
+				await this.checkFileHandlersInSQLcmd(cmdarr[i].scriptCode);
 				try {
 					res.output = await conn.query(cmdarr[i].scriptCode);	
 				} catch (err) {

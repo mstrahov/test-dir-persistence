@@ -94,7 +94,7 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 			this.cmdhistory.push(editorcontents);
 			this.cmdhistoryPosition = this.cmdhistory.length;
 		}
-		this.setValue('');		
+		this.codeEditorObj.setValue('');		
 		this.contentsChanged = false;
 	}
 	
@@ -131,6 +131,7 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 	
 	setValue(valstr) {
 		//~ doc.setValue(content: string)    Set the editor content.
+		this.clearEditor();
 		this.codeEditorObj.setValue(valstr);
 	}
 	

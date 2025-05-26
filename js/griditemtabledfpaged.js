@@ -13,6 +13,10 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 	
 	constructor (params) {
 		super(params);
+		
+		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.menuEventHandler.bind(this));
+		this.eventbus.subscribe('clickableactionclick',this.menuEventHandler.bind(this));
+		
 		this.coderunner = params.coderunner;
 		this.parentuuid = params.parentuuid;
 		
@@ -42,6 +46,19 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 		this.pyodide = await this.pyodidePromise;
 		
 	}
+	
+	// -------------------------------------------------------------------------
+	menuEventHandler(obj,eventdata) {
+		console.log("griditemTableDFPaged widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
+		
+		if (eventdata?.menuItemId === "refreshaction") {
+			this.showdf();
+		} else if (eventdata?.menuItemId === "refreshgriditem") {
+			this.showdf();
+		}
+		
+	}
+	
 	// -------------------------------------------------------------------------
 	async showdf() {
 		if (!this.pyodide) { await this.init(); }
@@ -77,7 +94,7 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 			// TODO: show error in place of a table?
 			return false;
 		}
-		window.exectimer.timeit("Showing dataframe 2 / got data...");
+		// window.exectimer.timeit("Showing dataframe 2 / got data...");
 		// -------------------   tabulator with regular columns
 		this.tabulatorobj = new Tabulator(this.#internalContainer, {
 						...this.tabulatorProperties,
@@ -111,8 +128,8 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 	// -------------------------------------------------------------------------
 	eventTableBuilt() {
 
-		this.eventbus.dispatch('tableBuilt', this);	
-		window.exectimer.timeit("Showing dataframe 2 / done...");
+		this.eventbus.dispatch('tableBuilt', this, {});	
+		//window.exectimer.timeit("Showing dataframe 2 / done...");
 	}
 	// -------------------------------------------------------------------------
 	generateColumnDefinitions(dfarray) {

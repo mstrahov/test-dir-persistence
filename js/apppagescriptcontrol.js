@@ -12,7 +12,9 @@ import { GridItemPyEditor } from  "./griditempyeditor.js";
 import { StatusGridItemTextOutput } from "./griditemtextoutput.js";
 import { gridItemScript, TransformScriptInit } from "./griditemscript.js";
 import { gridItemSelectFileDialog } from "./griditemselectfiledialog.js";
-import { griditemTableDFPaged } from "./griditemtabledfpaged.js";
+// import { griditemTableDFPaged } from "./griditemtabledfpaged.js";
+import { griditemTableDFPagedTransform } from "./griditemtabledfpagedtransform.js";
+
 
 export class AppPageScriptControl extends AppPageControl {
 	#tablePickerDialog;
@@ -32,8 +34,8 @@ export class AppPageScriptControl extends AppPageControl {
 				scriptname: "",
 			}
 		);
-		this.pyeditor = this.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Python", griditemoptions: {w:6,h:5,} });
-		this.dfview = this.addGridItem( griditemTableDFPaged, {templateid:"#gridItemDFtransformview", headertext: "DataFrame view", griditemoptions: {w:6,h:5,},
+		this.pyeditor = this.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonScriptControlCodeEditor", headertext: "Python", griditemoptions: {w:6,h:5,} });
+		this.dfview = this.addGridItem( griditemTableDFPagedTransform, {templateid:"#gridItemDFtransformview", headertext: "DataFrame view", griditemoptions: {w:6,h:5,},
 			coderunner: this.coderunner,
 			parentuuid: this.uuid
 		});
@@ -46,14 +48,37 @@ export class AppPageScriptControl extends AppPageControl {
 		
 		let that = this; 
 		this.fileIOHandler.eventbus.subscribe('ioDirRefreshNeeded',(obj,eventdata)=>{  that.selectFileDialog.refreshData(eventdata); }, this.selectFileDialog.uuid);
-		this.selectFileDialog.eventbus.subscribe('importfiletodf',(obj,eventdata)=>{  that.addImportFileStep(eventdata); }, this.scriptControl.uuid);
+		this.selectFileDialog.eventbus.subscribe('importfiletodf',async (obj,eventdata)=>{  
+			await that.addImportFileStep(eventdata); 
+			await that.runScriptOneStep(eventdata); 
+		}, this.scriptControl.uuid);
 		
-		this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ this.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
-		this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ this.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
-		this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ this.statusTabOutput.runExecutionFailure(eventdata);  }, this.statusTabOutput.uuid);
+		this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+		this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+		this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.statusTabOutput.runExecutionFailure(eventdata);  }, this.statusTabOutput.uuid);
 		
 		this.scriptControl.eventbus.subscribe('runonecodestepaction',(obj,eventdata)=>{  that.runScriptOneStep(eventdata); }, this.uuid);
 		this.scriptControl.eventbus.subscribe('runallcodestepsaction',(obj,eventdata)=>{  that.runScriptAllSteps(eventdata); }, this.uuid);
+		
+		this.scriptControl.eventbus.subscribe('showscriptaspythoneditable',(obj,eventdata)=>{  that.pyeditor.setValue(eventdata?.pycode); }, this.uuid);
+		
+		this.scriptControl.eventbus.subscribe('loadfrompythonscript',(obj,eventdata)=>{  that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue()); }, this.uuid);
+		
+		this.pyeditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ that.runCmdFromGridItem('py',obj,eventdata);  }, this.uuid);
+		this.pyeditor.eventbus.subscribe('clickableactionclick',(obj,eventdata)=>{ 
+			if (eventdata?.menuItemId === "syncaction") {
+				that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue());  
+			}
+		}, this.uuid);
+		
+		this.dfview.eventbus.subscribe('cmdActionEvent',async (obj,eventdata)=>{  
+			await that.scriptControl.addScriptStep(eventdata);
+			await that.runScriptOneStep(eventdata); 
+		}, this.scriptControl.uuid);
+		this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+		this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+		this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+		
 	}
 	// --------------------------------------------------------------------------------
 	async init() {
@@ -64,6 +89,48 @@ export class AppPageScriptControl extends AppPageControl {
 	
 	async runScriptOneStep(eventdata) {
 		console.log("runScriptOneStep",eventdata);
+		let scriptsteps = this.scriptControl?.transformscript?.transformSteps;
+		
+		if (!scriptsteps) {
+			console.error('Error: no transform script found!');
+			return false;
+		} else if (scriptsteps.length===0) {
+			console.log('Transform script is empty.');
+			return false;
+		}
+		scriptsteps.sort((a,b)=>a.stepOrder-b.stepOrder);
+		let steptorun = scriptsteps.findIndex((el)=>el.lastRunStatus!==true);
+		if (steptorun===-1) {steptorun=0;}
+		for (let i=steptorun;i<scriptsteps.length;i++) {
+			scriptsteps[i].lastRunStatus = null;
+		}
+		console.log(scriptsteps, steptorun);
+		
+		
+		let res;
+		try {
+			res = await this.runAsync(scriptsteps[steptorun].targetEnv, scriptsteps[steptorun].scriptCode);
+			console.log("Command run res: ", res);
+			if (res?.runStatus) {
+				scriptsteps[steptorun].lastRunStatus = true;
+				scriptsteps[steptorun].lastRunResult = res.runResult;
+				scriptsteps[steptorun].executionTime = res.executionTime;
+				this.eventbus.dispatch('CmdExecutionSuccess', this, { targetEnv: scriptsteps[steptorun].targetEnv, cmd: scriptsteps[steptorun].scriptCode, result: res });
+				
+			} else {
+				scriptsteps[steptorun].lastRunStatus = false;
+				scriptsteps[steptorun].lastRunResult = res.errorshort;
+				scriptsteps[steptorun].executionTime = res.executionTime;
+				this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: scriptsteps[steptorun].targetEnv, cmd: scriptsteps[steptorun].scriptCode, result: res });
+			}
+		} catch (err) {
+			console.error("Command run err ",err);
+			scriptsteps[steptorun].lastRunStatus = false;
+			scriptsteps[steptorun].lastRunResult = 'failed to run';
+			scriptsteps[steptorun].executionTime = 0;
+			this.eventbus.dispatch('CmdExecutionFailed', this, { targetEnv: scriptsteps[steptorun].targetEnv, cmd: scriptsteps[steptorun].scriptCode, result: null, error: err });
+		}
+		
 		
 	}
 	
@@ -71,7 +138,48 @@ export class AppPageScriptControl extends AppPageControl {
 	
 	async runScriptAllSteps(eventdata) {
 		console.log("runScriptAllSteps",eventdata);
+			let scriptsteps = this.scriptControl?.transformscript?.transformSteps;
 		
+		if (!scriptsteps) {
+			console.error('Error: no transform script found!');
+			return false;
+		} else if (scriptsteps.length===0) {
+			console.log('Transform script is empty.');
+			return false;
+		}
+		scriptsteps.sort((a,b)=>a.stepOrder-b.stepOrder);
+		for (let i=0;i<scriptsteps.length;i++) {
+			scriptsteps[i].lastRunStatus = null;
+		}
+		console.log("scriptsteps", scriptsteps);
+		
+		let res;
+		try {
+			res = await this.coderunner.runAsyncBatch(scriptsteps, this.appuuid); 
+			console.log("Command run res: ", res);
+			if (res?.runStatus) {
+				this.eventbus.dispatch('CmdExecutionSuccess', this, { targetEnv: res.targetEnv, cmd: '', result: res });
+			} else {
+				this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: res.targetEnv, cmd: '', result: res });
+			}
+			
+			if (res?.runresults && res?.runresults.length>0) {
+				for (let j=0;j<res.runresults.length;j++) {
+					let stepIndex = scriptsteps.findIndex((el)=>el.stepID===res.runresults[j].stepID);
+					if (stepIndex>-1) {
+						scriptsteps[stepIndex].lastRunStatus = res.runresults[j].runStatus;
+						scriptsteps[stepIndex].lastRunResult = res.runresults[j].runResult;
+						scriptsteps[stepIndex].executionTime = res.runresults[j].executionTime;
+					}
+					
+				}
+				
+			}
+			
+		} catch (err) {
+			console.error("Command run err ",err);
+			this.eventbus.dispatch('CmdExecutionFailed', this, { targetEnv: res.targetEnv, cmd: '', result: null, error: err });
+		}
 	}
 	
 	// --------------------------------------------------------------------------------
@@ -148,7 +256,7 @@ sheetinfo`;
 			if (selectedOption) {
 				// that.eventbus.dispatch('dfActionEvent',that,{actionid:a.actionid, parameters:{df:"df",rownum:cell.getRow().getIndex(), colnum:colIndex-1}}  );
 				// window.teststeps.addScriptStep(eventdata);
-				this.scriptControl.addScriptStep({actionid:'ImportExcelFileToDF', parameters:{df:"df",filepath:eventdata.fullpath, sheetname:selectedOption.sheetname}});
+				await this.scriptControl.addScriptStep({actionid:'ImportExcelFileToDF', parameters:{df:"df",filepath:eventdata.fullpath, sheetname:selectedOption.sheetname}});
 				
 			}
 			

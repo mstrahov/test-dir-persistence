@@ -89,6 +89,14 @@ export class gridItemScript extends GridItemWithMenu {
 				
 
 			],
+			rowContextMenu:[
+				{
+					label:"Delete step",
+					action:this.deleteOneStepRow.bind(this),
+				},
+
+				
+			],
 			data:this.#transformscript.transformSteps,
 		};
 		
@@ -112,6 +120,23 @@ export class gridItemScript extends GridItemWithMenu {
 		
 		
 	}
+	
+	// -----------------------------------------------------------------------------------------------------------
+	get transformscript() {
+		return this.#transformscript;
+	}
+	// -----------------------------------------------------------------------------------------------------------
+	
+	async deleteOneStepRow(e, row) {
+		
+		const rowData = row.getData();
+		let delIndex = this.#transformscript.transformSteps.findIndex((el)=>el.stepID===rowData?.stepID);
+		if (delIndex>-1) {
+			this.#transformscript.transformSteps.splice(delIndex,1);
+		}
+		
+	}
+	
 	// -----------------------------------------------------------------------------------------------------------
 	async menuEventHandler(obj,eventdata) {
 		console.log("GridItemPyEditor widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
@@ -131,13 +156,17 @@ export class gridItemScript extends GridItemWithMenu {
 			this.eventbus.dispatch('runallcodestepsaction', this, {});
 			
 		} else if (eventdata?.menuItemId === "syncaction") {
+			let pycode = await this.convertScriptToPyCode();
+			this.eventbus.dispatch('showscriptaspythoneditable', this, {pycode: pycode,});
 			
 		} else if (eventdata?.menuItemId === "exportasjson") {
 			
 		} else if (eventdata?.menuItemId === "editaspythonscript") {
+			let pycode = await this.convertScriptToPyCode();
+			this.eventbus.dispatch('showscriptaspythoneditable', this, {pycode: pycode,});
 			
 		} else if (eventdata?.menuItemId === "loadfrompythonscript") {
-			
+			this.eventbus.dispatch('loadfrompythonscript', this, {});
 		}
 		
 	}
@@ -148,7 +177,7 @@ export class gridItemScript extends GridItemWithMenu {
 		let rows = this.#tabulatorObj.getRows();
 		for (let i=0;i<rows.length;i++) {
 			if (rows[i].getPosition()>0) {
-				rows[i].update({"stepOrder":rows[i].getPosition()});	
+				await rows[i].update({"stepOrder":rows[i].getPosition()});	
 			}
 		}
 	}
@@ -159,14 +188,14 @@ export class gridItemScript extends GridItemWithMenu {
 			let newstep = {
 				//rownum: this.#transformscript.transformSteps.length+1,
 				stepOrder: this.#transformscript.transformSteps.length+1,
+				targetEnv: newaction.actionTemplateObj.targetEnv,
 				stepID: self.crypto.randomUUID(),
 				srccmdActionId: stepdata.actionid,
 				srccmdActionName: newaction.actionTemplateObj.name,
 				scriptCode: newaction.cmdcode(),
-				targetEnv: newaction.actionTemplateObj.targetEnv,
 				targetDataframe: stepdata.parameters.df,
 				mutations: [stepdata.parameters.df], 
-				lastRunStatus: undefined,
+				lastRunStatus: null,
 				lastRunResult: "",
 				executionTime: 0,
 				stepactive: true,
@@ -191,30 +220,29 @@ export class gridItemScript extends GridItemWithMenu {
 		
 	}
 	// -----------------------------------------------------------------------------------------------------------
-	btnSavePyScriptClick(e) {
+	async convertScriptToPyCode() {
 		console.log("savepyscript click");
 		const scriptheader = { ...this.#transformscript, transformSteps: undefined };
 		let pycode = '#---script: ' + JSON.stringify(scriptheader) + "\n";
 		
-		const rows = this.#tabulatorObj.getRows();
-		for (let i=0;i<rows.length;i++) {
-				rows[i].update({"stepOrder":rows[i].getPosition()});	
-		}
+		await this.updateStepOrderBasedOnActualOrder();
 				
-		
-		//let scriptsteps = this.#tabulatorObj.getData();
-		// this.#transformscript.transformSteps
 		let scriptsteps = this.#transformscript.transformSteps;
 		scriptsteps.sort((a,b)=>a.stepOrder-b.stepOrder);
 		for (let i=0;i<scriptsteps.length;i++) {
 			pycode += '#---step '+i+':'+JSON.stringify({ ...scriptsteps[i], scriptCode: undefined }) + "\n";
-			pycode += scriptsteps[i].scriptCode + "\n";
+			if (scriptsteps[i].targetEnv==="py") {
+				pycode += scriptsteps[i].scriptCode + "\n";
+			} else {
+				pycode += '"""' + scriptsteps[i].scriptCode + '"""' + "\n";
+			}
 		}
 		
-		//this.#outputcodefunc(pycode);
+		return pycode;
+
 	}
 	// -----------------------------------------------------------------------------------------------------------
-	btnLoadPyScriptClick(pycode) {
+	async loadScriptFromPyCode(pycode) {
 		console.log("loadpyscript click");
 		//let pycode = this.#getcodefunc();
 		pycode +='#---step';
@@ -256,14 +284,17 @@ export class gridItemScript extends GridItemWithMenu {
 					}	
 				}
 				// todo:  verify all fields of stepobj???
+				if (stepobj.targetEnv==="sql") {
+					stepobj.scriptCode = stepobj.scriptCode.replaceAll('"""','');
+				}
 				console.log("step obj=",stepobj);
 				newstepsarray.push(stepobj);
 			}
 			this.#transformscript.transformSteps = [...newstepsarray];
-			this.#tabulatorObj.setData(this.#transformscript.transformSteps);
+			await this.#tabulatorObj.setData(this.#transformscript.transformSteps);
 				
 		} else {
-			console.log("not a script");
+			console.log("Not a script");
 		}
 	}
 	

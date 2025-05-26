@@ -36,7 +36,8 @@ export const cmdActionsList = [
 		actionid: "PythonScript",
 		name: "Add python script",
 		description: "Add python script",
-		cmdtemplate: '{{df}}={{df}}',
+		cmdtemplate: `import pandas as pd
+{{df}}=pd.DataFrame()`,
 		cmdexample: 'df=df',
 		actiontype: ["column","row","cell"],
 		parameters: { df: "string" },
