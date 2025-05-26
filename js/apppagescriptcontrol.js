@@ -23,7 +23,6 @@ export class AppPageScriptControl extends AppPageControl {
 		this.#tablePickerDialog = params.tablePickerDialog;
 		this.scriptObject = params.transformScript?params.transformScript:TransformScriptInit();
 		
-		
 		this.scriptControl = this.addGridItem( gridItemScript, 
 			{	
 				templateid:"#gridItemScriptDialog", 
@@ -53,12 +52,28 @@ export class AppPageScriptControl extends AppPageControl {
 		this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ this.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
 		this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ this.statusTabOutput.runExecutionFailure(eventdata);  }, this.statusTabOutput.uuid);
 		
-		
+		this.scriptControl.eventbus.subscribe('runonecodestepaction',(obj,eventdata)=>{  that.runScriptOneStep(eventdata); }, this.uuid);
+		this.scriptControl.eventbus.subscribe('runallcodestepsaction',(obj,eventdata)=>{  that.runScriptAllSteps(eventdata); }, this.uuid);
 	}
 	// --------------------------------------------------------------------------------
 	async init() {
 			
 	}
+	
+	// --------------------------------------------------------------------------------	
+	
+	async runScriptOneStep(eventdata) {
+		console.log("runScriptOneStep",eventdata);
+		
+	}
+	
+	// --------------------------------------------------------------------------------	
+	
+	async runScriptAllSteps(eventdata) {
+		console.log("runScriptAllSteps",eventdata);
+		
+	}
+	
 	// --------------------------------------------------------------------------------
 	async addImportFileStep(eventdata) {
 		// {fullpath: row.getData().fullpath, filetype: row.getData().filetype   }

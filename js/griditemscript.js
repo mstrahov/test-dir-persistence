@@ -14,6 +14,7 @@ export const TransformStep = {
 	targetEnv: "py",
 	srccmdAction: {},
 	scriptCode: "",
+	stepID: "",
 	targetDataframe: "df",
 	mutations: ["df","file"], 
 	lastRunStatus: undefined,
@@ -112,35 +113,53 @@ export class gridItemScript extends GridItemWithMenu {
 		
 	}
 	// -----------------------------------------------------------------------------------------------------------
-	menuEventHandler(obj,eventdata) {
+	async menuEventHandler(obj,eventdata) {
 		console.log("GridItemPyEditor widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
 		
 		if (eventdata?.menuItemId === "addpythonscriptstep") {
-			this.addScriptStep({actionid:'PythonScript', parameters:{df:"df"}});
+			await this.addScriptStep({actionid:'PythonScript', parameters:{df:"df"}});
+			
 		} else if (eventdata?.menuItemId === "addsqlscriptstep") {
-			this.addScriptStep({actionid:'SQLScript', parameters:{df:"df"}});
-		} else if (eventdata?.menuItemId === "cleareditorgriditem") {
+			await this.addScriptStep({actionid:'SQLScript', parameters:{df:"df"}});
 			
-		} else if (eventdata?.menuItemId === "prevcommandmenuitem") {
+		} else if (eventdata?.menuItemId === "runcodeonestepaction") {
+			await this.updateStepOrderBasedOnActualOrder();
+			this.eventbus.dispatch('runonecodestepaction', this, {});
 			
-		} else if (eventdata?.menuItemId === "nextcommandmenuitem") {
+		} else if (eventdata?.menuItemId === "runallcodeaction") {
+			await this.updateStepOrderBasedOnActualOrder();
+			this.eventbus.dispatch('runallcodestepsaction', this, {});
 			
-		} else if (eventdata?.menuItemId === "runselectedcommandmenuitem") {
+		} else if (eventdata?.menuItemId === "syncaction") {
 			
-		} else if (eventdata?.menuItemId === "runcommandmenuitem") {
+		} else if (eventdata?.menuItemId === "exportasjson") {
 			
-		} else if (eventdata?.menuItemId === "dumpallhistory") {
+		} else if (eventdata?.menuItemId === "editaspythonscript") {
+			
+		} else if (eventdata?.menuItemId === "loadfrompythonscript") {
 			
 		}
 		
 	}
 	
 	// -----------------------------------------------------------------------------------------------------------
-	addScriptStep(stepdata) {
+	
+	async updateStepOrderBasedOnActualOrder() {
+		let rows = this.#tabulatorObj.getRows();
+		for (let i=0;i<rows.length;i++) {
+			if (rows[i].getPosition()>0) {
+				rows[i].update({"stepOrder":rows[i].getPosition()});	
+			}
+		}
+	}
+	
+	// -----------------------------------------------------------------------------------------------------------
+	async addScriptStep(stepdata) {
 			let newaction = new cmdAction(stepdata);
 			let newstep = {
 				//rownum: this.#transformscript.transformSteps.length+1,
 				stepOrder: this.#transformscript.transformSteps.length+1,
+				stepID: self.crypto.randomUUID(),
 				srccmdActionId: stepdata.actionid,
 				srccmdActionName: newaction.actionTemplateObj.name,
 				scriptCode: newaction.cmdcode(),
@@ -155,12 +174,7 @@ export class gridItemScript extends GridItemWithMenu {
 			};
 			
 			// first update steporders to sync with actual row moves
-			let rows = this.#tabulatorObj.getRows();
-			for (let i=0;i<rows.length;i++) {
-				if (rows[i].getPosition()>0) {
-					rows[i].update({"stepOrder":rows[i].getPosition()});	
-				}
-			}
+			await this.updateStepOrderBasedOnActualOrder();
 			
 			// tabulator is set as reactive here, so it adds a new row on push
 			this.#transformscript.transformSteps.push(newstep);
