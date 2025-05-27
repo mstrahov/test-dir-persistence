@@ -154,6 +154,15 @@ This would not be possible without these awesome opensource projects:
 					<option value="2">Option 2</option>
 					<option value="3">Option 3</option>
 				  </select>
+				  <!-- input -->
+				  <input type="text" class="form-control" name="example-text-input"
+						value = "Original value passed" placeholder="Input placeholder" />
+					<!-- input -->
+					
+					<!-- textarea -->
+					 <textarea class="form-control" name="example-textarea"
+							placeholder="Textarea placeholder"></textarea>
+				<!-- textarea -->
 				</div>
 				<div class="modal-footer">
 				  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -215,6 +224,30 @@ This would not be possible without these awesome opensource projects:
 		
 		
 		<!-- ================================================================================================================== -->
+		
+		<template id="editfieldvaluetemplate">
+			<div class="modal fade" id="pickermodal" tabindex="-1" aria-labelledby="pickerModalLabel" aria-hidden="true" data-bs-backdrop="static">
+				<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+				  <div class="modal-content">
+					<div class="modal-header">
+					  <h5 class="modal-title" id="pickerModalLabel">Enter text:</h5>
+					  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<input type="text" id="inputoneline" class="form-control" name="one-line-input"
+						value = "Original value passed" placeholder="Input placeholder" />
+					</div>
+					<div class="modal-footer">
+					  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+					  <button type="button" class="btn btn-primary" id="pickermodalSelectButton">OK</button>
+					</div>
+				  </div>
+				</div>
+			</div>
+		
+		</template>
+		
+		
 		<!-- ================================================================================================================== -->
 		
 

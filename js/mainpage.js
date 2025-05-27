@@ -1201,6 +1201,7 @@ let g1 = pyodide.globals.toJs()
 g1.keys()
 g1.get("df").type			
 
+let g1 = window.coderunner.pyNameSpaces.get('27568fb8-1c81-4b14-ac49-a92d60bdb99e').toJs()
 
 
 
