@@ -18,12 +18,16 @@ import { griditemTableDFPagedTransform } from "./griditemtabledfpagedtransform.j
 
 export class AppPageScriptControl extends AppPageControl {
 	#tablePickerDialog;
+	#modalInputDialog;
 	
 	constructor (params) {
 		super(params);
 		this.fileIOHandler = params.fileIOHandler;
 		this.#tablePickerDialog = params.tablePickerDialog;
 		this.scriptObject = params.transformScript?params.transformScript:TransformScriptInit();
+		this.#modalInputDialog = params.modalInputDialog;
+		
+		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.topDropDownMenuEventHandler.bind(this));
 		
 		this.scriptControl = this.addGridItem( gridItemScript, 
 			{	
@@ -83,6 +87,24 @@ export class AppPageScriptControl extends AppPageControl {
 	// --------------------------------------------------------------------------------
 	async init() {
 			
+	}
+	// --------------------------------------------------------------------------------	
+	async topDropDownMenuEventHandler(obj,eventdata) {
+		//console.log("main drop down menu item click",obj,eventdata); 
+		
+		if (eventdata?.menuItemId === "renameaction") {
+		//	this.grid.compact();
+		//} else if (eventdata?.menuItemId === 'savelayout') {
+		//	console.log(this.layoutToJSON());
+		}
+		
+	}
+	
+	// --------------------------------------------------------------------------------	
+	
+	async renameScript() {
+		
+		
 	}
 	
 	// --------------------------------------------------------------------------------	

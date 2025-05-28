@@ -16,6 +16,7 @@ import { GridItemTextOutput, StatusGridItemTextOutput } from "./griditemtextoutp
 import { FileIOHandler } from "./fileiohandler.js"
 import { gridItemFileDialog } from "./griditemfiledialog.js"
 import { TabulatorPicker } from "./tabupicker.js";
+import { modalDialogInput } from "./modaldialoginput.js";
 
 //console.log("test main app");
 // =====  Interface layout
@@ -28,7 +29,7 @@ window.coderunner = new CodeRunner({duckdbloader: window.duckdb, pyodideloader: 
 
 // ============= user dialogs ====================================
 let tablePicker = new TabulatorPicker({templateid:"#tabulatorpickertemplate"});
-
+let modalInput = new modalDialogInput({templateid:"#editfieldvaluetemplate"});
 //  ======================== Status Tab (right-most tab under spinner)
 const tabNavStatusTab = new AppPageControl( { 
 			tabnavcontrol: tabnavcontrol,  
@@ -109,6 +110,7 @@ const OpenNewScriptTab = ()=>{
 			DropDownMenuTemplateID: "#menuAppTab01",
 			fileIOHandler: window.fileiohandler,
 			tablePickerDialog: tablePicker,
+			modalInputDialog: modalInput,
 		});
 	activetabs.push(newtab);
 };

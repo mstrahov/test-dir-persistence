@@ -11,6 +11,7 @@
 			import { TabulatorPicker } from "./tabupicker.js";
 			import { DataFrameTableView } from "./dataframetableview.js";
 			import { TransformTableView } from "./transformtableview.js";
+			import { modalDialogInput } from "./modaldialoginput.js";
 			
 			// ------------------------------------------------------------------------
 			async function main_py() {
@@ -677,7 +678,26 @@ plot1`);
 			// testshowpicker
 			document.getElementById("testshowpicker").addEventListener("click", async ()=>{await testOptionPicker(testpicker)});
 			
+			document.getElementById("testmodalinputdialog").addEventListener("click", async ()=>{
+				console.log("test input dialog click");
+				
+				try {
+					const props = {
+						dialogTitle: "Enter one line of text here:",
+						inputOneLine: "Initial value",
+						inputOneLinePlaceHolder: "nothing as a placeholder",
+					};
+					const selectedOption = await testmodalDialogInput.showdialog(props);
+					console.log('Return value:', selectedOption);
+				} catch (error) {
+					console.error('Error:', error.message);
+				}
+					
+			});
+			
+			
 			var testpicker = new TabulatorPicker({templateid:"#tabulatorpickertemplate"});
+			var testmodalDialogInput = new modalDialogInput({templateid:"#editfieldvaluetemplate"});
 			
 			//  df table 1
 			window.dftabulator = new Tabulator("#dftable", {
@@ -1204,5 +1224,12 @@ g1.get("df").type
 let g1 = window.coderunner.pyNameSpaces.get('27568fb8-1c81-4b14-ac49-a92d60bdb99e').toJs()
 
 
+----------------------
+#pyodide FS delete remote entries hack
+py.FS.filesystems.NATIVEFS_ASYNC.removeRemoteEntry = function() { console.log("HACKED!"); }
+#original   py.FS.filesystems.NATIVEFS_ASYNC.removeRemoteEntry =
+async(n,o)=>{await n.get(r.dirname(o)).removeEntry(r.basename(o)),n.delete(o)}
+
+py.FS.filesystems.NATIVEFS_ASYNC.removeRemoteEntry = async function(n,o) { console.log("HACKED!",n,o); }
 
 			*/

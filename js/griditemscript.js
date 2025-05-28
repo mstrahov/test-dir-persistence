@@ -40,6 +40,8 @@ export const TransformScript = {
 
 export function TransformScriptInit() {
 	return {
+		scriptName : "New Script",
+		scriptID:  self.crypto.randomUUID(),  
 		srcfiles: [],
 		destfiles: [],
 		pyodideobject: undefined,

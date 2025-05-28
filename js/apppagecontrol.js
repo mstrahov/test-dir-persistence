@@ -65,7 +65,7 @@ export class AppPageControl {
 		
 		// grid element init  https://github.com/gridstack/gridstack.js/tree/master/doc
 		let opts = {
-			  cellHeight: 'auto', // see other possible values (best to do in here)
+			  //cellHeight: 'auto', // see other possible values (best to do in here)
 			  cellHeightThrottle: 100,
 			  handle: '.grid-elem-draggable' ,
 			  margin: 1,
@@ -110,7 +110,7 @@ export class AppPageControl {
 	}
 	
 	topDropDownEventHandler(obj,eventdata) {
-		console.log("main drop down menu item click",obj,eventdata); 
+		//console.log("main drop down menu item click",obj,eventdata); 
 		
 		if (eventdata?.menuItemId === 'compactview') {
 			this.grid.compact();

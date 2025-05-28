@@ -40,9 +40,6 @@ export class FileIOHandler {
 		this.projectfile = "";
 		this.duckdbfilehandles = [];
 		
-		
-		
-		
 	}
 	// ------------------------------------------------------------------
 	_iostatechange(newstate, addmessage='', params={}) {
@@ -206,6 +203,7 @@ export class FileIOHandler {
 		 * 
 		 * FS.syncfs() - if called (true: FS->disk), then (false: disk->FS) for some reason does not store a new file to opfs store - needs to be researched, maybe a bug in pyodide? 
 		 *
+		 * https://github.com/pyodide/pyodide/blob/main/src/js/nativefs.ts#L199
 		 *   */
 		
 		
