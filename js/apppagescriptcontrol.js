@@ -84,6 +84,9 @@ export class AppPageScriptControl extends AppPageControl {
 			await that.scriptControl.addScriptStep(eventdata);
 			await that.runScriptOneStep(eventdata); 
 		}, this.scriptControl.uuid);
+		
+		this.dfview.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+		
 		this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 		this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 		this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
@@ -177,14 +180,14 @@ export class AppPageScriptControl extends AppPageControl {
 				scriptsteps[steptorun].lastRunStatus = false;
 				scriptsteps[steptorun].lastRunResult = res.errorshort;
 				scriptsteps[steptorun].executionTime = res.executionTime;
-				this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: scriptsteps[steptorun].targetEnv, cmd: scriptsteps[steptorun].scriptCode, result: res });
+				this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: scriptsteps[steptorun].targetEnv, cmd: scriptsteps[steptorun].scriptCode, result: res, msg: "Step execution error:", });
 			}
 		} catch (err) {
 			console.error("Command run err ",err);
 			scriptsteps[steptorun].lastRunStatus = false;
 			scriptsteps[steptorun].lastRunResult = 'failed to run';
 			scriptsteps[steptorun].executionTime = 0;
-			this.eventbus.dispatch('CmdExecutionFailed', this, { targetEnv: scriptsteps[steptorun].targetEnv, cmd: scriptsteps[steptorun].scriptCode, result: null, error: err });
+			this.eventbus.dispatch('CmdExecutionFailed', this, { targetEnv: scriptsteps[steptorun].targetEnv, cmd: scriptsteps[steptorun].scriptCode, result: null, error: err, msg: "Step execution failed:", });
 		}
 		
 		
@@ -216,7 +219,7 @@ export class AppPageScriptControl extends AppPageControl {
 			if (res?.runStatus) {
 				this.eventbus.dispatch('CmdExecutionSuccess', this, { targetEnv: res.targetEnv, cmd: '', result: res });
 			} else {
-				this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: res.targetEnv, cmd: '', result: res });
+				this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: res.targetEnv, cmd: '', result: res, msg: 'Script execution error:', });
 			}
 			
 			if (res?.runresults && res?.runresults.length>0) {
@@ -234,7 +237,7 @@ export class AppPageScriptControl extends AppPageControl {
 			
 		} catch (err) {
 			console.error("Command run err ",err);
-			this.eventbus.dispatch('CmdExecutionFailed', this, { targetEnv: res.targetEnv, cmd: '', result: null, error: err });
+			this.eventbus.dispatch('CmdExecutionFailed', this, { targetEnv: res.targetEnv, cmd: '', result: null, error: err, msg: 'Script execution failed:', });
 		}
 	}
 	
@@ -255,16 +258,28 @@ export class AppPageScriptControl extends AppPageControl {
 	}
 	// --------------------------------------------------------------------------------
 	async addImportExcelFileStep(eventdata) {
-		// {fullpath: row.getData().fullpath, filetype: row.getData().filetype   }
+		// {fullpath: row.getData().fullpath, filetype: row.getData().filetype   }  
 		const sheetinfocmd = `import openpyxl
 workbook = openpyxl.open('${eventdata.fullpath}', read_only=True)
 sheetinfo = []
 for sheet in workbook:
-	numrows = sheet.max_row - sheet.min_row + 1
-	numcols = sheet.max_column - sheet.min_column + 1
-	sheetinfo.append({"sheetname":sheet.title, "numrows":numrows, "numcols":numcols })
+	numrows = 0
+	numcols = 0
+	sheettitle = ""
+	try:
+		sheettitle = sheet.title
+	except:
+		sheettitle = "Sheet1"
+	try:
+		numrows = sheet.max_row - sheet.min_row + 1
+		numcols = sheet.max_column - sheet.min_column + 1
+	except:
+		numrows = 0
+		numcols = 0    
+	sheetinfo.append({"sheetname":sheet.title, "numrows": numrows, "numcols": numcols })
 workbook.close()
-sheetinfo`;
+sheetinfo
+`;
 		let res = null;
 		let sheetlist = [];
 		try {
@@ -278,12 +293,14 @@ sheetinfo`;
 					sheetlist.push({id: i, sheetname: r1[i].sheetname, numrows: r1[i].numrows, numcols: r1[i].numcols });
 				}
 			} else {
-				this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: targetEnv, cmd: sheetinfocmd, result: res });
-				console.log("error fetching sheets from excel or not an excel");
+				this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: 'py', cmd: sheetinfocmd, result: res, 
+								msg: `Error fetching sheets from ${eventdata.fullpath} or not an Excel format.`, });
+				console.log("Error fetching sheets from excel or not an excel", eventdata.fullpath);
 			}
 		} catch (err) {
 			console.log("Excel import run err ",err);
-			this.eventbus.dispatch('CmdExecutionFailed', this, { targetEnv: targetEnv, cmd: sheetinfocmd, result: null, error: err });
+			this.eventbus.dispatch('CmdExecutionFailed', this, { targetEnv: 'py', cmd: sheetinfocmd, result: null, error: err, 
+								msg: `Excel file ${eventdata.fullpath} import failed!` });
 		}
 		console.log(sheetlist);
 		let selectedOption;

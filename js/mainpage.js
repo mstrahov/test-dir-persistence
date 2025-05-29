@@ -1256,6 +1256,27 @@ html
 * drag tabulator rows
 * https://tabulator.info/docs/6.3/move#rows-element
 
+---------------------------------
+import openpyxl
+workbook = openpyxl.open('/app/mount_dir/testdir/onlineretail2_android.xlsx', read_only=True)
+sheetinfo = []
+for sheet in workbook:
+	numrows = 0
+	numcols = 0
+	sheettitle = ""
+	try:
+		sheettitle = sheet.title
+	except:
+		sheettitle = "Sheet1"
+	try:
+		numrows = sheet.max_row - sheet.min_row + 1
+		numcols = sheet.max_column - sheet.min_column + 1
+	except:
+		numrows = 0
+		numcols = 0    
+	sheetinfo.append({"sheetname":sheet.title, "numrows": numrows, "numcols": numcols })
+workbook.close()
+sheetinfo
 
 * 
 * 

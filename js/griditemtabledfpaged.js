@@ -71,18 +71,20 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 		} catch (err) { console.error(err); }
 		//  get data from a df
 		let dfarray = {};
+		const get_df_data_command =  this.dfname + ".head(1).to_json(orient='split',date_format='iso')";
 		try {
-			const get_df_data_command =  this.dfname + ".head(1).to_json(orient='split',date_format='iso')";
 			const output = await this.coderunner.runPythonAsyncDirect(get_df_data_command, this.parentuuid);
 			dfarray = JSON.parse(output);
 		} catch (err) {
-			console.error(`Error getting ${this.dfname} data`,this.getdfcmd,err);
+			console.error(`Error getting ${this.dfname} data or ${this.dfname} is not defined.`,this.getdfcmd,err);
+			this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: 'py', cmd: get_df_data_command, 
+						result: this.coderunner.extractPyError(err), msg: `Error getting ${this.dfname} data or ${this.dfname} is not defined (run script?).`, });
 			// TODO: show error in place of a table?
 			return false;
 		}
 		//  get type definitions from a df
 		try {
-			const outputtypes = await this.coderunner.runPythonAsyncDirect(this.gettypescmd,this.parentuuid);
+			const outputtypes = await this.coderunner.runPythonAsyncDirect(this.gettypescmd, this.parentuuid);
 			this.columnstypes = JSON.parse(outputtypes);
 			//console.log("df types: ", this.columnstypes); 
 			/*
@@ -91,6 +93,8 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 			 */
 		} catch (err) {
 			console.error(`Error getting ${this.dfname} data types`,this.gettypescmd,err);
+			this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: 'py', cmd: this.gettypescmd, 
+						result: this.coderunner.extractPyError(err), msg: `Error getting ${this.dfname} data types`, });
 			// TODO: show error in place of a table?
 			return false;
 		}
@@ -229,7 +233,8 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 		try {
 			last_row = await this.coderunner.runPythonAsyncDirect(number_of_cols_command,this.parentuuid);
 		} catch (err) {
-			console.error(`Error getting ${this.dfname} rows number `,number_of_cols_command,err);
+			console.error(`Error getting ${this.dfname} rows number`,number_of_cols_command,err);
+			this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: 'py', cmd: number_of_cols_command, result: this.coderunner.extractPyError(err), msg: `Error getting ${this.dfname} rows number`, });
 			// TODO: show error in place of a table?
 			return false;
 		}
@@ -244,6 +249,7 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 			dfarray = JSON.parse(output);
 		} catch (err) {
 			console.error(`Error getting ${this.dfname} data`,get_data_command,err);
+			this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: 'py', cmd: get_data_command, result: this.coderunner.extractPyError(err), msg: `Error getting ${this.dfname} data`, });
 			// TODO: show error in place of a table?
 			return false;
 		}

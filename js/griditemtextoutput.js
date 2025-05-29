@@ -108,10 +108,15 @@ export class StatusGridItemTextOutput extends GridItemTextOutput {
 			}
 		} else {
 			this.addToOutput(null,' ');
-			this.addToOutput(`${eventdata?.result?.errorshort}`);
+			if (eventdata?.msg) {
+				this.addToOutput(eventdata?.msg?.toString());
+			}
+			this.addToOutput(`${eventdata?.result?.errorshort} (line:${eventdata?.result?.errorline?.toString()})`);
 			console.log("Command execution error:",eventdata?.targetEnv, eventdata?.cmd, eventdata?.result?.error);
 		}
-		this.addToOutput(`Execution time: ${eventdata?.result?.executionTime} sec`);
+		if (eventdata?.result?.executionTime !== undefined) {
+			this.addToOutput(`Execution time: ${eventdata?.result?.executionTime} sec`);
+		}
 		
 	}
 	
@@ -119,6 +124,9 @@ export class StatusGridItemTextOutput extends GridItemTextOutput {
 		//{ targetEnv: targetEnv, cmd: cmdparams.cmd, result: null, error: err }
 		this.addToOutput(null,' ');
 		console.error("Command execution failed:",eventdata?.targetEnv, eventdata?.cmd,eventdata?.error);
+		if (eventdata?.msg) {
+			this.addToOutput(eventdata?.msg?.toString());
+		}
 		this.addToOutput(eventdata?.error?.toString());
 	}
 	

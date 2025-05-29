@@ -553,7 +553,35 @@ export class CodeRunner {
 
 	// ------------------------------------------------------------------------------
 	
-	
+	extractPyError(err) {
+		let res = {};
+		const errarr = err?.message?.split("\n").filter(e=>e.length>0);
+		let pyerrmessageshort = "";
+		let pyerrorline = "";
+		let lastline = 0;
+		const re = /line (\d+)/gi;
+		for (let i=0;i<errarr?.length;i++) {
+			const matcharr = errarr[i].match(re);
+			if (matcharr!==null && matcharr.length>0) {
+				lastline = i;
+				if (errarr[i].includes('<exec>')) {
+					pyerrorline = matcharr[0].replace("line ","");
+				}
+			}
+		}
+		for (let i=lastline+1;i<errarr?.length;i++) {
+			pyerrmessageshort+=errarr[i]+'\n';
+		}
+		
+		res.errorshort = pyerrmessageshort;
+		res.errorline = pyerrorline;
+		res.error = err;
+		res.errortype = err?.type; 
+		res.errormessage = err?.message?.toString(); 	
+		
+		return res;
+	}
+	// ------------------------------------------------------------------------------
 	
 	
 }
