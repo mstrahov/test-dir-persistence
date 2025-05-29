@@ -138,6 +138,10 @@ export class FileIOHandler {
 		}
 		
 		
+		// Prevent pyodide sync from deleting files in mounted directories, if files was created after mounting dir to pyodide memfs 
+		// override removeRemoteEntry:    function  async function(n,o) { console.log("HACKED!",n,o); }
+		pyodide.FS.filesystems.NATIVEFS_ASYNC.removeRemoteEntry = async function(n,o='') { console.log("Prevented deletion of file: ", o); };
+		
 		//  error:  this.#reject(e);
 		
 		let lengthmilli = performance.now() - starttime;

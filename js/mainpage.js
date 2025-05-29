@@ -1232,4 +1232,33 @@ async(n,o)=>{await n.get(r.dirname(o)).removeEntry(r.basename(o)),n.delete(o)}
 
 py.FS.filesystems.NATIVEFS_ASYNC.removeRemoteEntry = async function(n,o) { console.log("HACKED!",n,o); }
 
+
+------
+ATTACH 'https://blobs.duckdb.org/data/test.db' as db;
+from db.t;
+
+
+----------
+* 
+import pandas as pd
+import openpyxl
+file = pd.ExcelFile('/app/mount_dir/Online Retail.xlsx')
+df = pd.read_excel(file, skiprows=0, nrows=500, usecols="B:Q")
+* 
+* 
+------------------------
+* https://duckdb.org/duckdb-docs.md
+await micropip.install('markdown')
+import markdown
+html = markdown.markdown('# Hello World')
+html
+---------------
+* drag tabulator rows
+* https://tabulator.info/docs/6.3/move#rows-element
+
+
+* 
+* 
+* 
+* 
 			*/

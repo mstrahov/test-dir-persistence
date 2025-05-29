@@ -89,7 +89,7 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 	
 	clearEditor() {
 		let editorcontents = this.getValue();
-		if (editorcontents && editorcontents.trim().length>0) {
+		if (this.contentsChanged && editorcontents && editorcontents.trim().length>0) {
 			if (!editorcontents.endsWith("\n")) { editorcontents+="\n"}
 			this.cmdhistory.push(editorcontents);
 			this.cmdhistoryPosition = this.cmdhistory.length;

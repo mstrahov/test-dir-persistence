@@ -27,6 +27,8 @@ export class AppPageScriptControl extends AppPageControl {
 		this.scriptObject = params.transformScript?params.transformScript:TransformScriptInit();
 		this.#modalInputDialog = params.modalInputDialog;
 		
+		
+		
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.topDropDownMenuEventHandler.bind(this));
 		
 		this.scriptControl = this.addGridItem( gridItemScript, 
@@ -38,6 +40,9 @@ export class AppPageScriptControl extends AppPageControl {
 				scriptname: "",
 			}
 		);
+		this.setTabTitle(this.scriptControl.transformscript.scriptName);
+		
+		
 		this.pyeditor = this.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonScriptControlCodeEditor", headertext: "Python", griditemoptions: {w:6,h:5,} });
 		this.dfview = this.addGridItem( griditemTableDFPagedTransform, {templateid:"#gridItemDFtransformview", headertext: "DataFrame view", griditemoptions: {w:6,h:5,},
 			coderunner: this.coderunner,
@@ -93,6 +98,9 @@ export class AppPageScriptControl extends AppPageControl {
 		//console.log("main drop down menu item click",obj,eventdata); 
 		
 		if (eventdata?.menuItemId === "renameaction") {
+			console.log('renameaction');
+			await this.renameScript();
+			
 		//	this.grid.compact();
 		//} else if (eventdata?.menuItemId === 'savelayout') {
 		//	console.log(this.layoutToJSON());
@@ -102,10 +110,36 @@ export class AppPageScriptControl extends AppPageControl {
 	
 	// --------------------------------------------------------------------------------	
 	
-	async renameScript() {
-		
+	setTabTitle(newTitle) {
+		let str1 = newTitle;
+		if (str1.length>14) {
+			str1 = str1.slice(0,11)+'...';
+		}
+		this.contenttab.setTitle(str1);
 		
 	}
+	
+	// --------------------------------------------------------------------------------
+	async renameScript() {
+		try {
+			const props = {
+				dialogTitle: "Script name:",
+				inputOneLine: this.scriptControl.transformscript.scriptName,
+				inputOneLinePlaceHolder: "Script name",
+			};
+			const selectedOption = await this.#modalInputDialog.showdialog(props);
+			console.log('Return value:', selectedOption.inputOneLine);
+			this.scriptControl.transformscript.scriptName = selectedOption.inputOneLine.trim();
+			this.setTabTitle(selectedOption.inputOneLine.trim());
+			
+		} catch (error) {
+			console.error('Error:', error.message);
+		}
+
+	}
+	
+	// --------------------------------------------------------------------------------	
+	
 	
 	// --------------------------------------------------------------------------------	
 	

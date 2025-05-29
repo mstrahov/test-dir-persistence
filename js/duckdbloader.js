@@ -1,10 +1,12 @@
 /*******************************
  * DuckDB module loader
  * 
- * 
+ * https://www.jsdelivr.com/package/npm/@duckdb/duckdb-wasm
+ * https://github.com/duckdb/duckdb-wasm
  * *********************************
  */
-import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev76.0/+esm'; 
+//import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev76.0/+esm'; 
+import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.29.1-dev207.0/+esm'; 
 import EventBus from "./eventbus.js";
 import { ExecTimer } from "./exectimer.js"; 
 
