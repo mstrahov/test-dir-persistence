@@ -1278,6 +1278,17 @@ for sheet in workbook:
 workbook.close()
 sheetinfo
 
+--------------------------------------------
+* 
+* https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html#matplotlib.pyplot.savefig
+await micropip.install('matplotlib')
+import matplotlib.pyplot as plt
+import io
+plt.plot([1, 2, 3, 4], [1, 4, 9, 16])
+buffer = io.BytesIO()
+plt.savefig(buffer, format='svg')
+svg_data = buffer.getvalue().decode()
+svg_data
 * 
 * 
 * 
