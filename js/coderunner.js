@@ -669,10 +669,55 @@ export class CodeRunner {
 	
 	async getNameSpaceVars(namespaceuuid) {
 		
-		
+		let res = [];
 		let pyodide = await this.#pyodidePromise;
-		let pyodideNameSpace = this.pyNameSpaces.get(variableVisual.namespaceuuid); 
+		let pyodideNameSpace = this.pyNameSpaces.get(namespaceuuid); 
 		
+		if (pyodideNameSpace) {
+			let plotlyispresent = false; 
+			try {
+				if (pyodideNameSpace.has('plotly') && pyodideNameSpace.get('plotly').type==='module') {
+					plotlyispresent = true; 
+				} 
+			} catch (err)  {  }
+			
+			let jsNameSpace;
+			let namespacekeys;
+			try {
+				jsNameSpace = pyodideNameSpace.toJs();
+				namespacekeys = jsNameSpace.keys().toArray();
+			} catch { }
+			
+			if  (namespacekeys && jsNameSpace) {
+				for (let i=0;i<namespacekeys.length;i++) {
+					try {
+						if (namespacekeys[i].startsWith('__')) { continue; }
+						if (typeof jsNameSpace.get(namespacekeys[i]) === "string") {
+							res.push({ 
+								targetEnv: "py",
+								namespaceuuid: namespaceuuid,
+								headertext: namespacekeys[i],
+								varName: namespacekeys[i],
+								varType: "string"
+							});
+						} else if (plotlyispresent && jsNameSpace.get(namespacekeys[i]).type==='Figure') {
+							res.push({ 
+								targetEnv: "py",
+								namespaceuuid: namespaceuuid,
+								headertext: namespacekeys[i],
+								varName: namespacekeys[i],
+								varType: "Figure"
+							});
+							
+						}
+					} catch (err) { }	
+					
+				}
+			}
+			
+		}
+		
+		return res;
 					/*
 			 
 			 g1.keys()

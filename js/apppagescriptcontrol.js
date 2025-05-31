@@ -151,13 +151,18 @@ export class AppPageScriptControl extends AppPageControl {
 		//console.log("main drop down menu item click",obj,eventdata); 
 		
 		if (eventdata?.menuItemId === "renameaction") {
-			console.log('renameaction');
+			//console.log('renameaction');
 			await this.renameScript();
-			
-		//	this.grid.compact();
-		//} else if (eventdata?.menuItemId === 'savelayout') {
-		//	console.log(this.layoutToJSON());
 		}
+		else if (eventdata?.menuItemId === 'addchartwidget') {	
+			console.log('addchartwidget');
+			await this.addChartWidget();
+			
+		}	
+		//	this.grid.compact();
+		//} else if (eventdata?.menuItemId === 'savelayout') {   
+		//	console.log(this.layoutToJSON());
+		
 		
 	}
 	
@@ -193,6 +198,50 @@ export class AppPageScriptControl extends AppPageControl {
 	
 	// --------------------------------------------------------------------------------	
 	
+	async addChartWidget() {
+		//~ { 
+			//~ targetEnv: "py",
+			//~ namespaceuuid: namespaceuuid,
+			//~ headertext: namespacekeys[i],
+			//~ varName: namespacekeys[i],
+			//~ varType: "Figure"
+		//~ }
+		let varlist = await this.coderunner.getNameSpaceVars(this.appuuid);
+		console.log("Available variables: ",varlist);
+		
+		for (let i=0;i<varlist.length;i++) {
+			varlist[i].id = i;
+		}
+		
+		let selectedOption;
+		if (varlist.length>0) {
+			const columns = [
+				{ title: "Variable", field: "varName" },
+				{ title: "Type", field: "varType" },
+				{ title: "Widget Header", field: "headertext", editor:true, },
+				//~ { title: "namespaceuuid", field: "namespaceuuid" },
+				//~ { title: "targetEnv", field: "py" },
+			 ];
+			let tabulatoroptions = {
+				data: varlist,
+				columns: columns,
+				dialogTitle : `Select an existing variable with chart data, edit widget's header text:`, 
+			};
+			try {
+				selectedOption = await this.#tablePickerDialog.showoptions(tabulatoroptions);
+				console.log('Selected option:', selectedOption);
+			} catch (error) {
+				console.error('Error:', error.message);
+			}
+			// ------------------
+			if (selectedOption) {
+				// add VisualWidget
+				
+			}
+			
+		}
+		
+	}
 	
 	// --------------------------------------------------------------------------------	
 	

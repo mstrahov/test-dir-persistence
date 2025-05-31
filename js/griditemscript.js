@@ -85,7 +85,7 @@ export class gridItemScript extends GridItemWithMenu {
 				{title:"stepOrder", field:"stepOrder", editor:false, headerSort:false,width:50,visible:true,},
 				{title:"Run status", field:"lastRunStatus", formatter:"tickCross", formatterParams:{ allowEmpty:true, allowTruthy:true, }, editor:false, headerSort:false, width:50, },
 				{title:"Name", field:"srccmdActionName", editor:true, headerSort:false, formatter:"textarea",width:90,},
-				{title:"Type", field:"targetEnv", editor:true,headerSort:false,width:50,},
+				{title:"Type", field:"targetEnv", editor:true, headerSort:false,width:50,},
 				{title:"Code", field:"scriptCode", editor:true, headerSort:false, formatter:"textarea",width:210,},
 				{title:"Exec time", field:"executionTime", editor:false,headerSort:false, width:50,},
 				
