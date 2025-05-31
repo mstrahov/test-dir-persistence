@@ -11,6 +11,7 @@ export class GridItemIFrameOutput extends GridItemWithMenu {
 
 	constructor (params) {
 		super(params);
+		this.appuuid = params.appuuid;
 		this.iframeElement = this.getElementByTemplateID('iframeelement');   
 	}
 	
@@ -24,7 +25,7 @@ export class GridItemIFrameOutput extends GridItemWithMenu {
 	menuEventHandler(obj,eventdata) {
 		console.log("GridItemIFrameOutput widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
 		
-		if (eventdata?.menuItemId === 'refreshaction') {
+		if (eventdata?.menuItemId === "refreshaction" || eventdata?.menuItemId === "refreshgriditem") {
 			this.eventbus.dispatch('contentsRefreshRequest', this, { });
 		}
 		
@@ -32,7 +33,7 @@ export class GridItemIFrameOutput extends GridItemWithMenu {
 	
 	setContents(strSrc) {
 		if (this.detectContents(strSrc)==='svg') {
-			strSrc = '<div class="svg-container" style="width: 100%;height: 100%;">' + strSrc + '</div>';
+			strSrc = '<div class="svgvisual-container" style="width: 100%;height: 100%;">' + strSrc + '</div>';
 		}
 		this.iframeElement.srcdoc=strSrc;
 	}

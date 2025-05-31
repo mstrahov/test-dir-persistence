@@ -14,7 +14,7 @@ import { gridItemScript, TransformScriptInit } from "./griditemscript.js";
 import { gridItemSelectFileDialog } from "./griditemselectfiledialog.js";
 // import { griditemTableDFPaged } from "./griditemtabledfpaged.js";
 import { griditemTableDFPagedTransform } from "./griditemtabledfpagedtransform.js";
-
+import { GridItemHTMLOutput } from "./griditemhtmloutput.js";
 
 export class AppPageScriptControl extends AppPageControl {
 	#tablePickerDialog;
@@ -51,20 +51,52 @@ export class AppPageScriptControl extends AppPageControl {
 		
 		
 		this.statusTabOutput = this.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:5,} });
+		
+		let that = this; 
+		
+		// ---------------   gridItemSelectFileDialog ---------------------
 		this.selectFileDialog = this.addGridItem( gridItemSelectFileDialog, {templateid:"#gridItemFileDialog", headertext: "File selection", griditemoptions: {w:6,h:5,}, 
 			fileIOHandler: this.fileIOHandler 
 		});
-		
-		let that = this; 
+				
 		this.fileIOHandler.eventbus.subscribe('ioDirRefreshNeeded',(obj,eventdata)=>{  that.selectFileDialog.refreshData(eventdata); }, this.selectFileDialog.uuid);
 		this.selectFileDialog.eventbus.subscribe('importfiletodf',async (obj,eventdata)=>{  
 			await that.addImportFileStep(eventdata); 
 			await that.runScriptOneStep(eventdata); 
 		}, this.scriptControl.uuid);
 		
+		// ----------------------------------------------------------------
+		
+		// ----------------------GridItemHTMLOutput   -------------------
+		
+		this.variableVisual01 = {
+			targetEnv: "py",
+			namespaceuuid: this.appuuid,
+			headertext: "Visual test",
+			varName: "fig",
+			varType: "Figure",
+		};
+		
+		this.variableVisual02 = {
+			targetEnv: "py",
+			namespaceuuid: this.appuuid,
+			headertext: "Visual test",
+			varName: "plot1",
+			varType: "string",
+		};
+		
+		this.iframe01 = this.addGridItem( GridItemHTMLOutput, {templateid:"#gridItemHTMLView", headertext: "Visual 01 (fig)", griditemoptions: {w:6,h:5,}, });
+		this.iframe01.eventbus.subscribe('contentsRefreshRequest',this.refreshVisualWidget.bind(this), this.uuid);
+		
+		this.iframe02 = this.addGridItem( GridItemHTMLOutput, {templateid:"#gridItemHTMLView", headertext: "Visual 02 (plot1)", griditemoptions: {w:6,h:5,}, });
+		this.iframe02.eventbus.subscribe('contentsRefreshRequest',this.refreshVisualWidget.bind(this), this.uuid);
+		
+		// ----------------------------------------------------------------
+		
 		this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
 		this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
 		this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.statusTabOutput.runExecutionFailure(eventdata);  }, this.statusTabOutput.uuid);
+		this.eventbus.subscribe('getVariableError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
 		
 		this.scriptControl.eventbus.subscribe('runonecodestepaction',(obj,eventdata)=>{  that.runScriptOneStep(eventdata); }, this.uuid);
 		this.scriptControl.eventbus.subscribe('runallcodestepsaction',(obj,eventdata)=>{  that.runScriptAllSteps(eventdata); }, this.uuid);
@@ -96,6 +128,24 @@ export class AppPageScriptControl extends AppPageControl {
 	async init() {
 			
 	}
+	// --------------------------------------------------------------------------------	
+	async refreshVisualWidget(obj,eventdata) {
+		console.log("contentsRefreshRequest",obj,eventdata);
+		let res = await this.coderunner.getVariableVisualValue(this.variableVisual01, eventdata.elementheight);
+		if (res.runStatus) {
+			this.iframe01.setContents(res);
+		} else {
+			this.eventbus.dispatch('getVariableError', this, { targetEnv: 'py', cmd: '', result: res, msg: `Error refreshing data`, });
+		} 
+		
+		res = await this.coderunner.getVariableVisualValue(this.variableVisual02, eventdata.elementheight);
+		if (res.runStatus) {
+			this.iframe02.setContents(res);
+		} else {
+			this.eventbus.dispatch('getVariableError', this, { targetEnv: 'py', cmd: '', result: res, msg: `Error refreshing data 2`, });
+		} 
+	}
+	
 	// --------------------------------------------------------------------------------	
 	async topDropDownMenuEventHandler(obj,eventdata) {
 		//console.log("main drop down menu item click",obj,eventdata); 

@@ -583,5 +583,111 @@ export class CodeRunner {
 	}
 	// ------------------------------------------------------------------------------
 	
+	/*
+	 let variableVisual01 = {
+			targetEnv: "py",
+			namespaceuuid: this.appuuid,
+			headertext: "Visual test",
+			varName: "plot1",
+			varType: "string",
+		}; 
+	*/
+	async getVariableVisualValue(variableVisual,elementheight=400) {
+		let pyodide = await this.#pyodidePromise;
+		let res = {
+			targetEnv: 'py', 
+			output: null,
+			runStatus: false,
+			runResult: "",
+			error: null,
+			errormessage: null,
+			errorshort: null,
+			errortype: null,
+			errorline: 0,
+			lengthmilli: 0,
+			lengthseconds: 0,
+			executionTime: 0,
+			uuid:  self.crypto.randomUUID(),  
+			PlotlyFigure: null,
+		};
+		const get_plotly_html_cmd = `plotly.io.to_html(fig,config={'scrollZoom': True, 'responsive': True, 'toImageButtonOptions': {
+        'format': 'svg', # one of png, svg, jpeg, webp
+        'filename': 'test_chart',
+        'height': 500,
+        'width': 700,
+        'scale': 1 # Multiply title/legend/axis/canvas sizes by this factor
+    }
+},include_plotlyjs=False,full_html=False,default_width="100%",default_height="${elementheight}px")
+`;
+		if (variableVisual.targetEnv === 'py') {
+			
+			let pyodideNameSpace = this.pyNameSpaces.get(variableVisual.namespaceuuid); 
+			if (pyodideNameSpace) {
+				try {
+					if (pyodideNameSpace.has(variableVisual.varName)) {
+						if (typeof pyodideNameSpace.get(variableVisual.varName) === variableVisual.varType || pyodideNameSpace.get(variableVisual.varName).type === variableVisual.varType) {
+							if (variableVisual.varType==='Figure' && pyodideNameSpace.has('plotly') && pyodideNameSpace.get('plotly').type==='module') {
+								res.output = await pyodide.pyodide_py.code.eval_code_async(get_plotly_html_cmd, pyodideNameSpace);
+								res.PlotlyFigure = true;
+								res.runStatus = true;
+							} else {
+								res.output = pyodideNameSpace.get(variableVisual.varName);	
+								res.runStatus = true;
+							}		
+						} else {
+							// error: incorrect type of variable
+							res.errorshort = `Incorrect type of variable ${variableVisual.varName}, expected ${variableVisual.varType}`;
+						}
+									
+					} else {
+						// error: variable is not defined
+						res.errorshort = `Variable ${variableVisual.varName} is not defined.`;
+					}
+				}
+				catch (err) {
+					// error: something is wrong with pyodideNameSpace 
+					res.error = err;
+					res.errortype = err?.type; 
+					res.errormessage = err?.message?.toString(); 
+					res.errorshort = `Error getting variable from pyodide environment: ${res.errormessage}`;
+				}
+			
+			} else {
+				res.errorshort = `Variable ${variableVisual.varName} is not defined. Pyodide namespace is not defined.`;				
+			}
+
+		} else {
+			res.errorshort = "Incorrect target environment: " + variableVisual.targetEnv;
+			res.errormessage = res.errorshort;
+		}
+		if (res.errorshort) { console.error(res.errorshort); }
+		
+		return res;
+	}
+	
+	// -------------------------------------------------------------------------
+	
+	async getNameSpaceVars(namespaceuuid) {
+		
+		
+		let pyodide = await this.#pyodidePromise;
+		let pyodideNameSpace = this.pyNameSpaces.get(variableVisual.namespaceuuid); 
+		
+					/*
+			 
+			 g1.keys()
+			g1.get("df").type			
+
+			let g1 = window.coderunner.pyNameSpaces.get('27568fb8-1c81-4b14-ac49-a92d60bdb99e').toJs()
+ 
+ 'Figure'
+ window.coderunner.pyNameSpaces.get('fe625998-4348-488c-93dd-c77e84cfa0a6').has('fig')
+ window.coderunner.pyNameSpaces.get('fe625998-4348-488c-93dd-c77e84cfa0a6').has('plotly')
+ window.coderunner.pyNameSpaces.get('fe625998-4348-488c-93dd-c77e84cfa0a6').get('plotly').type==='module'
+			*/
+		
+		
+	}
+	
 	
 }

@@ -66,10 +66,10 @@ export class AppPageControl {
 		// grid element init  https://github.com/gridstack/gridstack.js/tree/master/doc
 		let opts = {
 			  //cellHeight: 'auto', // see other possible values (best to do in here)
-			  cellHeightThrottle: 100,
+			  cellHeightThrottle: 120,
 			  handle: '.grid-elem-draggable' ,
 			  margin: 1,
-			  cellHeight: 80,
+			  cellHeight: 65,
 			  animate: true, // show immediate (animate: true is nice for user dragging though)
 			  columnOpts: {
 				layout: "moveScale",
@@ -89,7 +89,7 @@ export class AppPageControl {
 		// list of grid items on a page
 		this.gridItems = [];
 		this.coderunner	= params.coderunner;
-		
+							
 	}
 	
 	init() {
@@ -103,6 +103,7 @@ export class AppPageControl {
 			params.griditemoptions = {...gridItemParams.griditemoptions};
 		}
 		params.grid = this.grid;
+		if (!params.appuuid) { params.appuuid = this.appuuid; }
 		let newgriditem = new gridItemType(params);
 		this.gridItems.push(newgriditem);
 		newgriditem.init();  
