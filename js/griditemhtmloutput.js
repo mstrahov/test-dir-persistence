@@ -27,6 +27,8 @@ export class GridItemHTMLOutput extends GridItemWithMenu {
 		
 		if (eventdata?.menuItemId === "refreshaction" || eventdata?.menuItemId === "refreshgriditem") {
 			this.eventbus.dispatch('contentsRefreshRequest', this, { elementheight: this.getBodyElementHeight() });
+		} else if (eventdata?.menuItemId === "closegriditem") {
+			this.eventbus.dispatch('closegriditemRequest', this, { });	
 		}
 		
 	}

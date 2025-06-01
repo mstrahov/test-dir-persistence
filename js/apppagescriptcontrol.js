@@ -52,6 +52,7 @@ export class AppPageScriptControl extends AppPageControl {
 		
 		this.statusTabOutput = this.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:5,} });
 		
+		this.visualwidgets = [];
 		let that = this; 
 		
 		// ---------------   gridItemSelectFileDialog ---------------------
@@ -66,31 +67,7 @@ export class AppPageScriptControl extends AppPageControl {
 		}, this.scriptControl.uuid);
 		
 		// ----------------------------------------------------------------
-		
-		// ----------------------GridItemHTMLOutput   -------------------
-		
-		this.variableVisual01 = {
-			targetEnv: "py",
-			namespaceuuid: this.appuuid,
-			headertext: "Visual test",
-			varName: "fig",
-			varType: "Figure",
-		};
-		
-		this.variableVisual02 = {
-			targetEnv: "py",
-			namespaceuuid: this.appuuid,
-			headertext: "Visual test",
-			varName: "plot1",
-			varType: "string",
-		};
-		
-		this.iframe01 = this.addGridItem( GridItemHTMLOutput, {templateid:"#gridItemHTMLView", headertext: "Visual 01 (fig)", griditemoptions: {w:6,h:5,}, });
-		this.iframe01.eventbus.subscribe('contentsRefreshRequest',this.refreshVisualWidget.bind(this), this.uuid);
-		
-		this.iframe02 = this.addGridItem( GridItemHTMLOutput, {templateid:"#gridItemHTMLView", headertext: "Visual 02 (plot1)", griditemoptions: {w:6,h:5,}, });
-		this.iframe02.eventbus.subscribe('contentsRefreshRequest',this.refreshVisualWidget.bind(this), this.uuid);
-		
+
 		// ----------------------------------------------------------------
 		
 		this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
@@ -130,20 +107,63 @@ export class AppPageScriptControl extends AppPageControl {
 	}
 	// --------------------------------------------------------------------------------	
 	async refreshVisualWidget(obj,eventdata) {
-		console.log("contentsRefreshRequest",obj,eventdata);
-		let res = await this.coderunner.getVariableVisualValue(this.variableVisual01, eventdata.elementheight);
-		if (res.runStatus) {
-			this.iframe01.setContents(res);
+		const widgetIndex = this.visualwidgets.findIndex((v)=>v.widgetObject===obj);
+		if (widgetIndex>-1) {
+			let contentsData = await this.coderunner.getVariableVisualValue(this.visualwidgets[widgetIndex], eventdata.elementheight);
+			if (contentsData.runStatus) {
+				this.visualwidgets[widgetIndex].widgetObject.setContents(contentsData);
+			} else {
+				this.eventbus.dispatch('getVariableError', this, 
+					{ targetEnv: this.visualwidgets[widgetIndex].targetEnv, cmd: '', result: contentsData, 
+						msg: `Error refreshing widget data for variable ${this.visualwidgets[widgetIndex].varName}`, 
+				});
+			} 
 		} else {
-			this.eventbus.dispatch('getVariableError', this, { targetEnv: 'py', cmd: '', result: res, msg: `Error refreshing data`, });
-		} 
-		
-		res = await this.coderunner.getVariableVisualValue(this.variableVisual02, eventdata.elementheight);
-		if (res.runStatus) {
-			this.iframe02.setContents(res);
+			console.error("Widget to refresh not found!");
+		}
+	}
+	
+	// --------------------------------------------------------------------------------	
+	async deleteVisualWidget(obj,eventdata) {
+		//~ { 
+			//~ targetEnv: "py",
+			//~ namespaceuuid: namespaceuuid,
+			//~ headertext: namespacekeys[i],
+			//~ varName: namespacekeys[i],
+			//~ varType: "Figure",
+			//~ widgetObject: null,
+		//~ }
+		const widgetIndex = this.visualwidgets.findIndex((v)=>v.widgetObject===obj);
+		if (widgetIndex>-1) {
+			// get widget uuid   this.visualwidgets[widgetIndex].widgetObject.widgetName
+			console.log("Close request from "+this.visualwidgets[widgetIndex].widgetObject.widgetName + " id: " + this.visualwidgets[widgetIndex].widgetObject.uuid );
+			
+			let widgetuuid = this.visualwidgets[widgetIndex].widgetObject.uuid;
+			
+			// destroy widget grid item?
+			
+			this.visualwidgets[widgetIndex].widgetObject.destroy();
+			 
+			// clear widget's subscriptions to this eventbus
+			this.eventbus.unsubscribeUUID(widgetuuid);
+			// clear widget's subscriptions to other widgets' eventbuses
+			this.pyeditor.eventbus.unsubscribeUUID(widgetuuid);
+			this.selectFileDialog.eventbus.unsubscribeUUID(widgetuuid);
+			this.fileIOHandler.eventbus.unsubscribeUUID(widgetuuid);
+			this.scriptControl.eventbus.unsubscribeUUID(widgetuuid);
+			this.dropdownMenuControl.eventbus.unsubscribeUUID(widgetuuid);
+			this.statusTabOutput.eventbus.unsubscribeUUID(widgetuuid);
+			
+			if (this.dfview) this.dfview.eventbus.unsubscribeUUID(widgetuuid);
+			
+			// delete widget object
+			delete this.visualwidgets[widgetIndex].widgetObject;
+			// delete widget from visualwidgets
+			this.visualwidgets.splice(widgetIndex, 1);
+			
 		} else {
-			this.eventbus.dispatch('getVariableError', this, { targetEnv: 'py', cmd: '', result: res, msg: `Error refreshing data 2`, });
-		} 
+			console.error("Widget to delete not found!");
+		}
 	}
 	
 	// --------------------------------------------------------------------------------	
@@ -156,7 +176,7 @@ export class AppPageScriptControl extends AppPageControl {
 		}
 		else if (eventdata?.menuItemId === 'addchartwidget') {	
 			console.log('addchartwidget');
-			await this.addChartWidget();
+			await this.addVisualWidget();
 			
 		}	
 		//	this.grid.compact();
@@ -197,14 +217,14 @@ export class AppPageScriptControl extends AppPageControl {
 	}
 	
 	// --------------------------------------------------------------------------------	
-	
-	async addChartWidget() {
+	async addVisualWidget() {
 		//~ { 
 			//~ targetEnv: "py",
 			//~ namespaceuuid: namespaceuuid,
 			//~ headertext: namespacekeys[i],
 			//~ varName: namespacekeys[i],
-			//~ varType: "Figure"
+			//~ varType: "Figure",
+			//~ widgetObject: null,
 		//~ }
 		let varlist = await this.coderunner.getNameSpaceVars(this.appuuid);
 		console.log("Available variables: ",varlist);
@@ -218,7 +238,7 @@ export class AppPageScriptControl extends AppPageControl {
 			const columns = [
 				{ title: "Variable", field: "varName" },
 				{ title: "Type", field: "varType" },
-				{ title: "Widget Header", field: "headertext", editor:true, },
+				{ title: "Widget Header (editable)", field: "headertext", editor:true, },
 				//~ { title: "namespaceuuid", field: "namespaceuuid" },
 				//~ { title: "targetEnv", field: "py" },
 			 ];
@@ -235,9 +255,26 @@ export class AppPageScriptControl extends AppPageControl {
 			}
 			// ------------------
 			if (selectedOption) {
-				// add VisualWidget
+				// add VisualWidget to this.visualwidgets
 				
+				const newWidgetObject = this.addGridItem( GridItemHTMLOutput, {templateid:"#gridItemHTMLView", headertext: selectedOption.headertext, griditemoptions: {w:6,h:5,}, });
+				newWidgetObject.eventbus.subscribe('contentsRefreshRequest', this.refreshVisualWidget.bind(this), this.uuid);
+				newWidgetObject.eventbus.subscribe('closegriditemRequest', this.deleteVisualWidget.bind(this), this.uuid);
+				this.visualwidgets.push({
+					...selectedOption,
+					widgetObject : newWidgetObject,
+				});
+				newWidgetObject.eventbus.dispatch('contentsRefreshRequest', newWidgetObject, { elementheight: newWidgetObject.getBodyElementHeight() });
+
 			}
+			
+		} else {
+			const errormsg = 'New visual widgets can be created from existing variables in python script, containing plotly figures or SVG chart sources.';
+			console.log(errormsg);
+			this.eventbus.dispatch('getVariableError', this, 
+					{ targetEnv: 'py', cmd: '', result: null, 
+						msg: errormsg, 
+				});
 			
 		}
 		

@@ -94,6 +94,15 @@ export class GridItem {
 		return this.#grid.el.querySelector('#'+templateid+this.#uuid);
 	}
 	
+	destroy() {
+		// https://github.com/gridstack/gridstack.js/tree/master/doc#removewidgetel-removedom--true-triggerevent--true
+		//~ removeWidget(el, removeDOM = true, triggerEvent = true)        // Removes widget from the grid.
+		//~ el - widget to remove.
+		//~ removeDOM - if false node won't be removed from the DOM (Optional. Default true).
+		//~ triggerEvent if false (quiet mode) element will not be added to removed list and no 'removed' callbacks will be called (Default true).
+		this.#grid.removeWidget('item'+this.#uuid);
+	}
+	
 }
 
 // -----------------------------------------------------------------------------------------

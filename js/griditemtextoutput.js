@@ -111,7 +111,11 @@ export class StatusGridItemTextOutput extends GridItemTextOutput {
 			if (eventdata?.msg) {
 				this.addToOutput(eventdata?.msg?.toString());
 			}
-			this.addToOutput(`${eventdata?.result?.errorshort} (line:${eventdata?.result?.errorline?.toString()})`);
+			if (eventdata?.result?.errorshort) {
+				let msgtoadd = eventdata?.result?.errorshort;
+				if (eventdata?.result?.errorline !== undefined) msgtoadd+=` (line:${eventdata?.result?.errorline?.toString()})`;
+				this.addToOutput(msgtoadd);
+			}
 			console.log("Command execution error:",eventdata?.targetEnv, eventdata?.cmd, eventdata?.result?.error);
 		}
 		if (eventdata?.result?.executionTime !== undefined) {

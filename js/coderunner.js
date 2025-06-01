@@ -734,5 +734,49 @@ export class CodeRunner {
 		
 	}
 	
+	// --------------------------------------------------------------------------------------------
+	async getNameSpaceVarsOfType(namespaceuuid,vartype) {
+		let res = [];
+		let pyodide = await this.#pyodidePromise;
+		let pyodideNameSpace = this.pyNameSpaces.get(namespaceuuid); 
+		
+		if (pyodideNameSpace) {
+			let jsNameSpace;
+			let namespacekeys;
+			try {
+				jsNameSpace = pyodideNameSpace.toJs();
+				namespacekeys = jsNameSpace.keys().toArray();
+			} catch { }
+			
+			if  (namespacekeys && jsNameSpace) {
+				for (let i=0;i<namespacekeys.length;i++) {
+					try {
+						if (namespacekeys[i].startsWith('__')) { continue; }
+						if (typeof jsNameSpace.get(namespacekeys[i]) === vartype) {
+							res.push({ 
+								targetEnv: "py",
+								namespaceuuid: namespaceuuid,
+								headertext: namespacekeys[i],
+								varName: namespacekeys[i],
+								varType: vartype
+							});
+						} else if (jsNameSpace.get(namespacekeys[i]).type===vartype) {
+							res.push({ 
+								targetEnv: "py",
+								namespaceuuid: namespaceuuid,
+								headertext: namespacekeys[i],
+								varName: namespacekeys[i],
+								varType: vartype
+							});
+							
+						}
+					} catch (err) { }	
+				}
+			}	
+		}
+		
+		return res;
+	}
 	
+	// --------------------------------------------------------------------------------------------
 }

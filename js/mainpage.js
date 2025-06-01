@@ -1335,4 +1335,29 @@ plot1 = plotly.io.to_html(fig,config={'scrollZoom': True, 'responsive': True, 't
 * 
 * 
 * 
+* 
+* 
+* 
+* 
+import micropip
+await micropip.install('matplotlib')
+await micropip.install('plotly')
+
+
+import matplotlib.pyplot as plt
+import io
+plt.plot([1, 2, 3, 4], [1, 4, 9, 16])
+plt.tight_layout()
+buffer = io.BytesIO()
+plt.savefig(buffer, format='svg')
+plot1 = buffer.getvalue().decode()
+import numpy
+import plotly
+import plotly.express as px
+df1 = px.data.stocks()
+fig = px.line(df1, x='date', y="GOOG")
+fig.update_layout(
+    margin=dict(l=5, r=5, t=5, b=5),
+)
+* 
 			*/

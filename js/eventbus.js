@@ -18,7 +18,7 @@ export default class EventBus {
 		this.debug = debug;
 		this.eventsources = [];
 	}
-
+	// -------------------------------------------------------------------
 	subscriptionChange(key, callback){
 		if(!this.subscriptionNotifiers[key]){
 			this.subscriptionNotifiers[key] = [];
@@ -30,7 +30,7 @@ export default class EventBus {
 			this._notifySubscriptionChange(key, true);
 		}
 	}
-
+	// -------------------------------------------------------------------
 	subscribe(key, callback, srcuuid=''){
 		if(!this.events[key]){
 			this.events[key] = [];
@@ -42,7 +42,7 @@ export default class EventBus {
 		
 		this._notifySubscriptionChange(key, true);
 	}
-
+	// -------------------------------------------------------------------
 	unsubscribe(key, callback){
 		var index;
 
@@ -68,11 +68,26 @@ export default class EventBus {
 
 		this._notifySubscriptionChange(key, false);
 	}
-
+	// -------------------------------------------------------------------
+	unsubscribeUUID(srcuuid) {
+		const keyarr = Object.keys(this.events);
+		for (let i=0;i<keyarr.length;i++) {
+			let index = this.events[keyarr[i]].findIndex((item) => item.srcuuid === srcuuid);
+			const notifyflag = index;
+			while (index>-1) {
+				this.events[keyarr[i]].splice(index, 1);
+				index = this.events[keyarr[i]].findIndex((item) => item.srcuuid === srcuuid);				
+			}
+			if (notifyflag>-1) {
+				this._notifySubscriptionChange(keyarr[i], false);
+			}
+		}	
+	}
+	// -------------------------------------------------------------------
 	subscribed(key){
 		return this.events[key] && this.events[key].length;
 	}
-
+	// -------------------------------------------------------------------
 	_notifySubscriptionChange(key, subscribed){
 		var notifiers = this.subscriptionNotifiers[key];
 
@@ -82,7 +97,7 @@ export default class EventBus {
 			});
 		}
 	}
-
+	// -------------------------------------------------------------------
 	_dispatch(){
 		var args = Array.from(arguments),
 		key = args.shift(),
@@ -101,7 +116,7 @@ export default class EventBus {
 
 		return result;
 	}
-
+	// -------------------------------------------------------------------
 	_debugDispatch(){
 		var args = Array.from(arguments),
 		key = args[0];

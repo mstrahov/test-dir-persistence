@@ -47,7 +47,7 @@ export class GridItemWithMenu extends GridItem {
 	
 	
 	headerControlEventHandler(obj,eventdata) {
-		console.log("GridItemWithMenu widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
+		//console.log("GridItemWithMenu widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
 		
 		//~ if (eventdata?.menuItemId === 'compactview') {
 			//~ this.grid.compact();
