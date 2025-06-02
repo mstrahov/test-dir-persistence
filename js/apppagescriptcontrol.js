@@ -44,7 +44,7 @@ export class AppPageScriptControl extends AppPageControl {
 		
 		
 		this.pyeditor = this.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonScriptControlCodeEditor", headertext: "Python", griditemoptions: {w:6,h:5,} });
-		this.dfview = this.addGridItem( griditemTableDFPagedTransform, {templateid:"#gridItemDFtransformview", headertext: "DataFrame view", griditemoptions: {w:6,h:5,},
+		this.dfview = this.addGridItem( griditemTableDFPagedTransform, {templateid:"#gridItemDFtransformview", headertext: "DataFrame edit view", griditemoptions: {w:6,h:5,},
 			coderunner: this.coderunner,
 			parentuuid: this.uuid
 		});
@@ -95,6 +95,8 @@ export class AppPageScriptControl extends AppPageControl {
 		}, this.scriptControl.uuid);
 		
 		this.dfview.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+		this.dfview.eventbus.subscribe('requestDataFrameChange',this.dfViewDataFrameChange.bind(this), this.uuid);
+		
 		
 		this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 		this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
@@ -135,30 +137,11 @@ export class AppPageScriptControl extends AppPageControl {
 		//~ }
 		const widgetIndex = this.visualwidgets.findIndex((v)=>v.widgetObject===obj);
 		if (widgetIndex>-1) {
-			// get widget uuid   this.visualwidgets[widgetIndex].widgetObject.widgetName
-			console.log("Close request from "+this.visualwidgets[widgetIndex].widgetObject.widgetName + " id: " + this.visualwidgets[widgetIndex].widgetObject.uuid );
-			
+			// console.log("Close request from "+this.visualwidgets[widgetIndex].widgetObject.widgetName + " id: " + this.visualwidgets[widgetIndex].widgetObject.uuid );
 			let widgetuuid = this.visualwidgets[widgetIndex].widgetObject.uuid;
-			
-			// destroy widget grid item?
-			
-			this.visualwidgets[widgetIndex].widgetObject.destroy();
-			 
-			// clear widget's subscriptions to this eventbus
-			this.eventbus.unsubscribeUUID(widgetuuid);
-			// clear widget's subscriptions to other widgets' eventbuses
-			this.pyeditor.eventbus.unsubscribeUUID(widgetuuid);
-			this.selectFileDialog.eventbus.unsubscribeUUID(widgetuuid);
 			this.fileIOHandler.eventbus.unsubscribeUUID(widgetuuid);
-			this.scriptControl.eventbus.unsubscribeUUID(widgetuuid);
-			this.dropdownMenuControl.eventbus.unsubscribeUUID(widgetuuid);
-			this.statusTabOutput.eventbus.unsubscribeUUID(widgetuuid);
-			
-			if (this.dfview) this.dfview.eventbus.unsubscribeUUID(widgetuuid);
-			
-			// delete widget object
+			this.destroyGridItem(this.visualwidgets[widgetIndex].widgetObject);
 			delete this.visualwidgets[widgetIndex].widgetObject;
-			// delete widget from visualwidgets
 			this.visualwidgets.splice(widgetIndex, 1);
 			
 		} else {
@@ -178,8 +161,14 @@ export class AppPageScriptControl extends AppPageControl {
 			console.log('addchartwidget');
 			await this.addVisualWidget();
 			
-		}	
-		//	this.grid.compact();
+		} else if (eventdata?.menuItemId === 'savelayout') { 
+			console.log("Visual widgets ", this.visualwidgets);
+			console.log("Grid items ", this.gridItems);
+			// {"w":2,"h":2,"id":"0f1ab445-6b02-4d9e-bdec-d0eac4eb311e","x":6,"y":6},  
+			// but if size w=1,h=1: {"id":"0f1ab445-6b02-4d9e-bdec-d0eac4eb311e","x":6,"y":6},
+			console.log(this.scriptControl.transformscript);
+		}
+		//	this.grid.compact();   
 		//} else if (eventdata?.menuItemId === 'savelayout') {   
 		//	console.log(this.layoutToJSON());
 		
@@ -188,6 +177,62 @@ export class AppPageScriptControl extends AppPageControl {
 	
 	// --------------------------------------------------------------------------------	
 	
+	async dfViewDataFrameChange(obj,eventdata) {
+		console.log("Dataframe change request ", obj,eventdata);
+		const currentDF = eventdata.dfname?eventdata.dfname:''; 
+		
+		// ----------------
+		let varlist = await this.coderunner.getNameSpaceVarsOfType(this.appuuid,'DataFrame');
+		varlist = varlist.filter((v)=>v.varName!==currentDF);
+		console.log("Available variables: ",varlist);
+		
+		for (let i=0;i<varlist.length;i++) {
+			varlist[i].id = i;
+			varlist[i].headertext = "DataFrame edit view (" + varlist[i].headertext + ")";
+		}
+		
+		let selectedOption;
+		if (varlist.length>0) {
+			const columns = [
+				{ title: "Variable", field: "varName" },
+				{ title: "Type", field: "varType" },
+				{ title: "Widget Header (editable)", field: "headertext", editor:true, },
+				//~ { title: "namespaceuuid", field: "namespaceuuid" },
+				//~ { title: "targetEnv", field: "py" },
+			 ];
+			let tabulatoroptions = {
+				data: varlist,
+				columns: columns,
+				dialogTitle : `Select an existing variable with data frame data, edit widget's header text:`, 
+			};
+			try {
+				selectedOption = await this.#tablePickerDialog.showoptions(tabulatoroptions);
+				console.log('Selected option:', selectedOption);
+			} catch (error) {
+				console.error('Error:', error.message);
+			}
+			// ------------------
+			if (selectedOption) {
+				obj.headerText = selectedOption.headertext;
+				await obj.changeDataFrame(selectedOption.varName);
+			}
+			
+		} else {
+			const errormsg = 'Other data frame variables not found! Dataframe data can be set from existing variables in python script, containing DataFrame data.';
+			console.log(errormsg);
+			this.eventbus.dispatch('getVariableError', this, 
+					{ targetEnv: 'py', cmd: '', result: null, 
+						msg: errormsg, 
+				});
+			
+		}
+		
+		
+		
+		//  ------------------
+		
+	}
+	// --------------------------------------------------------------------------------	
 	setTabTitle(newTitle) {
 		let str1 = newTitle;
 		if (str1.length>14) {
@@ -227,7 +272,7 @@ export class AppPageScriptControl extends AppPageControl {
 			//~ widgetObject: null,
 		//~ }
 		let varlist = await this.coderunner.getNameSpaceVars(this.appuuid);
-		console.log("Available variables: ",varlist);
+		//console.log("Available variables: ",varlist);
 		
 		for (let i=0;i<varlist.length;i++) {
 			varlist[i].id = i;

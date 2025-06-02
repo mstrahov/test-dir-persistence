@@ -667,6 +667,25 @@ export class CodeRunner {
 	
 	// -------------------------------------------------------------------------
 	
+	async nameSpaceVarExists(namespaceuuid, varName) {
+		let res = false;
+		let pyodide = await this.#pyodidePromise;
+		let pyodideNameSpace = this.pyNameSpaces.get(namespaceuuid); 
+		
+		if (pyodideNameSpace) {
+			try {
+				if (pyodideNameSpace.has(varName)) {
+					res = true; 
+				} 
+			} catch (err) {  
+			}
+			
+		}
+		return res;
+	}
+	
+	// -------------------------------------------------------------------------
+	
 	async getNameSpaceVars(namespaceuuid) {
 		
 		let res = [];

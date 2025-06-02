@@ -95,7 +95,7 @@ export class AppPageControl {
 	init() {
 		
 	}
-	
+	// ---------------------------------------------------------------------------------------
 	addGridItem(gridItemType, gridItemParams) {
 		// let item2 = new GridItem({templateid:"#gridelementtemplate", grid: grid, headertext: "chart 2", griditemoptions: {w:2,h:2,} });
 		let params = {...gridItemParams};
@@ -109,7 +109,22 @@ export class AppPageControl {
 		newgriditem.init();  
 		return newgriditem;
 	}
+	// ------------------------------------------------------------------------------------------
+	destroyGridItem(gridItemObj) {
+		const gridItemIndex = this.gridItems.findIndex((v)=>v===gridItemObj);
+		if (gridItemIndex>-1) {
+			let gridItemUUID = gridItemObj.uuid;
+			this.gridItems.forEach((el) => el.eventbus.unsubscribeUUID(gridItemUUID));
+			this.eventbus.unsubscribeUUID(gridItemUUID);
+			if (this.dropdownMenuControl) {
+				this.dropdownMenuControl.eventbus.unsubscribeUUID(gridItemUUID);
+			}
+			gridItemObj.destroy();
+			this.gridItems.splice(gridItemIndex, 1);
+		}
+	}
 	
+	// ------------------------------------------------------------------------------------------
 	topDropDownEventHandler(obj,eventdata) {
 		//console.log("main drop down menu item click",obj,eventdata); 
 		
@@ -120,20 +135,20 @@ export class AppPageControl {
 		}
 		
 	}
-	
+	// ------------------------------------------------------------------------------------------
 	destroy() {
 		//  dropdownMenuControl - clear eventbus
 		//  dropdownmenutab  - destroy
 		
 	}
-	
+	// ------------------------------------------------------------------------------------------
 	layoutToJSON() {
 		// to save grid   grid.save(saveContent = false, saveGridOpt = true)
 		let res = JSON.stringify(this.grid.save(false, true));
 		return res;
 	}
 	
-	
+	// ------------------------------------------------------------------------------------------
 	async runCmdFromGridItem(targetEnv, caller, cmdparams) {
 		// this,{cmd: this.getValue(), successcallback: this.clearEditor.bind(this), }
 		let res = null;
@@ -152,7 +167,7 @@ export class AppPageControl {
 		}
 		
 	}
-	
+	// ------------------------------------------------------------------------------------------
 	async runAsync(targetEnv, cmd) {
 		return 	await this.coderunner.runAsync(targetEnv, cmd, this.appuuid); 
 	}

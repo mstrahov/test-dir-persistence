@@ -55,8 +55,11 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 			this.showdf();
 		} else if (eventdata?.menuItemId === "refreshgriditem") {
 			this.showdf();
+		} else if (eventdata?.menuItemId === "choosedataframegriditem") {
+			this.eventbus.dispatch('requestDataFrameChange', this, { dfname: this.dfname });	
 		}
 		
+		// 
 	}
 	
 	// -------------------------------------------------------------------------
@@ -73,6 +76,11 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 		let dfarray = {};
 		const get_df_data_command =  this.dfname + ".head(1).to_json(orient='split',date_format='iso')";
 		try {
+			const dfnameexists = await this.coderunner.nameSpaceVarExists(this.parentuuid, this.dfname);
+			if (!dfnameexists) {
+				console.warn(`${this.dfname} is not defined.`);
+				return false;
+			}
 			const output = await this.coderunner.runPythonAsyncDirect(get_df_data_command, this.parentuuid);
 			dfarray = JSON.parse(output);
 		} catch (err) {
@@ -129,6 +137,13 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 		this.tabulatorobj.on("tableBuilt", this.eventTableBuilt.bind(this));
 
 	}
+	// -------------------------------------------------------------------------
+	
+	async changeDataFrame(dfname) {
+		this.dfname = dfname;
+		await this.showdf();
+	}
+	
 	// -------------------------------------------------------------------------
 	eventTableBuilt() {
 
