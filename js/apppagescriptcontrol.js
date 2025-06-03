@@ -239,6 +239,7 @@ export class AppPageScriptControl extends AppPageControl {
 			str1 = str1.slice(0,11)+'...';
 		}
 		this.contenttab.setTitle(str1);
+		this.contenttab.setTitleToolTip(newTitle);
 		
 	}
 	

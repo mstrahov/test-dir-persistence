@@ -132,6 +132,10 @@ export class BaseTabControl {
 		this.TabNavTitleElement.innerHTML = innerhtml;
 	}
 	
+	setTitleToolTip(innerhtml) {
+		this.TabNavTitleElement.title = innerhtml;
+	}
+		
 	setBody(innerhtml) {
 		this.TabBodyElement.innerHTML = innerhtml;
 	}
