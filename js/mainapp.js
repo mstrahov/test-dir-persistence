@@ -17,6 +17,7 @@ import { FileIOHandler } from "./fileiohandler.js"
 import { gridItemFileDialog } from "./griditemfiledialog.js"
 import { TabulatorPicker } from "./tabupicker.js";
 import { modalDialogInput } from "./modaldialoginput.js";
+import { OwnFormatHandler } from "./ownformathandler.js";
 
 //console.log("test main app");
 // ==============  page close warning
@@ -36,6 +37,10 @@ window.duckdb = new DuckDBLoader();
 window.pyodideloader = new PyodideLoader();
 window.fileiohandler = new FileIOHandler({duckdbloader: window.duckdb, pyodideloader: window.pyodideloader});
 window.coderunner = new CodeRunner({duckdbloader: window.duckdb, pyodideloader: window.pyodideloader, fileIOHandler: window.fileiohandler });
+
+// ======== Format saver
+window.localFormatSaver = new OwnFormatHandler({pyodidePromise: window.pyodideloader.pyodideReadyPromise(), dbFileName: "/app/mount_dir/default.dbsqlite"});
+
 
 // ============= user dialogs ====================================
 let tablePicker = new TabulatorPicker({templateid:"#tabulatorpickertemplate"});
@@ -108,7 +113,7 @@ sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.
 
 
 
-// ==================================================================
+// ================================================================== newscriptmenuaction
 let activetabs = [];
 const OpenNewScriptTab = ()=>{   
 	let newtab = new AppPageScriptControl( { 
@@ -128,7 +133,7 @@ const OpenNewScriptTab = ()=>{
 };
 
 
-// ====== tabNavMainMenuTab - main left menu actions in tabs events
+// ====== tabNavMainMenuTab - main left menu actions in tabs events   
 
 mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{ 
 		console.log("mainmenuitemclick",obj,eventdata); 
@@ -137,7 +142,9 @@ mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{
 		} else if (eventdata?.menuItemId === "newscriptmenuaction") { 	
 			//console.log("NEW SCRIPT");
 			OpenNewScriptTab();
-		//~ } else if (eventdata?.menuItemId === "refreshgriditem" || eventdata?.menuItemId ===  "refreshaction") {      
+		} else if (eventdata?.menuItemId === "saveprojectfilemenuaction") { 
+			console.log("saveprojectfilemenuaction");
+				     
 		}
 	});
 

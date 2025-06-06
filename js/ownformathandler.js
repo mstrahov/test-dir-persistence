@@ -45,7 +45,8 @@ conn_internal = sqlite3.connect("${this.#dbfilename}")
 conn_internal.execute('''
     CREATE TABLE IF NOT EXISTS tbl_objects (
         id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
+        name TEXT,
+        objuuid TEXT NOT NULL,
         objtype TEXT NOT NULL,
         datahash TEXT,
         modtimestamp TEXT DEFAULT CURRENT_TIMESTAMP, 
@@ -53,7 +54,7 @@ conn_internal.execute('''
     );
 ''')
 conn_internal.execute('''
-    CREATE UNIQUE INDEX IF NOT EXISTS uniqnametype ON tbl_objects (name,objtype);
+    CREATE UNIQUE INDEX IF NOT EXISTS uniqnametype ON tbl_objects (objuuid, objtype);
 ''')
 `;
 		if (!this.#pyodide) { await this.init(); }
@@ -82,15 +83,15 @@ conn_internal.close()
 	
 	// ------------------------------------------------
 	
-	async writeObjectFromString(name, objtype, stringval){
+	async writeObjectFromString(name, objuuid, objtype, stringval){
 		//window.exectimer.timeit("writing object from string...");
 		const cmd = `
 filedata_01 = b'''${stringval}'''	
 conn_internal.execute('''
-    INSERT INTO tbl_objects (name, objtype, data)
-    VALUES (?, ?, ?)
-    ON CONFLICT(name, objtype) DO UPDATE SET data=excluded.data, modtimestamp = CURRENT_TIMESTAMP;	
-''', ('${name}','${objtype}', sqlite3.Binary(filedata_01)))
+    INSERT INTO tbl_objects (name, objuuid, objtype, data)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(objuuid, objtype) DO UPDATE SET name=excluded.name, data=excluded.data, modtimestamp = CURRENT_TIMESTAMP;	
+''', ('${name}', '${objuuid}', '${objtype}', sqlite3.Binary(filedata_01)))
 del filedata_01
 `;	
 
@@ -98,26 +99,26 @@ del filedata_01
 		try {
 			let output = await this.#pyodide.runPythonAsync(cmd);
 		} catch (err) {
-			console.error('Error writing object from string value',this.#dbfilename,name,objtype,err);
+			console.error('Error writing object from string value',this.#dbfilename,name,objuuid,objtype,err);
 		}
 		await this.closeConn();
 		//window.exectimer.timeit("done!");
 	}
 	
 	// ------------------------------------------------
-	async writeObjectFromFile(name, objtype, filename){
+	async writeObjectFromFile(name, objuuid, objtype, filename){
 		//window.exectimer.timeit("writeObjectFromFile...");
 		const cmd = `
 with open('${filename}', 'rb') as f:
     filedata_01 = f.read()			
 conn_internal.execute('''
-    INSERT INTO tbl_objects (name, objtype, data)
-    VALUES (?, ?, ?)
-    ON CONFLICT(name, objtype) DO UPDATE SET data=excluded.data, modtimestamp = CURRENT_TIMESTAMP;
-''', ('${name}','${objtype}', sqlite3.Binary(filedata_01)))
+    INSERT INTO tbl_objects (name, objuuid, objtype, data)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(objuuid, objtype) DO UPDATE SET name=excluded.name, data=excluded.data, modtimestamp = CURRENT_TIMESTAMP;
+''', ('${name}','${objuuid}','${objtype}', sqlite3.Binary(filedata_01)))
 del filedata_01
 `;
-		if (! await this.#iohandler.pathExists(filename)) {
+		if (!await this.#iohandler.pathExists(filename)) {
 			console.error('File does not exist: ', filename);
 			return;
 		}
@@ -126,7 +127,7 @@ del filedata_01
 		try {
 			let output = await this.#pyodide.runPythonAsync(cmd);
 		} catch (err) {
-			console.error('Error writing object from file',this.#dbfilename,name,objtype,err);
+			console.error('Error writing object from file',this.#dbfilename,name,objuuid,objtype,err);
 		}
 		await this.closeConn();
 		//window.exectimer.timeit("done!");
@@ -134,12 +135,12 @@ del filedata_01
 	
 	// ------------------------------------------------
 	
-	async readObjectToString(name, objtype){
+	async readObjectToString(objuuid, objtype){
 		//window.exectimer.timeit("readObjectToString...");
 		const cmd = `
 conn_curs = conn_internal.execute('''
-	SELECT data FROM tbl_objects WHERE name=? AND objtype=?;
-''',('${name}','${objtype}'))
+	SELECT data FROM tbl_objects WHERE objuuid=? AND objtype=?;
+''',('${objuuid}','${objtype}'))
 conn_internal_data = conn_curs.fetchone()[0]
 conn_curs.close()
 conn_internal_data.decode()
@@ -149,7 +150,7 @@ conn_internal_data.decode()
 		try {
 			output = await this.#pyodide.runPythonAsync(cmd);
 		} catch (err) {
-			console.error('Error reading object from file',this.#dbfilename,name,objtype,err);
+			console.error('Error reading object from file',this.#dbfilename,objuuid,objtype,err);
 		}
 		await this.closeConn();
 		//window.exectimer.timeit("done!");
@@ -159,12 +160,12 @@ conn_internal_data.decode()
 	
 	// ------------------------------------------------
 	
-	async readObjectToFile(name, objtype, filename){
+	async readObjectToFile(objuuid, objtype, filename){
 		//window.exectimer.timeit("readObjectToFile...");
 		const cmd = `
 conn_internal_data = conn_internal.execute('''
-	SELECT data FROM tbl_objects WHERE name=? AND objtype=?;
-''',('${name}','${objtype}')).fetchone()[0]
+	SELECT data FROM tbl_objects WHERE objuuid=? AND objtype=?;
+''',('${objuuid}','${objtype}')).fetchone()[0]
 with open('${filename}', 'wb') as file:
     file.write(conn_internal_data)
 del conn_internal_data
@@ -174,7 +175,7 @@ del conn_internal_data
 		try {
 			output = await this.#pyodide.runPythonAsync(cmd);
 		} catch (err) {
-			console.error('Error reading object to file',this.#dbfilename,name,objtype,filename,err);
+			console.error('Error reading object to file',this.#dbfilename,objuuid,objtype,filename,err);
 		}
 		await this.closeConn();
 		//window.exectimer.timeit("done!");
