@@ -19,6 +19,16 @@ import { TabulatorPicker } from "./tabupicker.js";
 import { modalDialogInput } from "./modaldialoginput.js";
 
 //console.log("test main app");
+// ==============  page close warning
+
+window.addEventListener("beforeunload", function (e) {
+	e.preventDefault();
+	var confirmationMessage = 'Leave site? Changes you made may not be saved.';
+	(e || window.event).returnValue = confirmationMessage;
+	return confirmationMessage; 
+});
+
+
 // =====  Interface layout
 const tabnavcontrol = new TabNavigationControl({templateid: "#navtabscontroltemplate", containerid:"#tabnavcontrol"});
 // ======  DuckDB & Pyodide
@@ -152,3 +162,6 @@ mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{
 
 //  new tab example
 //tabnavcontrol.addNewTab(BaseTabControl, {insertBeforePosition:-1, templateid: "#emptyTabContentTemplate", navitemtemplateid: "#emptyTabNavItemTemplate", tabtitle: "tab title 1" , tabbody: "tab 1 body here" });
+
+
+

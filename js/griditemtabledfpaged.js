@@ -49,7 +49,7 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 	
 	// -------------------------------------------------------------------------
 	menuEventHandler(obj,eventdata) {
-		console.log("griditemTableDFPaged widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
+		//~ console.log("griditemTableDFPaged widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
 		
 		if (eventdata?.menuItemId === "refreshaction") {
 			this.showdf();
@@ -231,8 +231,8 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 			//~ }
 		
 		//data: this.generateTableData(dfarray),
-		console.log("Internal Data Feed params: ",params);
-		console.log("Internal Data Feed config: ",config);
+		//console.log("Internal Data Feed params: ",params);
+		//console.log("Internal Data Feed config: ",config);
 		let res = {
 			"last_page":0,
 			"last_row":0,
@@ -276,7 +276,7 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 		
 		return new Promise(function(resolve, reject){
 			//do some async data retrieval then pass the array of row data back into Tabulator
-			console.log("Promise function called");
+			//~ console.log("Promise function called");
 			resolve(res);
 			//if there is an error call this function and pass the error message or object into it
 			//reject();

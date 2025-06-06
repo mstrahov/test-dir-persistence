@@ -610,7 +610,8 @@ export class CodeRunner {
 			uuid:  self.crypto.randomUUID(),  
 			PlotlyFigure: null,
 		};
-		const get_plotly_html_cmd = `plotly.io.to_html(fig,config={'scrollZoom': True, 'responsive': True, 'toImageButtonOptions': {
+		const get_plotly_html_cmd = `import plotly
+plotly.io.to_html(fig,config={'scrollZoom': True, 'responsive': True, 'toImageButtonOptions': {
         'format': 'svg', # one of png, svg, jpeg, webp
         'filename': 'test_chart',
         'height': 500,
@@ -620,13 +621,13 @@ export class CodeRunner {
 },include_plotlyjs=False,full_html=False,default_width="100%",default_height="${elementheight}px")
 `;
 		if (variableVisual.targetEnv === 'py') {
-			
+			let plotlyispresent = await this.checkIfModuleIsPresentInNameSpace(variableVisual.namespaceuuid, 'plotly'); 
 			let pyodideNameSpace = this.pyNameSpaces.get(variableVisual.namespaceuuid); 
 			if (pyodideNameSpace) {
 				try {
 					if (pyodideNameSpace.has(variableVisual.varName)) {
 						if (typeof pyodideNameSpace.get(variableVisual.varName) === variableVisual.varType || pyodideNameSpace.get(variableVisual.varName).type === variableVisual.varType) {
-							if (variableVisual.varType==='Figure' && pyodideNameSpace.has('plotly') && pyodideNameSpace.get('plotly').type==='module') {
+							if (variableVisual.varType==='Figure' && plotlyispresent ) {
 								res.output = await pyodide.pyodide_py.code.eval_code_async(get_plotly_html_cmd, pyodideNameSpace);
 								res.PlotlyFigure = true;
 								res.runStatus = true;
@@ -686,6 +687,49 @@ export class CodeRunner {
 	
 	// -------------------------------------------------------------------------
 	
+	async checkIfModuleIsPresentInNameSpace(namespaceuuid, modulename) {
+		let pyodide = await this.#pyodidePromise;
+		let res = false;
+		let pyodideNameSpace = this.pyNameSpaces.get(namespaceuuid); 
+		
+		if (pyodideNameSpace) {
+
+			let jsNameSpace;
+			let namespacekeys;
+			
+			try {
+				if (pyodideNameSpace.has(modulename) && pyodideNameSpace.get(modulename).type==='module') {
+					return true;
+				} 
+			} catch (err)  {  console.warn(`Checking module ${modulename} presence error 1: `,err) }
+			
+			try {
+				jsNameSpace = pyodideNameSpace.toJs();
+				namespacekeys = [...jsNameSpace.keys()];
+			} catch (err) { console.warn(`Checking module ${modulename} presence error 2: `,err) }
+			
+			if  (namespacekeys && jsNameSpace) {
+				for (let i=0;i<namespacekeys.length;i++) {
+					try {
+						if (namespacekeys[i].startsWith('__')) { continue; }
+						if (typeof jsNameSpace.get(namespacekeys[i]) === "object" && jsNameSpace.get(namespacekeys[i]).type === "module") {
+							let moduletype = await pyodide.pyodide_py.code.eval_code_async(`${namespacekeys[i]}.__name__`, pyodideNameSpace); 
+							// console.log(`Module ${namespacekeys[i]} moduletype ${moduletype}`);
+							if (typeof(moduletype)==='string' && moduletype.includes(modulename)) {
+								return true;
+							}
+						}
+					} catch (err) { console.warn(`Checking module ${modulename} presence error 3: `,err) }	
+					
+				}
+			}
+		}
+		return res;
+	}
+	
+	
+	// -------------------------------------------------------------------------
+	
 	async getNameSpaceVars(namespaceuuid) {
 		
 		let res = [];
@@ -693,19 +737,22 @@ export class CodeRunner {
 		let pyodideNameSpace = this.pyNameSpaces.get(namespaceuuid); 
 		
 		if (pyodideNameSpace) {
-			let plotlyispresent = false; 
-			try {
-				if (pyodideNameSpace.has('plotly') && pyodideNameSpace.get('plotly').type==='module') {
-					plotlyispresent = true; 
-				} 
-			} catch (err)  {  }
+			
+			
+			let plotlyispresent = await this.checkIfModuleIsPresentInNameSpace(namespaceuuid, 'plotly'); 
+			//~ console.log("HAS PLOTLY: ", plotlyispresent);
+			//~ try {
+				//~ if (pyodideNameSpace.has('plotly') && pyodideNameSpace.get('plotly').type==='module') {
+					//~ plotlyispresent = true; 
+				//~ } 
+			//~ } catch (err)  {  }
 			
 			let jsNameSpace;
 			let namespacekeys;
 			try {
 				jsNameSpace = pyodideNameSpace.toJs();
-				namespacekeys = jsNameSpace.keys().toArray();
-			} catch { }
+				namespacekeys = [...jsNameSpace.keys()];
+			} catch (err) { console.warn("Getting namespace variables error 1: ",err) }
 			
 			if  (namespacekeys && jsNameSpace) {
 				for (let i=0;i<namespacekeys.length;i++) {
@@ -729,7 +776,7 @@ export class CodeRunner {
 							});
 							
 						}
-					} catch (err) { }	
+					} catch (err) { console.warn("Getting namespace variables error 2: ",err)  }	
 					
 				}
 			}
@@ -764,8 +811,8 @@ export class CodeRunner {
 			let namespacekeys;
 			try {
 				jsNameSpace = pyodideNameSpace.toJs();
-				namespacekeys = jsNameSpace.keys().toArray();
-			} catch { }
+				namespacekeys = [...jsNameSpace.keys()];
+			} catch (err) { console.warn("Getting namespace of type variables error 1: ",err)  }
 			
 			if  (namespacekeys && jsNameSpace) {
 				for (let i=0;i<namespacekeys.length;i++) {
@@ -789,7 +836,7 @@ export class CodeRunner {
 							});
 							
 						}
-					} catch (err) { }	
+					} catch (err) { console.warn("Getting namespace of type variables error 2: ",err)  }	
 				}
 			}	
 		}
