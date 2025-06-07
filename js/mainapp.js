@@ -39,8 +39,14 @@ window.fileiohandler = new FileIOHandler({duckdbloader: window.duckdb, pyodidelo
 window.coderunner = new CodeRunner({duckdbloader: window.duckdb, pyodideloader: window.pyodideloader, fileIOHandler: window.fileiohandler });
 
 // ======== Format saver
-window.localFormatSaver = new OwnFormatHandler({pyodidePromise: window.pyodideloader.pyodideReadyPromise(), dbFileName: "/app/mount_dir/default.dbsqlite"});
-
+window.localFormatSaver = new OwnFormatHandler({
+		pyodidePromise: window.pyodideloader.pyodideReadyPromise(), 
+		FileIOHandler: window.fileiohandler,
+		coderunner: window.coderunner,  
+		namespaceuuid: "globals",
+		dbFileName: "/app/mount_dir/default.dbsqlite"
+});
+window.localFormatSaver.init();
 
 // ============= user dialogs ====================================
 let tablePicker = new TabulatorPicker({templateid:"#tabulatorpickertemplate"});
@@ -76,7 +82,7 @@ const appstatusview = new AppStatusView({templateid: "#statusdisplaycontroltempl
 // =====  duckdb & pyodide events
 
 window.duckdb.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{ /* console.log("dbstatechange",obj,eventdata); */  appstatusview.duckdbStatusChange(eventdata); }, appstatusview.uuid);
-window.pyodideloader.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ /* console.log("pyodidestatechange",obj,eventdata); */  appstatusview.pyodideStatusChange(eventdata); }, appstatusview.uuid);
+window.pyodideloader.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{ /*console.log("pyodidestatechange",obj,eventdata); */  appstatusview.pyodideStatusChange(eventdata); }, appstatusview.uuid);
 
 window.duckdb.eventbus.subscribe('dbstatechange',(obj,eventdata)=>{  statusTabOutput.statusUpdate(eventdata); }, statusTabOutput.uuid);
 window.pyodideloader.eventbus.subscribe('pyodidestatechange',(obj,eventdata)=>{  statusTabOutput.statusUpdate(eventdata); }, statusTabOutput.uuid);
@@ -132,8 +138,41 @@ const OpenNewScriptTab = ()=>{
 	activetabs.push(newtab);
 };
 
+// ================================================================== save project menu action
 
-// ====== tabNavMainMenuTab - main left menu actions in tabs events   
+const SaveProjectFile = async () => {   
+	// name, objuuid, objtype, stringval
+	await window.localFormatSaver.writeObjectFromString("format_version", "format_version", "format_version", window.localFormatSaver.FORMAT_VERSION );
+	//await window.localFormatSaver.writeObjectFromString("test1", "test2", "test3", "test4");
+	/* saving objects:
+		activetabs = []
+	
+	*/
+	for (let i=0;i<activetabs.length;i++) {
+		let tabobj = activetabs[i].toOwnFormat();
+		
+		console.log(`TAB: ${i}`, tabobj);
+		await window.localFormatSaver.writeObjectFromString(tabobj.name, tabobj.objuuid, tabobj.objtype, JSON.stringify(tabobj));
+		//console.log("GRID LAYOUT ",activetabs[i].layoutToJSON());
+	}
+};
+
+// ================================================================== open project menu action
+
+const OpenProjectFile = async () => {   
+	// name, objuuid, objtype, stringval
+	//await window.localFormatSaver.writeObjectFromString("format_version", "format_version", "format_version", window.localFormatSaver.FORMAT_VERSION );
+	//await window.localFormatSaver.writeObjectFromString("test1", "test2", "test3", "test4");
+	/* saving objects:
+		activetabs = []
+	
+	*/
+	let file_format_ver = await window.localFormatSaver.readObjectToString("format_version", "format_version");
+	console.log(`Open project file ${window.localFormatSaver.dbfilename} format ver ${file_format_ver}`);
+};
+
+
+// ====== tabNavMainMenuTab - main left menu actions in tabs events    
 
 mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{ 
 		console.log("mainmenuitemclick",obj,eventdata); 
@@ -143,8 +182,11 @@ mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{
 			//console.log("NEW SCRIPT");
 			OpenNewScriptTab();
 		} else if (eventdata?.menuItemId === "saveprojectfilemenuaction") { 
-			console.log("saveprojectfilemenuaction");
-				     
+			//console.log("saveprojectfilemenuaction");
+			SaveProjectFile(); 
+		} else if (eventdata?.menuItemId === "openprojectfile") { 
+			//console.log("saveprojectfilemenuaction");
+			OpenProjectFile(); 
 		}
 	});
 

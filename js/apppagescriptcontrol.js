@@ -232,16 +232,7 @@ export class AppPageScriptControl extends AppPageControl {
 		//  ------------------
 		
 	}
-	// --------------------------------------------------------------------------------	
-	setTabTitle(newTitle) {
-		let str1 = newTitle;
-		if (str1.length>14) {
-			str1 = str1.slice(0,11)+'...';
-		}
-		this.contenttab.setTitle(str1);
-		this.contenttab.setTitleToolTip(newTitle);
-		
-	}
+	
 	
 	// --------------------------------------------------------------------------------
 	async renameScript() {
@@ -520,6 +511,28 @@ sheetinfo
 		
 	}
 	// --------------------------------------------------------------------------------
+	toOwnFormat() {
+		let res = super.toOwnFormat();
+		
+		res.visualwidgets = [];
+		
+		for (let i=0;i<this.visualwidgets.length;i++) {
+			res.visualwidgets.push(Object.assign({},this.visualwidgets[i],{widgetObject:null, widgetObj:this.visualwidgets[i].widgetObject.toOwnFormat() }))
+		}
+		
+		// -----------
+		
+		res.scriptObject = this.scriptControl?this.scriptControl.transformscriptclone:this.scriptObject;
+		res.scriptname = this.scriptControl?this.scriptControl.transformscript.scriptName:this.scriptObject.scriptName;
+		
+		res.name = res.scriptname;
+		res.objuuid = res.uuid;
+		res.objtype = "script";
+		// -------------
+		
+		return res;
+	}
+	
 	// --------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------
 }

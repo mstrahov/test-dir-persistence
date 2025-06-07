@@ -185,6 +185,13 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 		this.contentsChanged = false;
 	} 
 	
+	// ------------------------------------------------------------------------------
+	toOwnFormat() {
+		let res = super.toOwnFormat();
+		res.cmdhistory = this.cmdhistory;
+		
+		return res;
+	}
 	
 }
 

@@ -14,31 +14,46 @@ export class OwnFormatHandler {
 	#iohandler;
 	
 	constructor(params) {
+		this.FORMAT_VERSION = "0.1";
 		this.#pyodidePromise = params.pyodidePromise;
 		this.#pyodide = undefined;
 		this.#dbfilename = params.dbFileName;
 		this.#iohandler = params.FileIOHandler;
+		this.namespaceuuid = params.namespaceuuid;
+		this.coderunner = params.coderunner;
 	}
 	
-	// ------------------------------------------------
+	
+	// ------------------------------------------------------------------------------------------------------------------------
+	get dbfilename() {
+		return this.#dbfilename;
+	}
+	// -----------------------------------------------------------------------------------------------------
 	async init() {
 		//window.exectimer.timeit("initializing internal format saver...");
 		this.#pyodide = await this.#pyodidePromise;
 		try {
-			let output = await this.#pyodide.runPythonAsync(`
+			//~ let output = await this.#pyodide.runPythonAsync(`
+//~ import pyodide_js
+//~ await pyodide_js.loadPackage('micropip')
+//~ import micropip
+//~ await micropip.install('sqlite3')
+//~ import sqlite3
+//~ `);
+		let output = await this.coderunner.runPythonAsync(`
 import pyodide_js
 await pyodide_js.loadPackage('micropip')
 import micropip
 await micropip.install('sqlite3')
 import sqlite3
-`);
+`, this.namespaceuuid);
 		} catch (err) {
 			console.error('Error initializing sqlite3',err);
 		}
 		//window.exectimer.timeit("done!");
 	}
 	
-	// ------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------
 	async openConn() {
 		const cmd = `
 conn_internal = sqlite3.connect("${this.#dbfilename}")
@@ -60,20 +75,24 @@ conn_internal.execute('''
 		if (!this.#pyodide) { await this.init(); }
 
 		try {
-			let output = await this.#pyodide.runPythonAsync(cmd);
+			//~ let output = await this.#pyodide.runPythonAsync(cmd);
+			
+			let output = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
+			
 		} catch (err) {
 			console.error('Error opening internal file connection',this.#dbfilename,err);
 		}
 	}
 
-	// ------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------
 	async closeConn() {
 		const cmd = `
 conn_internal.commit()
 conn_internal.close()
 `;
 		try {
-			let output = await this.#pyodide.runPythonAsync(cmd);
+			//~ let output = await this.#pyodide.runPythonAsync(cmd);
+			let output = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
 		} catch (err) {
 			console.error('Error closing internal file connection',this.#dbfilename,err);
 		}
@@ -81,7 +100,7 @@ conn_internal.close()
 		await this.#iohandler.syncFS();
 	}
 	
-	// ------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------
 	
 	async writeObjectFromString(name, objuuid, objtype, stringval){
 		//window.exectimer.timeit("writing object from string...");
@@ -97,7 +116,8 @@ del filedata_01
 
 		await this.openConn();
 		try {
-			let output = await this.#pyodide.runPythonAsync(cmd);
+			//~ let output = await this.#pyodide.runPythonAsync(cmd);
+			let output = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
 		} catch (err) {
 			console.error('Error writing object from string value',this.#dbfilename,name,objuuid,objtype,err);
 		}
@@ -105,7 +125,7 @@ del filedata_01
 		//window.exectimer.timeit("done!");
 	}
 	
-	// ------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------
 	async writeObjectFromFile(name, objuuid, objtype, filename){
 		//window.exectimer.timeit("writeObjectFromFile...");
 		const cmd = `
@@ -125,7 +145,8 @@ del filedata_01
 		
 		await this.openConn();
 		try {
-			let output = await this.#pyodide.runPythonAsync(cmd);
+			//~ let output = await this.#pyodide.runPythonAsync(cmd);
+			let output = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
 		} catch (err) {
 			console.error('Error writing object from file',this.#dbfilename,name,objuuid,objtype,err);
 		}
@@ -133,7 +154,7 @@ del filedata_01
 		//window.exectimer.timeit("done!");
 	}
 	
-	// ------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------
 	
 	async readObjectToString(objuuid, objtype){
 		//window.exectimer.timeit("readObjectToString...");
@@ -148,9 +169,16 @@ conn_internal_data.decode()
 		let output = undefined;
 		await this.openConn();
 		try {
-			output = await this.#pyodide.runPythonAsync(cmd);
+			//~ output = await this.#pyodide.runPythonAsync(cmd);
+			let res = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
+			if (res.runStatus) {
+				output = res.output;
+			} else {
+				console.error('Error reading object from file',this.#dbfilename, objuuid, objtype, res.error);
+			}
+			
 		} catch (err) {
-			console.error('Error reading object from file',this.#dbfilename,objuuid,objtype,err);
+			console.error('Failed to read object from file',this.#dbfilename,objuuid,objtype,err);
 		}
 		await this.closeConn();
 		//window.exectimer.timeit("done!");
@@ -158,7 +186,7 @@ conn_internal_data.decode()
 		
 	}
 	
-	// ------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------
 	
 	async readObjectToFile(objuuid, objtype, filename){
 		//window.exectimer.timeit("readObjectToFile...");
@@ -173,9 +201,15 @@ del conn_internal_data
 		let output = undefined;
 		await this.openConn();
 		try {
-			output = await this.#pyodide.runPythonAsync(cmd);
+			//~ output = await this.#pyodide.runPythonAsync(cmd);
+			let res = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
+			if (res.runStatus) {
+				output = res.output;
+			} else {
+				console.error('Error reading object from file',this.#dbfilename, objuuid, objtype,filename, res.error);
+			}
 		} catch (err) {
-			console.error('Error reading object to file',this.#dbfilename,objuuid,objtype,filename,err);
+			console.error('Failed to read object from file',this.#dbfilename,objuuid,objtype,filename,err);
 		}
 		await this.closeConn();
 		//window.exectimer.timeit("done!");

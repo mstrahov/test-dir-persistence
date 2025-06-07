@@ -171,4 +171,33 @@ export class AppPageControl {
 	async runAsync(targetEnv, cmd) {
 		return 	await this.coderunner.runAsync(targetEnv, cmd, this.appuuid); 
 	}
+	// ------------------------------------------------------------------------------------------
+	setTabTitle(newTitle) {
+		let str1 = newTitle;
+		if (str1.length>14) {
+			str1 = str1.slice(0,11)+'...';
+		}
+		this.contenttab.setTitle(str1);
+		this.contenttab.setTitleToolTip(newTitle);
+		this.tabtitle = newTitle;
+		
+	}
+	
+	// ------------------------------------------------------------------------------------------
+	
+	toOwnFormat() {
+		let res = {};
+		
+		res.tabtitle = this.tabtitle;
+		res.uuid = this.uuid;
+		res.gridlayout = this.layoutToJSON();
+		//res.gridItems = this.gridItems;
+		res.gridwidgets = [];
+		for (let i=0;i<this.gridItems.length;i++) {
+			res.gridwidgets.push(this.gridItems[i].toOwnFormat());
+		}
+		
+		return res;
+	}
+	
 }

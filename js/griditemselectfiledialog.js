@@ -126,6 +126,27 @@ export class gridItemSelectFileDialog extends gridItemFileDialog {
 		this.eventbus.subscribe('clickableactionclick',this.menuEventHandler.bind(this));
 		
 	}
+	
+	// ------------------------------------
+	
+	toOwnFormat() {
+		let res = super.toOwnFormat();
+		// -----------
+		//~ if (this.lastcolumnlayout) {
+			//~ let oldlayout = this.lastcolumnlayout.find((e)=>e.field==="df_row_index");
+			//~ if (oldlayout) {
+				//~ colwidth = oldlayout?.width;
+			//~ }
+		//~ }
+		
+		
+		// ------------
+		try {
+			res.columnlayout = this.tabulatorObj.getColumnLayout();
+		} catch (e) {  console.warn("Column layout save error",e);  }
+				
+		return res;
+	}
 
 }
 

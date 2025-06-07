@@ -50,6 +50,16 @@ export class GridItem {
 		
 	}
 	
+	toOwnFormat() {
+		let res = {};
+		
+		res.griditemheader = this.headerText;
+		res.uuid = this.uuid;
+		res.griditemname = this.__proto__?.constructor?.name;
+		
+		return res;
+	}
+	
 	get grid() {
 		return this.#grid;
 	}

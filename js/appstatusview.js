@@ -64,6 +64,7 @@ export class AppStatusView {
 	updateSvgIcon(statustext, iconelement) {
 
 		if (statustext.includes('_success')) {
+			//console.log("STATUS TEXT TO GREEN: ", statustext, iconelement);
 			iconelement.style.stroke = "green";
 			this.hideSpinner();
 		} else if (statustext.includes('_error')) {

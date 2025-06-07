@@ -27,8 +27,8 @@ export const TransformStep = {
 export const TransformScript = {
 	srcfiles: [],
 	destfiles: [],
-	pyodideobject: undefined,
-	duckdbconn: undefined,
+	//~ pyodideobject: undefined,
+	//~ duckdbconn: undefined,
 	filesdirectory: "/mount_dir",
 	transformSteps: [],
 	lastRunStepNum: 0,
@@ -44,8 +44,8 @@ export function TransformScriptInit() {
 		scriptID:  self.crypto.randomUUID(),  
 		srcfiles: [],
 		destfiles: [],
-		pyodideobject: undefined,
-		duckdbconn: undefined,
+		//~ pyodideobject: undefined,
+		//~ duckdbconn: undefined,
 		filesdirectory: "",
 		transformSteps: [],
 		lastRunStepNum: 0,
@@ -127,6 +127,32 @@ export class gridItemScript extends GridItemWithMenu {
 	get transformscript() {
 		return this.#transformscript;
 	}
+	// -----------------------------------------------------------------------------------------------------------
+	
+	get transformscriptclone() {
+		let res = Object.assign({}, this.#transformscript, {transformSteps:[]});
+		
+		for (let i=0;i<this.#transformscript.transformSteps.length;i++){
+			res.transformSteps.push({
+				stepOrder: this.#transformscript.transformSteps[i].stepOrder,
+				targetEnv: this.#transformscript.transformSteps[i].targetEnv,
+				stepID: this.#transformscript.transformSteps[i].stepID,
+				srccmdActionId: this.#transformscript.transformSteps[i].srccmdActionId,
+				srccmdActionName: this.#transformscript.transformSteps[i].srccmdActionName,
+				scriptCode: this.#transformscript.transformSteps[i].scriptCode,
+				targetDataframe: this.#transformscript.transformSteps[i].targetDataframe,
+				mutations: this.#transformscript.transformSteps[i].mutations, 
+				lastRunStatus: this.#transformscript.transformSteps[i].lastRunStatus,
+				lastRunResult: this.#transformscript.transformSteps[i].lastRunResult,
+				executionTime: this.#transformscript.transformSteps[i].executionTime,
+				stepactive: this.#transformscript.transformSteps[i].stepactive,
+				
+			});
+		}
+		
+		return res;
+	}
+	
 	// -----------------------------------------------------------------------------------------------------------
 	
 	async deleteOneStepRow(e, row) {
@@ -301,6 +327,28 @@ export class gridItemScript extends GridItemWithMenu {
 	}
 	
 	// -----------------------------------------------------------------------------------------------------------
+	
+	toOwnFormat() {
+		let res = super.toOwnFormat();
+		// -----------
+		//~ if (this.lastcolumnlayout) {
+			//~ let oldlayout = this.lastcolumnlayout.find((e)=>e.field==="df_row_index");
+			//~ if (oldlayout) {
+				//~ colwidth = oldlayout?.width;
+			//~ }
+		//~ }
+		
+		res.transformscript = this.transformscriptclone;
+		res.scriptname = this.#scriptname;
+		// ------------
+		try {
+			res.columnlayout = this.#tabulatorObj.getColumnLayout();
+		} catch (e) {  console.warn("Column layout save error",e);  }
+				
+		return res;
+	}
+	
+	
 	// -----------------------------------------------------------------------------------------------------------
 	
 }

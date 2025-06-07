@@ -141,6 +141,8 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 	
 	async changeDataFrame(dfname) {
 		this.dfname = dfname;
+		this.getdfcmd =  this.dfname + ".to_json(orient='split',date_format='iso')";
+		this.gettypescmd = this.dfname + ".dtypes.to_json(orient='split',default_handler=str)";	
 		await this.showdf();
 	}
 	
@@ -283,6 +285,31 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 		});
 	}
 	// -------------------------------------------------------------------------
+	
+	// ------------------------------------
+	
+	toOwnFormat() {
+		let res = super.toOwnFormat();
+		// -----------
+		//~ if (this.lastcolumnlayout) {
+			//~ let oldlayout = this.lastcolumnlayout.find((e)=>e.field==="df_row_index");
+			//~ if (oldlayout) {
+				//~ colwidth = oldlayout?.width;
+			//~ }
+		//~ }
+		
+		res.dfname = this.dfname;
+		res.parentuuid = this.parentuuid;
+		// ------------
+		if (this.tabulatorobj) {
+			try {
+				res.columnlayout = this.tabulatorobj.getColumnLayout();
+			} catch (e) { console.warn("Column layout save error",e); }
+		}	
+		return res;
+	}
+	
+	
 	// -------------------------------------------------------------------------
 	
 }
