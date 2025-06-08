@@ -169,6 +169,9 @@ const OpenProjectFile = async () => {
 	*/
 	let file_format_ver = await window.localFormatSaver.readObjectToString("format_version", "format_version");
 	console.log(`Open project file ${window.localFormatSaver.dbfilename} format ver ${file_format_ver}`);
+	let file_stats = await window.localFormatSaver.getObjTypeStats();
+	console.log('File stats: ', file_stats);
+	
 };
 
 

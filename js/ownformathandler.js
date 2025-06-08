@@ -217,4 +217,35 @@ del conn_internal_data
 		
 	}
 	
+	// -----------------------------------------------------------------------------------------------------
+	
+	async getObjTypeStats(){
+		const cmd = `
+conn_internal_data = conn_internal.execute('''
+	SELECT objtype, count(objuuid) as objcount 
+    FROM tbl_objects group by objtype order by objtype;
+''').fetchall()
+conn_internal_data
+`;		
+		let output = undefined;
+		await this.openConn();
+		try {
+			let res = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
+			if (res.runStatus) {
+				output = res.output.toJs();
+			} else {
+				console.error('Error reading object types from file',this.#dbfilename, res.error);
+			}
+		} catch (err) {
+			console.error('Failed to read object types from file',this.#dbfilename, err);
+		}
+		await this.closeConn();
+		return output;
+		
+	}
+	
+	// -----------------------------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------------------------------
+	
 }   // end of class OwnFormatHandler
