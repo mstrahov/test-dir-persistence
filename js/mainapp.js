@@ -121,8 +121,9 @@ sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.
 
 // ================================================================== newscriptmenuaction
 let activetabs = [];
-const OpenNewScriptTab = ()=>{   
+const OpenNewScriptTab = (scriptobj) => {   
 	let newtab = new AppPageScriptControl( { 
+			scriptobj: scriptobj,
 			tabnavcontrol: tabnavcontrol,  
 			baseTabControlType:BaseTabControl, 
 			insertBeforePosition:-1, 
@@ -150,8 +151,9 @@ const SaveProjectFile = async () => {
 	*/
 	for (let i=0;i<activetabs.length;i++) {
 		let tabobj = activetabs[i].toOwnFormat();
+		tabobj.isopen = true;
 		
-		console.log(`TAB: ${i}`, tabobj);
+		//console.log(`TAB: ${i}`, tabobj , JSON.stringify(tabobj));
 		await window.localFormatSaver.writeObjectFromString(tabobj.name, tabobj.objuuid, tabobj.objtype, JSON.stringify(tabobj));
 		//console.log("GRID LAYOUT ",activetabs[i].layoutToJSON());
 	}
@@ -171,6 +173,14 @@ const OpenProjectFile = async () => {
 	console.log(`Open project file ${window.localFormatSaver.dbfilename} format ver ${file_format_ver}`);
 	let file_stats = await window.localFormatSaver.getObjTypeStats();
 	console.log('File stats: ', file_stats);
+	
+	window.localFormatSaver.scriptsarr = await window.localFormatSaver.getScriptsArray();
+	console.log('Scripts: ', window.localFormatSaver.scriptsarr);
+	
+	for (let i=0;window.localFormatSaver.scriptsarr.length;i++) {
+		const ind = activetabs[i].find((v)=>v.uuid===window.localFormatSaver.scriptsarr[i].objuuid);
+		if (ind===-1) { OpenNewScriptTab(window.localFormatSaver.scriptsarr[i]); }
+	}
 	
 };
 

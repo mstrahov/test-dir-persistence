@@ -18,7 +18,7 @@ export class GridItem {
 	constructor (params) {
 		this.#templateid = params.templateid;
 		this.#grid = params.grid;
-		this.#uuid = self.crypto.randomUUID();
+		this.#uuid = params.uuid?params.uuid:self.crypto.randomUUID();
 		
 		const clone = makeCloneFromTemplate(this.#templateid, this.#uuid);
 		clone.querySelector('#grid-el-header'+this.#uuid).querySelector('.griditemheadertext').textContent = params.headertext;
@@ -67,6 +67,7 @@ export class GridItem {
 	get uuid() {
 		return this.#uuid;
 	}
+	
 	
 	get widgetName() {
 		return this.__proto__?.constructor?.name

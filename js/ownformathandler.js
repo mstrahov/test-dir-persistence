@@ -21,6 +21,7 @@ export class OwnFormatHandler {
 		this.#iohandler = params.FileIOHandler;
 		this.namespaceuuid = params.namespaceuuid;
 		this.coderunner = params.coderunner;
+		this.scriptsarr = [];
 	}
 	
 	
@@ -104,16 +105,27 @@ conn_internal.close()
 	
 	async writeObjectFromString(name, objuuid, objtype, stringval){
 		//window.exectimer.timeit("writing object from string...");
+		//~ const cmd = `
+//~ filedata_01 = b'''${stringval}'''	
+//~ conn_internal.execute('''
+    //~ INSERT INTO tbl_objects (name, objuuid, objtype, data)
+    //~ VALUES (?, ?, ?, ?)
+    //~ ON CONFLICT(objuuid, objtype) DO UPDATE SET name=excluded.name, data=excluded.data, modtimestamp = CURRENT_TIMESTAMP;	
+//~ ''', ('${name}', '${objuuid}', '${objtype}', sqlite3.Binary(filedata_01)))
+//~ del filedata_01
+//~ `;	
+
 		const cmd = `
-filedata_01 = b'''${stringval}'''	
+from js import filedata_01 
 conn_internal.execute('''
     INSERT INTO tbl_objects (name, objuuid, objtype, data)
     VALUES (?, ?, ?, ?)
     ON CONFLICT(objuuid, objtype) DO UPDATE SET name=excluded.name, data=excluded.data, modtimestamp = CURRENT_TIMESTAMP;	
-''', ('${name}', '${objuuid}', '${objtype}', sqlite3.Binary(filedata_01)))
-del filedata_01
+''', ('${name}', '${objuuid}', '${objtype}', sqlite3.Binary(filedata_01.to_py())))
 `;	
-
+		
+		const encoder = new TextEncoder();
+		self.globalThis.filedata_01 = encoder.encode(stringval);
 		await this.openConn();
 		try {
 			//~ let output = await this.#pyodide.runPythonAsync(cmd);
@@ -245,7 +257,63 @@ conn_internal_data
 	}
 	
 	// -----------------------------------------------------------------------------------------------------
+	
+	async getAllObjectsOfType(objtype){
+		//~ const cmd = `
+//~ conn_internal_data = conn_internal.execute('''
+	//~ SELECT name, objuuid, data FROM tbl_objects 
+    //~ WHERE objtype='${objtype}';
+//~ ''').fetchall()
+//~ data_output = []
+//~ for item in conn_internal_data:
+    //~ data_output.append([item[0],item[1],item[2].decode()]) 
+//~ del conn_internal_data
+//~ data_output
+//~ `;		
+		const cmd = `
+conn_internal_data = conn_internal.execute('''
+	SELECT name, objuuid, data FROM tbl_objects 
+    WHERE objtype='${objtype}';
+''').fetchall()
+conn_internal_data
+`;	
+		let output = undefined;
+		await this.openConn();
+		try {
+			let res = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
+			if (res.runStatus) {
+				output = res.output.toJs();
+			} else {
+				console.error('Error reading object types from file',this.#dbfilename, res.error);
+			}
+		} catch (err) {
+			console.error('Failed to read object types from file',this.#dbfilename, err);
+		}
+		await this.closeConn();
+		return output;
+		
+	}
+	
 	// -----------------------------------------------------------------------------------------------------
+	
+	async getScriptsArray(){
+		let res = [];
+		
+		let scriptlist = await this.getAllObjectsOfType('script');
+		for (let i=0;i<scriptlist.length;i++) {
+			try {
+				let scriptobj = JSON.parse((new TextDecoder()).decode(scriptlist[i][2]));
+				res.push(scriptobj);
+			} catch (err) {
+				console.log('Script parsing from json error:',scriptlist[i],err);	
+			}
+			
+		}
+		
+		return res;
+	}
+	
+	
 	// -----------------------------------------------------------------------------------------------------
 	
 }   // end of class OwnFormatHandler

@@ -24,10 +24,9 @@ export class AppPageScriptControl extends AppPageControl {
 		super(params);
 		this.fileIOHandler = params.fileIOHandler;
 		this.#tablePickerDialog = params.tablePickerDialog;
+		this.initscriptobj = params.scriptobj;
 		this.scriptObject = params.transformScript?params.transformScript:TransformScriptInit();
 		this.#modalInputDialog = params.modalInputDialog;
-		
-		
 		
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.topDropDownMenuEventHandler.bind(this));
 		
