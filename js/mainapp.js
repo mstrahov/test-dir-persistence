@@ -177,9 +177,11 @@ const OpenProjectFile = async () => {
 	window.localFormatSaver.scriptsarr = await window.localFormatSaver.getScriptsArray();
 	console.log('Scripts: ', window.localFormatSaver.scriptsarr);
 	
-	for (let i=0;window.localFormatSaver.scriptsarr.length;i++) {
-		const ind = activetabs[i].find((v)=>v.uuid===window.localFormatSaver.scriptsarr[i].objuuid);
-		if (ind===-1) { OpenNewScriptTab(window.localFormatSaver.scriptsarr[i]); }
+	for (let i=0;i<window.localFormatSaver.scriptsarr.length;i++) {
+		const ind = activetabs.findIndex((v)=>v.uuid===window.localFormatSaver.scriptsarr[i].objuuid);
+		if (ind===-1) { 
+			OpenNewScriptTab(window.localFormatSaver.scriptsarr[i]); 
+		}
 	}
 	
 };

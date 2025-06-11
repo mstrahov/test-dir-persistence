@@ -14,7 +14,7 @@ import { MenuEventsControl } from "./menueventscontrol.js";
 
 export class AppPageControl {
 	constructor (params) {
-		this.uuid = self.crypto.randomUUID();
+		this.uuid = params.uuid?params.uuid:self.crypto.randomUUID();
 		this.appuuid = this.uuid;
 		this.eventbus = new EventBus();
 		

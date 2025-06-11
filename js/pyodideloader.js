@@ -70,8 +70,8 @@ export class PyodideLoader {
 				const loadingCommands = `import micropip
 await micropip.install('openpyxl')
 await micropip.install('sqlite3')
-await micropip.install('matplotlib')
-await micropip.install('plotly')
+#await micropip.install('matplotlib')
+#await micropip.install('plotly')
 `;
 				await this.pyodide.runPythonAsync(loadingCommands);
 				this._statechange('pyodide_core_packages_load_success', 'Pyodide core packages loading success!');
