@@ -49,7 +49,7 @@ export class PyodideLoader {
 							pythonversion: pyversion,
 						}
 					);
-				this.loadcorepackages();
+				await this.loadcorepackages();
 				this.#resolve();			
 			} catch (e) {
 				console.error(e);
@@ -72,6 +72,9 @@ await micropip.install('openpyxl')
 await micropip.install('sqlite3')
 #await micropip.install('matplotlib')
 #await micropip.install('plotly')
+import sqlite3
+import pandas
+import openpyxl
 `;
 				await this.pyodide.runPythonAsync(loadingCommands);
 				this._statechange('pyodide_core_packages_load_success', 'Pyodide core packages loading success!');

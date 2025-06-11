@@ -115,7 +115,7 @@ export class AppPageScriptControl extends AppPageControl {
 			this.setTabTitle(this.scriptObject.scriptName);
 			// execute script before adding widgets ?
 			if (this.scriptObject?.transformSteps?.length>0) {
-				this.runScriptAllSteps();	
+				//this.runScriptAllSteps();	
 			}
 			
 			// widgets layout
