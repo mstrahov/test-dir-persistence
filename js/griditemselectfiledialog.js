@@ -12,11 +12,15 @@ export class gridItemSelectFileDialog extends gridItemFileDialog {
 	constructor (params) {
 		super(params);
 		
+		
 	}
 
 	async init() {
 		let filetree = await this.fileIOHandler.genFileTreePyFS(this.fileIOHandler.APP_ROOT_DIR);
 		let that = this;
+		
+		
+		
 		this.tabulatorProperties = {
 			//height:"311px", 
 			movableRows:false,
@@ -103,6 +107,21 @@ export class gridItemSelectFileDialog extends gridItemFileDialog {
 			],
 			
 		};
+		
+		// ---------------------------- Restore last column widths
+		if (this.lastcolumnlayout) {
+			for (let i1=0;i1<this.tabulatorProperties.columns.length;i1++) {
+				let oldlayout = this.lastcolumnlayout.find((e)=>e.title===this.tabulatorProperties.columns[i1].title);
+				if (!oldlayout) {
+					// do a second search in case column renamed, assume field name is the same
+					oldlayout = this.lastcolumnlayout.find((e)=>e.field===this.tabulatorProperties.columns[i1].field);
+				}
+				if (oldlayout) {
+					this.tabulatorProperties.columns[i1].width = oldlayout?.width;
+				}
+			}
+		}
+		// -----------------------------
 					
 		this.tabulatorObj = new Tabulator(this.bodyelement, this.tabulatorProperties);
 				

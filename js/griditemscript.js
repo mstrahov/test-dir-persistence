@@ -68,6 +68,16 @@ export class gridItemScript extends GridItemWithMenu {
 		this.#transformscript = {...params.transformscript};
 		this.#scriptname = params.scriptname;
 		
+		this.lastcolumnlayout = undefined;
+		if (params.columnlayout) {
+			try {
+				this.lastcolumnlayout = JSON.parse(JSON.stringify(params.columnlayout));
+			} catch (err) {
+				console.warn("Error processing initial column layout",err);
+			}
+		}
+		
+		
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.menuEventHandler.bind(this));
 		this.eventbus.subscribe('clickableactionclick',this.menuEventHandler.bind(this));
 		
@@ -102,6 +112,20 @@ export class gridItemScript extends GridItemWithMenu {
 			data:this.#transformscript.transformSteps,
 		};
 		
+		// ---------------------------- Restore last column widths
+		if (this.lastcolumnlayout) {
+			for (let i1=0;i1<this.tabulatorProperties.columns.length;i1++) {
+				let oldlayout = this.lastcolumnlayout.find((e)=>e.title===this.tabulatorProperties.columns[i1].title);
+				if (!oldlayout) {
+					// do a second search in case column renamed, assume field name is the same
+					oldlayout = this.lastcolumnlayout.find((e)=>e.field===this.tabulatorProperties.columns[i1].field);
+				}
+				if (oldlayout) {
+					this.tabulatorProperties.columns[i1].width = oldlayout?.width;
+				}
+			}
+		}
+		// -----------------------------
 		this.#tabulatorObj = new Tabulator("#grid-el-body"+this.uuid, this.tabulatorProperties);
 		
 		this.#tabulatorObj.on("rowAdded", function(row){

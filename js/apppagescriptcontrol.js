@@ -21,8 +21,8 @@ export class AppPageScriptControl extends AppPageControl {
 	#modalInputDialog;
 	
 	constructor (params) {
-		if (params.initscriptobj && params.initscriptobj.objuuid) {
-			params.uuid = params.initscriptobj.objuuid;
+		if (params.scriptobj && params.scriptobj.objuuid) {
+			params.uuid = params.scriptobj.objuuid;
 		}
 		super(params);
 		this.fileIOHandler = params.fileIOHandler;
@@ -183,6 +183,7 @@ export class AppPageScriptControl extends AppPageControl {
 					this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 					this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 					this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+					
 						
 				} else if (this.initscriptobj.gridwidgets[i].griditemname==="StatusGridItemTextOutput") {
 					this.statusTabOutput = this.addGridItem( StatusGridItemTextOutput, 
@@ -254,6 +255,8 @@ export class AppPageScriptControl extends AppPageControl {
 						await that.scriptControl.addScriptStep(eventdata);
 						await that.runScriptOneStep(eventdata); 
 					}, this.scriptControl.uuid);
+					
+					this.dfview.showdf(); 
 				}
 			}
 			

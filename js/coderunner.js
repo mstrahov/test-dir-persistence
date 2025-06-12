@@ -178,20 +178,27 @@ export class CodeRunner {
 			let pyerrmessageshort = "";
 			let pyerrorline = "";
 			let lastline = 0;
+			let linewithexec = 0;
 			const re = /line (\d+)/gi;
 			for (let i=0;i<errarr?.length;i++) {
 				const matcharr = errarr[i].match(re);
 				if (matcharr!==null && matcharr.length>0) {
 					lastline = i;
 					if (errarr[i].includes('<exec>')) {
+						linewithexec = i;
 						pyerrorline = matcharr[0].replace("line ","");
 					}
 				}
 			}
-			for (let i=lastline+1;i<errarr?.length;i++) {
+			if (lastline===linewithexec && (lastline+1)<errarr?.length) {
+				lastline++;
+			}
+			for (let i=lastline;i<errarr?.length;i++) {
 				pyerrmessageshort+=errarr[i]+'\n';
 			}
-			
+			if (pyerrmessageshort === "") {
+				pyerrmessageshort = err?.message?.toString();
+			}
 			
 			res.errorshort = pyerrmessageshort;
 			res.errorline = pyerrorline;
@@ -365,7 +372,6 @@ export class CodeRunner {
 			
 			// ------------------------------------------------
 		}
-		
 		
 		res.runStatus = true;
 		res.runResult = "success";
@@ -559,20 +565,27 @@ export class CodeRunner {
 		let pyerrmessageshort = "";
 		let pyerrorline = "";
 		let lastline = 0;
+		let linewithexec = 0;
 		const re = /line (\d+)/gi;
 		for (let i=0;i<errarr?.length;i++) {
 			const matcharr = errarr[i].match(re);
 			if (matcharr!==null && matcharr.length>0) {
 				lastline = i;
 				if (errarr[i].includes('<exec>')) {
+					linewithexec = i;
 					pyerrorline = matcharr[0].replace("line ","");
 				}
 			}
 		}
-		for (let i=lastline+1;i<errarr?.length;i++) {
+		if (lastline===linewithexec && (lastline+1)<errarr?.length) {
+			lastline++;
+		}
+		for (let i=lastline;i<errarr?.length;i++) {
 			pyerrmessageshort+=errarr[i]+'\n';
 		}
-		
+		if (pyerrmessageshort === "") {
+			pyerrmessageshort = err?.message?.toString();
+		}
 		res.errorshort = pyerrmessageshort;
 		res.errorline = pyerrorline;
 		res.error = err;
@@ -580,6 +593,7 @@ export class CodeRunner {
 		res.errormessage = err?.message?.toString(); 	
 		
 		return res;
+		
 	}
 	// ------------------------------------------------------------------------------
 	
@@ -842,6 +856,43 @@ plotly.io.to_html(fig,config={'scrollZoom': True, 'responsive': True, 'toImageBu
 		}
 		
 		return res;
+	}
+	
+	// --------------------------------------------------------------------------------------------
+	
+	async runScriptStepsAndUpdateInPlace(scriptsteps, namespaceuuid) {
+		
+		if (!scriptsteps || scriptsteps.length===0) {
+			console.log('runScriptStepsAndUpdateInPlace no script steps given!');
+			return false;
+		} 
+		scriptsteps.sort((a,b)=>a.stepOrder-b.stepOrder);
+		for (let i=0;i<scriptsteps.length;i++) {
+			scriptsteps[i].lastRunStatus = null;
+		}
+		//console.log("scriptsteps", scriptsteps);
+		
+		let res;
+		try {
+			res = await this.runAsyncBatch(scriptsteps, namespaceuuid); 
+			//console.log("Command run res: ", res);
+		
+			if (res?.runresults && res?.runresults.length>0) {
+				for (let j=0;j<res.runresults.length;j++) {
+					let stepIndex = scriptsteps.findIndex((el)=>el.stepID===res.runresults[j].stepID);
+					if (stepIndex>-1) {
+						scriptsteps[stepIndex].lastRunStatus = res.runresults[j].runStatus;
+						scriptsteps[stepIndex].lastRunResult = res.runresults[j].runResult;
+						scriptsteps[stepIndex].executionTime = res.runresults[j].executionTime;
+					}
+				}
+				return res;
+			}
+			
+		} catch (err) {
+			console.error("Command run err ",err);
+			return false;
+		}
 	}
 	
 	// --------------------------------------------------------------------------------------------

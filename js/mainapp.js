@@ -180,6 +180,16 @@ const OpenProjectFile = async () => {
 	for (let i=0;i<window.localFormatSaver.scriptsarr.length;i++) {
 		const ind = activetabs.findIndex((v)=>v.uuid===window.localFormatSaver.scriptsarr[i].objuuid);
 		if (ind===-1) { 
+			if (window.localFormatSaver.scriptsarr[i].scriptObject?.transformSteps?.length>0) {
+				let res = await window.coderunner.runScriptStepsAndUpdateInPlace(
+												window.localFormatSaver.scriptsarr[i].scriptObject?.transformSteps, 
+												window.localFormatSaver.scriptsarr[i].objuuid
+										);
+				if (res?.runStatus) {
+					window.localFormatSaver.scriptsarr[i].scriptObject.lastRunStatus = res.runStatus;
+					window.localFormatSaver.scriptsarr[i].scriptObject.lastRunResult = res.runResult;
+				}						
+			}
 			OpenNewScriptTab(window.localFormatSaver.scriptsarr[i]); 
 		}
 	}

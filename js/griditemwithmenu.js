@@ -68,8 +68,8 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 
 	constructor (params) {
 		super(params);
-		this.cmdhistory = [];
-		this.cmdhistoryPosition = 0;
+		this.cmdhistory = params.editorhistory?[...params.editorhistory]:[];
+		this.cmdhistoryPosition = this.cmdhistory.length;
 		this.contentsChanged = false;
 		this.codeEditorObj = null;
 	}

@@ -36,6 +36,14 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 		this.columnsarray = [];
 		this.columnstypes = undefined;
 		this.lastcolumnlayout = undefined;
+		if (params.columnlayout) {
+			try {
+				this.lastcolumnlayout = JSON.parse(JSON.stringify(params.columnlayout));
+			} catch (err) {
+				console.warn("Error processing initial column layout",err);
+			}
+		}
+		
 		
 	}
 	

@@ -16,6 +16,14 @@ export class gridItemFileDialog extends GridItemWithMenu {
 		this.tabulatorProperties = undefined;
 		this.tabulatorObj = undefined;
 		this.awaitingrefresh = false;
+		this.lastcolumnlayout = undefined;
+		if (params.columnlayout) {
+			try {
+				this.lastcolumnlayout = JSON.parse(JSON.stringify(params.columnlayout));
+			} catch (err) {
+				console.warn("Error processing initial column layout",err);
+			}
+		}
 	}
 	// --------------------------------------------------------------------------
 	menuEventHandler(obj,eventdata) {
@@ -127,7 +135,22 @@ export class gridItemFileDialog extends GridItemWithMenu {
 			],
 			
 		};
-					
+			
+		// ---------------------------- Restore last column widths
+		if (this.lastcolumnlayout) {
+			for (let i1=0;i1<this.tabulatorProperties.columns.length;i1++) {
+				let oldlayout = this.lastcolumnlayout.find((e)=>e.title===this.tabulatorProperties.columns[i1].title);
+				if (!oldlayout) {
+					// do a second search in case column renamed, assume field name is the same
+					oldlayout = this.lastcolumnlayout.find((e)=>e.field===this.tabulatorProperties.columns[i1].field);
+				}
+				if (oldlayout) {
+					this.tabulatorProperties.columns[i1].width = oldlayout?.width;
+				}
+			}
+		}
+		// -----------------------------	
+				
 		this.tabulatorObj = new Tabulator(this.bodyelement, this.tabulatorProperties);
 				
 		this.tabulatorObj.on("rowDblClick", function(e, row){
