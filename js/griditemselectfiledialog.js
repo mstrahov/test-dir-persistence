@@ -10,9 +10,7 @@ import { FileUploadButton } from "./filedialogs.js";
 export class gridItemSelectFileDialog extends gridItemFileDialog {
 	
 	constructor (params) {
-		super(params);
-		
-		
+		super(params);	
 	}
 
 	async init() {

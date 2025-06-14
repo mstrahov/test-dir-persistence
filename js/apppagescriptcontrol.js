@@ -589,14 +589,26 @@ export class AppPageScriptControl extends AppPageControl {
 		if (eventdata?.filetype?.toLowerCase().startsWith("xls")) {
 			await this.addImportExcelFileStep(eventdata);
 		} else if (eventdata?.filetype?.toLowerCase() === 'parquet') {
-			
+			await this.addImportParquetFileStep(eventdata);
 		} else if (eventdata?.filetype?.toLowerCase() === 'csv') {
-			
+			await this.addImportCSVFileStep(eventdata);
 			
 		} 
 		
 		
 	}
+	
+	// --------------------------------------------------------------------------------
+	async addImportParquetFileStep(eventdata) {
+		await this.scriptControl.addScriptStep({actionid:'ImportParquetFileToDF', parameters:{df:"df",filepath:eventdata.fullpath, }});
+	}
+	
+	// --------------------------------------------------------------------------------
+	async addImportCSVFileStep(eventdata) {
+		await this.scriptControl.addScriptStep({actionid:'ImportCSVFileToDF', parameters:{df:"df",filepath:eventdata.fullpath, }});
+	}
+	
+	
 	// --------------------------------------------------------------------------------
 	async addImportExcelFileStep(eventdata) {
 		// {fullpath: row.getData().fullpath, filetype: row.getData().filetype   }  

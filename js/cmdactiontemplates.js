@@ -119,6 +119,35 @@ file = pd.ExcelFile('{{filepath}}')
 		parameters: { df: "string", filepath: "string", sheetname: "string",  },
 		targetEnv: "py",
 	},
+	// -------------------------------------------------------------------------------
+	{
+		actionid: "ImportParquetFileToDF",
+		name: "Import Parquet File To Dataframe",
+		description: "Import Parquet File To Dataframe",
+		cmdtemplate: `import pandas as pd
+import fastparquet
+{{df}} = pd.read_parquet('{{filepath}}', engine='fastparquet')
+`,
+		cmdexample: `df = pd.read_parquet("/app/opfs/buffer1.parquet", engine="fastparquet")`,
+		actiontype: ["import"],
+		parameters: { df: "string", filepath: "string",   },
+		targetEnv: "py",
+	},
+	// -------------------------------------------------------------------------------
+	{
+		actionid: "ImportCSVFileToDF",
+		name: "Import CSV File To Dataframe",
+		description: "Import CSV File To Dataframe",
+		cmdtemplate: `import pandas as pd
+{{df}} = pd.read_csv('{{filepath}}')
+`,
+		cmdexample: `df = pd.read_csv('/app/mount_dir/onlineretail.csv')`,
+		actiontype: ["import"],
+		parameters: { df: "string", filepath: "string",   },
+		targetEnv: "py",
+	},
+	
+	
 	
 ];
 
