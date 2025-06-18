@@ -1,7 +1,7 @@
 /*******************
  * async Python and duckdb code runner
  * 
- *
+ * depends on duckdb, pyodide, arrow, luxon
  * 
  * 
  * ****************************/
@@ -896,4 +896,118 @@ plotly.io.to_html(fig,config={'scrollZoom': True, 'responsive': True, 'toImageBu
 	}
 	
 	// --------------------------------------------------------------------------------------------
+	
+	async getVar(varname) {
+		let res = null;
+		let qryres = await this.runSQLAsync(`SELECT getvariable('${varname}') AS result;`);
+		if (qryres?.runResult) {
+			if (qryres?.output?.numRows>0) {
+				res = qryres?.output?.get(0)['result']?.toString();
+			}
+		}
+		return res;
+	}
+	// --------------------------------------------------------------------------------------------
+	async setVar(varname, varval) {
+		// for now assume varval is string
+		let res = false;
+		let qryres = await this.runSQLAsync(`SET VARIABLE ${varname} = '${varval}';`);
+		if (qryres?.runResult) {
+			res = true;
+		}
+		return res;
+		
+	}
+	// --------------------------------------------------------------------------------------------
+	async getVarList() {
+		let res = [];
+		const getvarscmd = `SELECT * FROM duckdb_variables();`;
+		let qryres = await this.runSQLAsync(getvarscmd);
+		if (qryres?.runResult) {
+			if (qryres?.output?.numRows>0) {
+				res = this.convertArrowToArray(qryres?.output);
+			}
+		}
+		return res;
+	}
+	// --------------------------------------------------------------------------------------------
+	async onVarChange(obj) {
+		await this.setVar(obj.id, obj.value);
+	}
+	
+	// --------------------------------------------------------------------------------------------
+	convertArrowToArray(res1) {
+		let resArray = [];
+		var DT = window.DateTime || luxon.DateTime;
+		
+		for (let i=0;i<res1.numRows;i++) {
+			let oneline = {};
+			res1.schema.fields.forEach((f)=>{
+				if (Arrow.Decimal.isDecimal(f)) {
+					//  DECIMAL, WITH SCALE (AFTER DEC POINT)
+					if (res1.get(i)[f.name]===null) {
+						oneline[f.name]=null;
+					} else {
+						oneline[f.name]=(+res1.get(i)[f.name].toString())/Math.pow(10,f.type.scale);
+					}
+				} else if (Arrow.Decimal.isDate(f)) {
+					// DATE, CONVERT
+					if (res1.get(i)[f.name]===null) {
+						oneline[f.name]='';
+					} else {
+						oneline[f.name]=DT.fromJSDate(res1.get(i)[f.name]).toFormat("yyyy-MM-dd");
+					}
+				} else {
+					oneline[f.name]=res1.get(i)[f.name];
+				}	
+			});
+			
+			resArray.push(oneline);
+		}
+		return resArray;
+	}
+	
+	// --------------------------------------------------------------------------------------------
+	
+}
+
+
+// ============
+
+export const convertArrowToArray = (res1) => {
+	let resArray = [];
+	var DT = window.DateTime || luxon.DateTime;
+	//const names = res1.schema.fields.map(f=>f.name);
+	for (let i=0;i<res1.numRows;i++) {
+		let oneline = {};
+		res1.schema.fields.forEach((f)=>{
+			if (Arrow.Decimal.isDecimal(f)) {
+				//  DECIMAL, WITH SCALE (AFTER DEC POINT)
+				if (res1.get(i)[f.name]===null) {
+					oneline[f.name]=null;
+				} else {
+					oneline[f.name]=(+res1.get(i)[f.name].toString())/Math.pow(10,f.type.scale);
+				}
+			} else if (Arrow.Decimal.isDate(f)) {
+				// DATE, CONVERT
+				if (res1.get(i)[f.name]===null) {
+					oneline[f.name]='';
+				} else {
+					oneline[f.name]=DT.fromJSDate(res1.get(i)[f.name]).toFormat("yyyy-MM-dd");
+				}
+			} else {
+				oneline[f.name]=res1.get(i)[f.name];
+			}	
+		});
+		
+		// Arrow.Decimal.isDecimal(res2.schema.fields.find(e=>e.name==='m1102'))
+		// Arrow.Decimal.isDecimal(window.duckdb.stroiteliarrow.schema.fields.find(e=>e.name==='v0102'))
+		// Arrow.Decimal.isDate(window.duckdb.stroiteliarrow.schema.fields.find(e=>e.name==='v0102'))
+		// luxon.DateTime.fromJSDate(window.duckdb.stroiteliarrow.get(0)['v0102']).toFormat("yyyy-MM-dd")
+		// (+res2.get(0)['m1102'].toString())/Math.pow(10,res2.schema.fields.find(e=>e.name==='m1102').type.scale)
+		//  https://arrow.apache.org/docs/js/classes/Arrow.dom.DataType.html
+
+		resArray.push(oneline);
+	}
+	return resArray;
 }

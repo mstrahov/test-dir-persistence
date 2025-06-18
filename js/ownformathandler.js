@@ -296,7 +296,7 @@ conn_internal_data
 	
 	// -----------------------------------------------------------------------------------------------------
 	
-	async getScriptsArray(){
+	async getScriptsArrayFromOwnFormatFile(){
 		let res = [];
 		
 		let scriptlist = await this.getAllObjectsOfType('script');
@@ -312,6 +312,54 @@ conn_internal_data
 		
 		return res;
 	}
+	
+	
+	// -----------------------------------------------------------------------------------------------------
+	
+	generateTabulatorTree() {
+		resTree = [];
+		if (!this.scriptsarr || this.scriptsarr.length===0) {
+			return resTree;
+		}
+		// nodeObj['_children'] 
+		scripttree = [];
+		
+		for (let i=0;i<this.scriptsarr.length;i++) {
+			scripttree.push({   
+				name: this.scriptsarr[i].name,
+				isopen: this.scriptsarr[i].isopen,
+				autorun: this.scriptsarr[i].autorun,
+				objtype: this.scriptsarr[i].objtype, 
+				objuuid:  this.scriptsarr[i].objuuid,
+				//visualwidgetsnum: this.scriptsarr[i].visualwidgets?.length,
+				//gridwidgetsnum: this.scriptsarr[i].gridwidgets?.length,
+				//scriptlength: this.scriptsarr[i].scriptObject?.transformSteps?.length, 
+				lastRunResult: this.scriptsarr[i].scriptObject?.lastRunResult, 
+				lastRunStatus: this.scriptsarr[i].scriptObject?.lastRunStatus, 
+				_level: 1,
+			});
+		}
+		
+		resTree.push({
+			name: 'Scripts',
+			isopen: null,
+			autorun: null,
+			objtype: '', 
+			objuuid:  '',
+			//visualwidgetsnum: this.scriptsarr[i].visualwidgets?.length,
+			//gridwidgetsnum: this.scriptsarr[i].gridwidgets?.length,
+			//scriptlength: this.scriptsarr[i].scriptObject?.transformSteps?.length, 
+			lastRunResult: '', 
+			lastRunStatus: null, 
+			_children: scripttree,
+			_level: 0,
+			
+		}); 
+		
+		return resTree;
+		
+	}
+	
 	
 	
 	// -----------------------------------------------------------------------------------------------------

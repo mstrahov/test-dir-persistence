@@ -174,7 +174,7 @@ const OpenProjectFile = async () => {
 	let file_stats = await window.localFormatSaver.getObjTypeStats();
 	console.log('File stats: ', file_stats);
 	
-	window.localFormatSaver.scriptsarr = await window.localFormatSaver.getScriptsArray();
+	window.localFormatSaver.scriptsarr = await window.localFormatSaver.getScriptsArrayFromOwnFormatFile();
 	console.log('Scripts: ', window.localFormatSaver.scriptsarr);
 	
 	for (let i=0;i<window.localFormatSaver.scriptsarr.length;i++) {
