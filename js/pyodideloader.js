@@ -39,6 +39,10 @@ export class PyodideLoader {
 			try {
 				this._statechange('pyodide_loading', 'Pyodide loading...');
 				this.pyodide = await loadPyodide();
+				// Prevent pyodide sync from deleting files in mounted directories, if files was created after mounting dir to pyodide memfs 
+				// override removeRemoteEntry:    function  async function(n,o) { console.log("HACKED!",n,o); }
+				this.pyodide.FS.filesystems.NATIVEFS_ASYNC.removeRemoteEntry = async function(n,o='') { console.log("Prevented deletion of file: ", o); };
+				
 				const pyversion = await this.pyodide.runPythonAsync(`import sys;sys.version`);
 				//this.pyodide.version
 				

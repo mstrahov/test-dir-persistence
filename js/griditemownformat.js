@@ -29,14 +29,14 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 	menuEventHandler(obj,eventdata) {
 		console.log("gridItemOwnFormat widget",this.__proto__?.constructor?.name, this.headerText, "item click: ",obj,eventdata); 
 		
-		if (eventdata?.menuItemId === "mountlocaldirectoryitem") {
+		if (eventdata?.menuItemId === "____mountlocaldirectoryitem") {
 			
 			
 		} else if (eventdata?.menuItemId === "refreshgriditem" || eventdata?.menuItemId ===  "refreshaction") {
 			this.awaitingrefresh = true;
-			
-		} else if (eventdata?.menuItemId === "uploadfiletoopfsitem") {
-			this.awaitingrefresh = true;
+			this.refreshData();
+		} else if (eventdata?.menuItemId === "_____uploadfiletoopfsitem") {
+			//~ this.awaitingrefresh = true;
 			
 			
 		}
@@ -44,7 +44,7 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 	}
 	// --------------------------------------------------------------------------
 	async init() {
-		let datatree = await this.OwnFormatHandler.generateTabulatorTree()();
+		let datatree = await this.OwnFormatHandler.generateTabulatorTree();
 		let that = this;
 		
 			//~ name: 'Scripts',
@@ -63,43 +63,39 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 			movableRows:false,
 			reactiveData:false, 
 			columns:[
-				{title:"Name", field:"name", editor:false, headerSort:true, headerFilter:"input", headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),width:250, },
-				{title:"Pick", field:"pick", editor:true,headerSort:false,
+				{title:"Object Name", field:"name", editor:false, headerSort:true, 
+					headerFilter:"input", 
+					headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),
+					width:250, 
+				},
+				{title:"Auto Open", field:"isopen", editor:true,headerSort:true,
 					formatter:"tickCross", 
 					 hozAlign:"center", 
+					 width: 80, 
 					formatterParams:{
 						allowEmpty:true,
 						allowTruthy:true,
 					},
-					cellEdited:function(cell){
-							const row = cell.getRow();
-							const rowdata = row.getData();
-							if (rowdata.type === 'directory') {
-								row.treeToggle();
-							}
-							console.log(rowdata);
-							row.toggleSelect();
-							
-							row.update({"pick":null}); 
-							(async (text)=> {await navigator.clipboard.writeText(text);})(rowdata.fullpath);
-							//console.log(cell);
-					 },
 				},
-				{title:"Last change", field:"modificationDate", editor:false, headerFilter:"datetime",  headerFilterFunc:this.customHeaderFilterDate.bind(this), headerSort:true, hozAlign:"left",
-					sorter:"datetime",
-					formatter:"datetime",
+				{title:"Auto Run", field:"autorun", editor:true,headerSort:true,
+					formatter:"tickCross", 
+					 hozAlign:"center", 
+					width: 80, 
 					formatterParams:{
-						//inputFormat:"yyyy-MM-dd HH:ss",
-						outputFormat:"yyyy-MM-dd TT", //  "D TT", 
-						invalidPlaceholder:"",
+						allowEmpty:true,
+						allowTruthy:true,
 					},
-					width:160,},
-				{title:"Size", field:"sizeBytes", hozAlign:"right", editor:false, 
-						headerSort:true, sorter:"number",
-						headerFilter:this.minMaxFilterEditor.bind(this),
-						headerFilterFunc:this.minMaxFilterFunction.bind(this),
-						headerFilterLiveFilter:false,},
-				{title:"Type", field:"filetype", editor:false, 
+				},
+				{title:"Last Run Status", field:"lastRunStatus", editor:false, headerSort:true,
+					formatter:"tickCross", 
+					 hozAlign:"center", 
+					 width: 80, 
+					formatterParams:{
+						allowEmpty:true,
+						allowTruthy:true,
+					},
+				},
+				{title:"Last Run Result", field:"lastRunResult", editor:false, 
 						headerSort:true, 
 						headerFilter:"input",
 						headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),
@@ -110,27 +106,27 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 			data:datatree,
 			dataTree:true,
 			dataTreeFilter:true,
-			dataTreeStartExpanded:false,
+			dataTreeStartExpanded:true,
 			dataTreeChildIndent:27,
 			dataTreeElementColumn:"name", 
-			selectableRows:1,
-			selectableRowsPersistence:false,
-			selectableRowsCheck:function(row){
-				return row.getData().type==='file'; //allow selection of rows with files only
-			},
+			//~ selectableRows:1,
+			//~ selectableRowsPersistence:false,
+			//~ selectableRowsCheck:function(row){
+				//~ return row.getData().type==='file'; //allow selection of rows with files only
+			//~ },
 			rowContextMenu:[
 				{
-					label:"Copy path to clipboard",
+					label:"Open script",
 					action:function(e, row){
 						console.log(row.getData());
-						(async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
+						//~ (async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
 					}
 				},
 				{
-					label:"Save file as ...",
+					label:"Run script",
 					action:function(e, row){
 						console.log(row.getData());
-						(async (path)=> {await that.filesaveasdialog.downloadFromFSPath(path); })(row.getData().fullpath);
+						//~ (async (path)=> {await that.filesaveasdialog.downloadFromFSPath(path); })(row.getData().fullpath);
 					}
 				},
 				
@@ -159,18 +155,16 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 			//e - the click event object
 			//row - row component
 			console.log(row.getData()); 
-			(async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
+			//~ (async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
 		});
 		this.tabulatorObj.on("rowDblTap", function(e, row){
 			//e - the click event object
 			//row - row component
 			console.log(row.getData()); 
-			(async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
+			//~ (async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
 		});
 		
-		
-		
-		this.fileuploaddialog = new FileUploadButton({containertemplateid: "#hiddenuploadbuttontemplate", containerid:"#fileuploaddialogplaceholder"+this.uuid,  fileSystemHandler: this.fileIOHandler });
+				
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.menuEventHandler.bind(this));
 		this.eventbus.subscribe('clickableactionclick',this.menuEventHandler.bind(this));
 		
@@ -196,8 +190,8 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 		}
 		
 		if  (this.tabulatorObj && resetGrid) {
-			let filetree = await this.fileIOHandler.genFileTreePyFS(this.fileIOHandler.APP_ROOT_DIR);
-			this.tabulatorObj.setData(filetree);
+			let datatree = await this.OwnFormatHandler.generateTabulatorTree();
+			this.tabulatorObj.setData(datatree);
 		}
 	}
 	
@@ -312,7 +306,25 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 		//~ this.tabulatorObj = new Tabulator(this.bodyelement, this.tabulatorProperties);
 		
 	}
+	// --------------------------------------------------------------------------
 	
+	toOwnFormat() {
+		let res = super.toOwnFormat();
+		// -----------
+		//~ if (this.lastcolumnlayout) {
+			//~ let oldlayout = this.lastcolumnlayout.find((e)=>e.field==="df_row_index");
+			//~ if (oldlayout) {
+				//~ colwidth = oldlayout?.width;
+			//~ }
+		//~ }
+		
+		// ------------
+		try {
+			res.columnlayout = this.tabulatorObj.getColumnLayout();
+		} catch (e) {  console.warn("Column layout save error",e);  }
+				
+		return res;
+	}
 	
 	
 }

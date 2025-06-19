@@ -317,12 +317,12 @@ conn_internal_data
 	// -----------------------------------------------------------------------------------------------------
 	
 	generateTabulatorTree() {
-		resTree = [];
+		let resTree = [];
 		if (!this.scriptsarr || this.scriptsarr.length===0) {
 			return resTree;
 		}
 		// nodeObj['_children'] 
-		scripttree = [];
+		let scripttree = [];
 		
 		for (let i=0;i<this.scriptsarr.length;i++) {
 			scripttree.push({   

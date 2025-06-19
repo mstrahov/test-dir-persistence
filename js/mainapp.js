@@ -18,6 +18,7 @@ import { gridItemFileDialog } from "./griditemfiledialog.js"
 import { TabulatorPicker } from "./tabupicker.js";
 import { modalDialogInput } from "./modaldialoginput.js";
 import { OwnFormatHandler } from "./ownformathandler.js";
+import { gridItemOwnFormat } from "./griditemownformat.js";
 
 //console.log("test main app");
 // ==============  page close warning
@@ -69,6 +70,7 @@ window.testgrid = tabNavStatusTab;
 const pyeditor = tabNavStatusTab.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Python", griditemoptions: {w:6,h:7,} });
 const statusTabOutput = tabNavStatusTab.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:7,} });
 const sqleditor = tabNavStatusTab.addGridItem( GridItemSQLEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "SQL", griditemoptions: {w:6,h:7,} });
+const ownformatdialog = tabNavStatusTab.addGridItem( gridItemOwnFormat, {templateid:"#gridItemOwnFormatDialog", headertext: "Project file", griditemoptions: {w:6,h:7,}, OwnFormatHandler: window.localFormatSaver });
 const filedialog = tabNavStatusTab.addGridItem( gridItemFileDialog, {templateid:"#gridItemFileDialog", headertext: "Local files", griditemoptions: {w:6,h:7,}, fileIOHandler: window.fileiohandler });
 
 //  ---------- Menu tab (left-most)
