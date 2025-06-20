@@ -33,6 +33,7 @@ export class OwnFormatHandler {
 	async init() {
 		//window.exectimer.timeit("initializing internal format saver...");
 		this.#pyodide = await this.#pyodidePromise;
+		await this.#iohandler.FileIOinitialized();
 		try {
 			//~ let output = await this.#pyodide.runPythonAsync(`
 //~ import pyodide_js
@@ -74,7 +75,7 @@ conn_internal.execute('''
 ''')
 `;
 		if (!this.#pyodide) { await this.init(); }
-
+		await this.#iohandler.FileIOinitialized();
 		try {
 			//~ let output = await this.#pyodide.runPythonAsync(cmd);
 			
@@ -91,6 +92,8 @@ conn_internal.execute('''
 conn_internal.commit()
 conn_internal.close()
 `;
+		if (!this.#pyodide) { await this.init(); }
+		await this.#iohandler.FileIOinitialized();
 		try {
 			//~ let output = await this.#pyodide.runPythonAsync(cmd);
 			let output = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
@@ -123,6 +126,8 @@ conn_internal.execute('''
     ON CONFLICT(objuuid, objtype) DO UPDATE SET name=excluded.name, data=excluded.data, modtimestamp = CURRENT_TIMESTAMP;	
 ''', ('${name}', '${objuuid}', '${objtype}', sqlite3.Binary(filedata_01.to_py())))
 `;	
+		if (!this.#pyodide) { await this.init(); }
+		await this.#iohandler.FileIOinitialized();
 		
 		const encoder = new TextEncoder();
 		self.globalThis.filedata_01 = encoder.encode(stringval);
@@ -150,6 +155,9 @@ conn_internal.execute('''
 ''', ('${name}','${objuuid}','${objtype}', sqlite3.Binary(filedata_01)))
 del filedata_01
 `;
+		if (!this.#pyodide) { await this.init(); }
+		await this.#iohandler.FileIOinitialized();
+		
 		if (!await this.#iohandler.pathExists(filename)) {
 			console.error('File does not exist: ', filename);
 			return;
@@ -178,6 +186,7 @@ conn_internal_data = conn_curs.fetchone()[0]
 conn_curs.close()
 conn_internal_data.decode()
 `;
+		
 		let output = undefined;
 		await this.openConn();
 		try {
@@ -329,6 +338,7 @@ conn_internal_data
 				name: this.scriptsarr[i].name,
 				isopen: this.scriptsarr[i].isopen,
 				autorun: this.scriptsarr[i].autorun,
+				runorder: this.scriptsarr[i].runorder,
 				objtype: this.scriptsarr[i].objtype, 
 				objuuid:  this.scriptsarr[i].objuuid,
 				//visualwidgetsnum: this.scriptsarr[i].visualwidgets?.length,
@@ -344,6 +354,7 @@ conn_internal_data
 			name: 'Scripts',
 			isopen: null,
 			autorun: null,
+			runorder: null,
 			objtype: '', 
 			objuuid:  '',
 			//visualwidgetsnum: this.scriptsarr[i].visualwidgets?.length,

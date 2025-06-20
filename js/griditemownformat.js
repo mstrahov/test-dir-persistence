@@ -44,7 +44,7 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 	}
 	// --------------------------------------------------------------------------
 	async init() {
-		let datatree = await this.OwnFormatHandler.generateTabulatorTree();
+		this.datatree = await this.OwnFormatHandler.generateTabulatorTree();
 		let that = this;
 		
 			//~ name: 'Scripts',
@@ -61,16 +61,18 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 		this.tabulatorProperties = {
 			//height:"311px", 
 			movableRows:false,
-			reactiveData:false, 
+			reactiveData:true, 
 			columns:[
 				{title:"Object Name", field:"name", editor:false, headerSort:true, 
 					headerFilter:"input", 
+					sorter: "string",
 					headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),
 					width:250, 
 				},
 				{title:"Auto Open", field:"isopen", editor:false,headerSort:true,
 					formatter:"tickCross", 
 					 hozAlign:"center", 
+					 sorter: "boolean",
 					 width: 80, 
 					formatterParams:{
 						allowEmpty:false,
@@ -81,6 +83,7 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 				{title:"Auto Run", field:"autorun", editor:false, headerSort:true,
 					formatter:"tickCross", 
 					 hozAlign:"center", 
+					  sorter: "boolean",
 					width: 80, 
 					formatterParams:{
 						allowEmpty:false,
@@ -91,6 +94,7 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 				{title:"Last Run Status", field:"lastRunStatus", editor:false, headerSort:true,
 					formatter:"tickCross", 
 					 hozAlign:"center", 
+					  sorter: "boolean",
 					 width: 90, 
 					formatterParams:{
 						allowEmpty:true,
@@ -99,13 +103,14 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 				},
 				{title:"Last Run Result", field:"lastRunResult", editor:false, 
 						headerSort:true, 
+						 sorter: "string",
 						headerFilter:"input",
 						headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),
 				},
 				
 				// 
 			],
-			data:datatree,
+			data:this.datatree,
 			dataTree:true,
 			dataTreeFilter:true,
 			dataTreeStartExpanded:true,
@@ -165,15 +170,32 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 			//~ console.log(row.getData()); 
 			//~ // (async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
 		//~ });
-		
+		//  
 		this.tabulatorObj.on("cellClick", function(e, cell) {
 			//e - the click event object
 			//cell - cell component
 			//  cell.getData()
-			if (cell.getField()==='isopen' || cell.getField()==='autorun') {
-				cell.setValue(!cell.getValue());
+			if (cell.getData()['_level']===1 && (cell.getField()==='isopen' || cell.getField()==='autorun')) {
+				let curVal = cell.getValue();
+				if (curVal) { 
+					curVal = false;
+				} else {
+					curVal = true;
+				}
+				cell.setValue(curVal);
 			}
 			//~ console.log(cell);
+		});
+		this.tabulatorObj.on("cellTap", function(e, cell) {
+			if (cell.getData()['_level']===1 && (cell.getField()==='isopen' || cell.getField()==='autorun')) {
+				let curVal = cell.getValue();
+				if (curVal) { 
+					curVal = false;
+				} else {
+					curVal = true;
+				}
+				cell.setValue(curVal);
+			}
 		});
 				
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.menuEventHandler.bind(this));

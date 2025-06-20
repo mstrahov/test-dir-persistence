@@ -85,6 +85,9 @@ export class gridItemScript extends GridItemWithMenu {
 			//height:"311px", 
 			movableRows:true,
 			reactiveData:true, 
+			resizableRows: true,
+			//~ resizableRowGuide:true,
+			//~ resizableColumnGuide:true,
 			index: "stepOrder",
 			rowHeader:{headerSort:false, resizable: false, minWidth:30, width:30, rowHandle:true, formatter:"handle"},
 			columns:[
