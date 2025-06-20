@@ -68,28 +68,30 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 					headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),
 					width:250, 
 				},
-				{title:"Auto Open", field:"isopen", editor:true,headerSort:true,
+				{title:"Auto Open", field:"isopen", editor:false,headerSort:true,
 					formatter:"tickCross", 
 					 hozAlign:"center", 
 					 width: 80, 
 					formatterParams:{
-						allowEmpty:true,
+						allowEmpty:false,
 						allowTruthy:true,
+						crossElement:false,
 					},
 				},
-				{title:"Auto Run", field:"autorun", editor:true,headerSort:true,
+				{title:"Auto Run", field:"autorun", editor:false, headerSort:true,
 					formatter:"tickCross", 
 					 hozAlign:"center", 
 					width: 80, 
 					formatterParams:{
-						allowEmpty:true,
+						allowEmpty:false,
 						allowTruthy:true,
+						crossElement:false,
 					},
 				},
 				{title:"Last Run Status", field:"lastRunStatus", editor:false, headerSort:true,
 					formatter:"tickCross", 
 					 hozAlign:"center", 
-					 width: 80, 
+					 width: 90, 
 					formatterParams:{
 						allowEmpty:true,
 						allowTruthy:true,
@@ -151,19 +153,28 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 				
 		this.tabulatorObj = new Tabulator(this.bodyelement, this.tabulatorProperties);
 				
-		this.tabulatorObj.on("rowDblClick", function(e, row){
-			//e - the click event object
-			//row - row component
-			console.log(row.getData()); 
-			//~ (async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
-		});
-		this.tabulatorObj.on("rowDblTap", function(e, row){
-			//e - the click event object
-			//row - row component
-			console.log(row.getData()); 
-			//~ (async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
-		});
+		//~ this.tabulatorObj.on("rowDblClick", function(e, row){
+			//~ //e - the click event object
+			//~ //row - row component
+			//~ console.log(row.getData()); 
+			//~ // (async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
+		//~ });
+		//~ this.tabulatorObj.on("rowDblTap", function(e, row){
+			//~ //e - the click event object
+			//~ //row - row component
+			//~ console.log(row.getData()); 
+			//~ // (async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
+		//~ });
 		
+		this.tabulatorObj.on("cellClick", function(e, cell) {
+			//e - the click event object
+			//cell - cell component
+			//  cell.getData()
+			if (cell.getField()==='isopen' || cell.getField()==='autorun') {
+				cell.setValue(!cell.getValue());
+			}
+			//~ console.log(cell);
+		});
 				
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.menuEventHandler.bind(this));
 		this.eventbus.subscribe('clickableactionclick',this.menuEventHandler.bind(this));
