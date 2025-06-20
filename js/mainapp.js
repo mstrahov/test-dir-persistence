@@ -196,6 +196,8 @@ const OpenProjectFile = async () => {
 		}
 	}
 	
+	ownformatdialog.refreshData();
+	
 };
 
 
