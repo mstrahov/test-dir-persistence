@@ -210,9 +210,13 @@ export class FileIOHandler {
 		 * https://github.com/pyodide/pyodide/blob/main/src/js/nativefs.ts#L199
 		 *   */
 		
-		
 		let pyodide = await this.#pyodidePromise;
+		await this.#defer;
 		let that = this;
+		this.#defer = new Promise((res, rej) => {
+			this.#resolve = res;
+			this.#reject = rej;
+		});
 		
 		return new Promise((resolve, reject) => {
 			if (populate === undefined) {
@@ -222,8 +226,11 @@ export class FileIOHandler {
 								console.log('Sync FS (true: FS->disk)',err);
 								if (!err) {
 									that.eventbus.dispatch('ioDirRefreshNeeded', that, { source: "syncFS", msg: "syncFS done" });
+									this.#resolve();
 									resolve();
+									
 								} else {
+									this.#reject();
 									reject(err);
 								}
 						});
@@ -235,8 +242,10 @@ export class FileIOHandler {
 						console.log('Sync FS with populate:',populate,populatedir,err);
 						if (!err) {
 							that.eventbus.dispatch('ioDirRefreshNeeded', that, { source: "syncFS", msg: "syncFS done" });
+							this.#resolve();
 							resolve();
 						} else {
+							this.#reject();
 							reject(err);
 						};
 					});
@@ -247,6 +256,7 @@ export class FileIOHandler {
 	// ------------------------------------------------------------------
 	async pathExists(path) {
 		let pyodide = await this.#pyodidePromise;
+		await this.#defer;
 		return pyodide.FS.analyzePath(path).exists;
 	}
 	// ------------------------------------------------------------------
@@ -257,6 +267,7 @@ export class FileIOHandler {
 	async writeFileToOPFSroot(filename,arraybuf) {
 		let res = true;
 		let pyodide = await this.#pyodidePromise;
+		await this.#defer;
 		await pyodide.FS.writeFile(this.OPFS_DIR+"/"+filename,arraybuf);
 		return res;
 	}
@@ -265,6 +276,7 @@ export class FileIOHandler {
 		// returns a new Uint8Array buffer (encoding is binary)
 		// https://emscripten.org/docs/api_reference/Filesystem-API.html#FS.readFile
 		let pyodide = await this.#pyodidePromise;
+		await this.#defer;
 		const filestat = pyodide.FS.stat(path);
 		if (pyodide.FS.isFile(filestat?.mode)) {
 			return pyodide.FS.readFile(path);
@@ -350,6 +362,8 @@ export class FileIOHandler {
 		let permissionStatus;
 		let directoriesmounted = '';
 		let pyodide = await this.#pyodidePromise;
+		await this.#defer;
+		
 		let msg = '';
 		try {
 			directoryHandle = await showDirectoryPicker(opts);
