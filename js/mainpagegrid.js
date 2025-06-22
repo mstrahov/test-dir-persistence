@@ -596,6 +596,8 @@ item4.init();
 
 let item5 = new GridItemCodeEditor({templateid:"#gridelementtemplatecode", grid: grid, headertext: "py code",});
 
+window.testpycode = item5;
+
 //  to compact grid
 grid.compact();
 

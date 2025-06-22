@@ -154,6 +154,9 @@ const SaveProjectFile = async () => {
 	for (let i=0;i<activetabs.length;i++) {
 		let tabobj = activetabs[i].toOwnFormat();
 		tabobj.isopen = true;
+		tabobj.autorun = true;
+		tabobj.runorder = (i+1)*10;
+		
 		
 		//console.log(`TAB: ${i}`, tabobj , JSON.stringify(tabobj));
 		await window.localFormatSaver.writeObjectFromString(tabobj.name, tabobj.objuuid, tabobj.objtype, JSON.stringify(tabobj));

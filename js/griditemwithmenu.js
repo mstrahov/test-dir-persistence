@@ -186,6 +186,12 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 	} 
 	
 	// ------------------------------------------------------------------------------
+	insertStringAtCursor(valstr) {
+		this.codeEditorObj.replaceRange(valstr, this.codeEditorObj.getCursor());
+	}
+	
+	
+	// ------------------------------------------------------------------------------
 	toOwnFormat() {
 		let res = super.toOwnFormat();
 		res.cmdhistory = this.cmdhistory;
@@ -198,4 +204,12 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------
-
+/*
+ * testpycode.#codeEditorObj.cursorCoords(true,'local')
+ * testpycode.#codeEditorObj.getCursor()
+Pos {line: 2, ch: 5, sticky: 'after'}    (index 0-based)
+ * 
+ * INSERT AT CURSOR POSITION:
+ * testpycode.#codeEditorObj.replaceRange("insert test string",testpycode.#codeEditorObj.getCursor())
+ * 
+ * */

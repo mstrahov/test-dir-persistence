@@ -50,6 +50,7 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 			//~ name: 'Scripts',
 			//~ isopen: null,
 			//~ autorun: null,
+			//~ runorder: 0,
 			//~ objtype: '', 
 			//~ objuuid:  '', 
 			//~ lastRunResult: '', 
@@ -63,13 +64,15 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 			movableRows:false,
 			reactiveData:true, 
 			columns:[
-				{title:"Object Name", field:"name", editor:false, headerSort:true, 
+				{title:"Object Name", field:"name", editor:true, headerSort:true, 
 					headerFilter:"input", 
 					sorter: "string",
 					headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),
 					width:250, 
 				},
-				{title:"Auto Open", field:"isopen", editor:false,headerSort:true,
+				{title:"Auto Open", field:"isopen", editor:false,
+					headerSort:true,
+					//headerFilter:"input", 
 					formatter:"tickCross", 
 					 hozAlign:"center", 
 					 sorter: "boolean",
@@ -80,11 +83,28 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 						crossElement:false,
 					},
 				},
-				{title:"Auto Run", field:"autorun", editor:false, headerSort:true,
+				{title:"Auto Run", field:"autorun", 
+					editor:false, 
+					headerSort:true,
+					//headerFilter:true, 
 					formatter:"tickCross", 
 					 hozAlign:"center", 
 					  sorter: "boolean",
 					width: 80, 
+					formatterParams:{
+						allowEmpty:false,
+						allowTruthy:true,
+						crossElement:false,
+					},
+				},
+				{title:"Order", field:"runorder", 
+					editor:true, 
+					headerSort:true,
+					formatter:"plaintext", 
+					hozAlign:"center", 
+					sorter: "number",
+					validator:"integer",
+					width: 85, 
 					formatterParams:{
 						allowEmpty:false,
 						allowTruthy:true,
@@ -223,8 +243,9 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 		}
 		
 		if  (this.tabulatorObj && resetGrid) {
-			let datatree = await this.OwnFormatHandler.generateTabulatorTree();
-			this.tabulatorObj.setData(datatree);
+			this.datatree = await this.OwnFormatHandler.generateTabulatorTree();
+			this.tabulatorObj.setData(this.datatree);
+			this.tabulatorObj.clearFilter();
 		}
 	}
 	
