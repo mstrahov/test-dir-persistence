@@ -410,8 +410,16 @@ export class AppPageScriptControl extends AppPageControl {
 			
 			//~ this.scriptControl.transformscript.scriptName = selectedOption.inputOneLine.trim();
 			//~ this.setTabTitle(selectedOption.inputOneLine.trim());
-			this.setScriptName(selectedOption.inputOneLine.trim());
-			
+			if (selectedOption.inputOneLine.trim() !== this.scriptControl.transformscript.scriptName) {
+				this.setScriptName(selectedOption.inputOneLine.trim());
+				this.eventbus.dispatch('scriptnamechange', this, {
+						fieldname: 'name', 
+						oldvalue: this.scriptControl.transformscript.scriptName, 
+						newvalue:selectedOption.inputOneLine.trim(), 
+						scriptuuid: this.uuid,
+						rowdata: { objuuid: this.uuid }, 
+				});
+			}
 		} catch (error) {
 			console.error('Error:', error.message);
 		}

@@ -137,6 +137,8 @@ const OpenNewScriptTab = (scriptobj) => {
 			modalInputDialog: modalInput,
 		});
 	activetabs.push(newtab);
+	
+	newtab.eventbus.subscribe('scriptnamechange', (obj,eventdata)=> {  window.localFormatSaver.updateScriptArrayData(eventdata); } , tabNavStatusTab.uuid);
 };
 // ================================================================== own format handler
 
