@@ -119,8 +119,6 @@ tabNavStatusTab.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{   sta
 sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.runCmdFromGridItem('sql',obj,eventdata);  }, tabNavStatusTab.uuid);
 
 
-
-
 // ================================================================== newscriptmenuaction
 let activetabs = [];
 const OpenNewScriptTab = (scriptobj) => {   
@@ -140,6 +138,21 @@ const OpenNewScriptTab = (scriptobj) => {
 		});
 	activetabs.push(newtab);
 };
+// ================================================================== own format handler
+
+ownformatdialog.eventbus.subscribe('datacelledited',
+	(obj,eventdata)=>
+		{ 
+			//console.log("datacelledited",eventdata);
+			window.localFormatSaver.updateScriptArrayData(eventdata);
+			if (eventdata.fieldname==="name") {	
+				const ind = activetabs.findIndex((val)=>val.uuid===eventdata.rowdata.objuuid);
+				if (ind>-1) {
+					activetabs[ind].setScriptName(eventdata.newvalue.trim());
+				}
+			}
+		}
+, tabNavStatusTab.uuid);
 
 // ================================================================== save project menu action
 

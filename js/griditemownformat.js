@@ -34,6 +34,7 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 			
 		} else if (eventdata?.menuItemId === "refreshgriditem" || eventdata?.menuItemId ===  "refreshaction") {
 			this.awaitingrefresh = true;
+			this.eventbus.dispatch('datarefreshrequested', this, { });
 			this.refreshData();
 		} else if (eventdata?.menuItemId === "_____uploadfiletoopfsitem") {
 			//~ this.awaitingrefresh = true;
@@ -100,7 +101,7 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 				{title:"Order", field:"runorder", 
 					editor:true, 
 					headerSort:true,
-					formatter:"plaintext", 
+					formatter:"number", 
 					hozAlign:"center", 
 					sorter: "number",
 					validator:"integer",
@@ -215,6 +216,24 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 					curVal = true;
 				}
 				cell.setValue(curVal);
+			}
+		});
+		
+		//~ this.tabulatorObj.on("dataChanged", function(data){
+			//~ console.log("dataChanged", data);
+		//~ });
+		
+		this.tabulatorObj.on("cellEdited", function(cell){
+			//console.log("cellEdited", cell, cell.getField(), cell.getValue(), cell.getOldValue(), cell.getData());
+			if (cell.getValue()!==cell.getOldValue()) {
+				that.eventbus.dispatch('datacelledited', this, {fieldname: cell.getField(), oldvalue: cell.getOldValue(), newvalue:cell.getValue(), rowdata: cell.getData(), });
+			}
+		});
+		
+		
+		this.tabulatorObj.on("cellEditing", function(cell){
+			if (cell.getData()['_level']===0) {
+				cell.cancelEdit();
 			}
 		});
 				

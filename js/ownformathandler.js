@@ -372,7 +372,24 @@ conn_internal_data
 	}
 	
 	
+	// -----------------------------------------------------------------------------------------------------
+	updateScriptArrayData(eventdata) {
+		// {fieldname: cell.getField(), oldvalue: cell.getOldValue(), newvalue:cell.getValue(), rowdata: cell.getData(), });
+		const ind = this.scriptsarr.findIndex((val)=>val.objuuid===eventdata.rowdata.objuuid);
+		if (ind>-1) {
+			if (eventdata.fieldname==="runorder") {	
+				this.scriptsarr[ind][eventdata.fieldname] = parseInt(eventdata.newvalue);
+			} else if (eventdata.fieldname==="name") {	
+				this.scriptsarr[ind][eventdata.fieldname] = eventdata.newvalue.trim();
+				this.scriptsarr[ind]['scriptname'] = eventdata.newvalue.trim();
+				this.scriptsarr[ind]['tabtitle'] = eventdata.newvalue.trim();
+				
+			} else {
+				this.scriptsarr[ind][eventdata.fieldname] = eventdata.newvalue;
+			}
+		}
 	
+	}
 	// -----------------------------------------------------------------------------------------------------
 	
 }   // end of class OwnFormatHandler

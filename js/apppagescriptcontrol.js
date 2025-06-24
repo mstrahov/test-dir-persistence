@@ -407,13 +407,22 @@ export class AppPageScriptControl extends AppPageControl {
 			};
 			const selectedOption = await this.#modalInputDialog.showdialog(props);
 			console.log('Return value:', selectedOption.inputOneLine);
-			this.scriptControl.transformscript.scriptName = selectedOption.inputOneLine.trim();
-			this.setTabTitle(selectedOption.inputOneLine.trim());
+			
+			//~ this.scriptControl.transformscript.scriptName = selectedOption.inputOneLine.trim();
+			//~ this.setTabTitle(selectedOption.inputOneLine.trim());
+			this.setScriptName(selectedOption.inputOneLine.trim());
 			
 		} catch (error) {
 			console.error('Error:', error.message);
 		}
 
+	}
+	
+	// --------------------------------------------------------------------------------
+	
+	setScriptName(newName) {
+		this.scriptControl.transformscript.scriptName = newName;
+		this.setTabTitle(newName);
 	}
 	
 	// --------------------------------------------------------------------------------	
