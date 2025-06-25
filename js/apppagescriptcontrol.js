@@ -47,13 +47,14 @@ export class AppPageScriptControl extends AppPageControl {
 			);
 			this.setTabTitle(this.scriptControl.transformscript.scriptName);
 			
-			
 			this.pyeditor = this.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonScriptControlCodeEditor", headertext: "Python", griditemoptions: {w:6,h:5,} });
+			
 			this.dfview = this.addGridItem( griditemTableDFPagedTransform, {templateid:"#gridItemDFtransformview", headertext: "DataFrame edit view", griditemoptions: {w:6,h:5,},
 				coderunner: this.coderunner,
 				parentuuid: this.uuid
 			});
-			
+			// closegriditem
+			this.dfview.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata, that.dfview );  }, this.uuid);
 			
 			this.statusTabOutput = this.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:5,} });
 			
@@ -310,6 +311,32 @@ export class AppPageScriptControl extends AppPageControl {
 		} else {
 			console.error("Widget to delete not found!");
 		}
+	}
+	// --------------------------------------------------------------------------------	
+	deleteMainWidget(obj, eventdata, localobj) {
+		const mainWidgetName = obj.widgetName;
+		let widgetuuid = obj.uuid;
+		console.log("Removing object ", mainWidgetName, widgetuuid, localobj.uuid);
+		this.fileIOHandler.eventbus.unsubscribeUUID(widgetuuid);
+		this.destroyGridItem(obj);
+		
+		// *********************-------------------------------------------------------------------------------------------------
+		if (mainWidgetName==="gridItemScript") {
+			this.scriptControl = null;
+		} else if (mainWidgetName==="GridItemPyEditor") {
+			this.pyeditor = null;
+		} else if (mainWidgetName==="griditemTableDFPagedTransform") {
+			this.dfview = null;
+		} else if (mainWidgetName==="StatusGridItemTextOutput") {
+			this.statusTabOutput = null;
+		} else if (mainWidgetName==="gridItemSelectFileDialog") {
+			this.selectFileDialog = null;	
+		} 
+		// *********************-------------------------------------------------------------------------------------------------
+		console.log("grid items: ", this.gridItems);
+		localobj = null;
+		console.log("Removed object ", mainWidgetName, widgetuuid);
+		
 	}
 	
 	// --------------------------------------------------------------------------------	

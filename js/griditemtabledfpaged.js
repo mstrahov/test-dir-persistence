@@ -64,7 +64,9 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 		} else if (eventdata?.menuItemId === "refreshgriditem") {
 			this.showdf();
 		} else if (eventdata?.menuItemId === "choosedataframegriditem") {
-			this.eventbus.dispatch('requestDataFrameChange', this, { dfname: this.dfname });	
+			this.eventbus.dispatch('requestDataFrameChange', this, { dfname: this.dfname });
+		} else if (eventdata?.menuItemId === "closegriditem") {
+			this.eventbus.dispatch('closegriditem', this, { });		
 		}
 		
 		// 
@@ -294,6 +296,14 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 	}
 	// -------------------------------------------------------------------------
 	
+	destroy() {
+		if (this.tabulatorobj) {
+			try {
+				this.tabulatorobj.destroy();
+			} catch (err) { console.error(err); }
+		}
+		super.destroy();
+	}
 	// ------------------------------------
 	
 	toOwnFormat() {

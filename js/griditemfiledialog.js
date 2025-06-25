@@ -310,6 +310,18 @@ export class gridItemFileDialog extends GridItemWithMenu {
 		//~ this.tabulatorObj = new Tabulator(this.bodyelement, this.tabulatorProperties);
 		
 	}
+	// -------------------------------------------------------------------------
+	
+	destroy() {
+		if (this.tabulatorObj) {
+			try {
+				this.tabulatorObj.destroy();
+			} catch (err) { console.error(err); }
+		}
+		super.destroy();
+	}
+	
+	// -------------------------------------------------------------------------
 	
 	
 	

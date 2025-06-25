@@ -138,10 +138,21 @@ const OpenNewScriptTab = (scriptobj) => {
 		});
 	activetabs.push(newtab);
 	
-	newtab.eventbus.subscribe('scriptnamechange', (obj,eventdata)=> {  window.localFormatSaver.updateScriptArrayData(eventdata); } , tabNavStatusTab.uuid);
+	newtab.eventbus.subscribe('scriptnamechange', (obj,eventdata)=> {  
+		window.localFormatSaver.updateScriptArrayData(eventdata);
+		updateOwnFormatDialogData();
+	} , tabNavStatusTab.uuid);
 };
 // ================================================================== own format handler
 
+const updateOwnFormatDialogData = () => {
+	if (ownformatdialog) {
+		let datatree = window.localFormatSaver.generateTabulatorTree();
+		ownformatdialog.refreshData({ source: 'tabNavStatusTab', datatree: datatree });
+	}
+}
+
+// ================================================================== own format handler
 ownformatdialog.eventbus.subscribe('datacelledited',
 	(obj,eventdata)=>
 		{ 
@@ -155,6 +166,9 @@ ownformatdialog.eventbus.subscribe('datacelledited',
 			}
 		}
 , tabNavStatusTab.uuid);
+
+
+ownformatdialog.eventbus.subscribe('datarefreshrequested', (obj,eventdata)=>  { updateOwnFormatDialogData(); } , tabNavStatusTab.uuid);
 
 // ================================================================== save project menu action
 
@@ -214,7 +228,7 @@ const OpenProjectFile = async () => {
 		}
 	}
 	
-	ownformatdialog.refreshData();
+	updateOwnFormatDialogData();
 	
 };
 

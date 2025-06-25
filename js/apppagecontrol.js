@@ -119,6 +119,9 @@ export class AppPageControl {
 			if (this.dropdownMenuControl) {
 				this.dropdownMenuControl.eventbus.unsubscribeUUID(gridItemUUID);
 			}
+			if (gridItemObj.eventbus && gridItemObj.eventbus?.events) {
+				gridItemObj.eventbus.events = {};
+			}
 			gridItemObj.destroy();
 			this.gridItems.splice(gridItemIndex, 1);
 		}

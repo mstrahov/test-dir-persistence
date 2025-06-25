@@ -35,7 +35,7 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 		} else if (eventdata?.menuItemId === "refreshgriditem" || eventdata?.menuItemId ===  "refreshaction") {
 			this.awaitingrefresh = true;
 			this.eventbus.dispatch('datarefreshrequested', this, { });
-			this.refreshData();
+			//this.refreshData();
 		} else if (eventdata?.menuItemId === "_____uploadfiletoopfsitem") {
 			//~ this.awaitingrefresh = true;
 			
@@ -244,7 +244,7 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 	// --------------------------------------------------------------------------
 	
 	async refreshData(eventdata) {
-		console.log(eventdata);
+		//console.log(eventdata);
 		// source: 'syncFS',  source: 'mountDirectory'
 		let resetGrid = true;
 		let eventSource = '';
@@ -261,8 +261,9 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 			}
 		}
 		
-		if  (this.tabulatorObj && resetGrid) {
-			this.datatree = await this.OwnFormatHandler.generateTabulatorTree();
+		if  (this.tabulatorObj && resetGrid && eventdata.datatree) {
+			//~ this.datatree = await this.OwnFormatHandler.generateTabulatorTree();
+			this.datatree = eventdata.datatree;
 			this.tabulatorObj.setData(this.datatree);
 			this.tabulatorObj.clearFilter();
 		}
