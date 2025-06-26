@@ -55,7 +55,7 @@ export class AppPageScriptControl extends AppPageControl {
 				parentuuid: this.uuid
 			});
 			// closegriditem
-			this.dfview.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata, that.dfview );  }, this.uuid);
+			this.dfview.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 			
 			this.statusTabOutput = this.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:5,} });
 			
@@ -185,6 +185,7 @@ export class AppPageScriptControl extends AppPageControl {
 							coderunner: this.coderunner,
 							parentuuid: this.uuid,
 						});
+					this.dfview.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 					this.dfview.eventbus.subscribe('requestDataFrameChange',this.dfViewDataFrameChange.bind(this), this.uuid);
 					this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 					this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
@@ -388,6 +389,7 @@ export class AppPageScriptControl extends AppPageControl {
 							parentuuid: this.uuid,
 						});
 				this.dfview.eventbus.subscribe('requestDataFrameChange',this.dfViewDataFrameChange.bind(this), this.uuid);
+				this.dfview.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata);  }, this.uuid);
 				this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 				this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 				this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
