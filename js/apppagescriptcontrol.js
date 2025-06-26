@@ -131,8 +131,9 @@ export class AppPageScriptControl extends AppPageControl {
 			}	
 			
 			// add closed widgets
-			this.closedwidgets = JSON.parse(JSON.stringify(this.initscriptobj.closedwidgets));
-			
+			if (this.initscriptobj.closedwidgets) {
+				this.closedwidgets = JSON.parse(JSON.stringify(this.initscriptobj.closedwidgets));
+			} 
 			
 			// add widgets
 			for (let i=0;i<this.initscriptobj?.gridwidgets?.length;i++) {
