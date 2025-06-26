@@ -8,7 +8,7 @@
 
 import { AppPageControl } from "./apppagecontrol.js";
 import { GridItemPyEditor } from  "./griditempyeditor.js";
-//import { GridItemSQLEditor } from  "./griditemsqleditor.js";
+import { GridItemSQLEditor } from  "./griditemsqleditor.js";
 import { StatusGridItemTextOutput } from "./griditemtextoutput.js";
 import { gridItemScript, TransformScriptInit } from "./griditemscript.js";
 import { gridItemSelectFileDialog } from "./griditemselectfiledialog.js";
@@ -33,6 +33,7 @@ export class AppPageScriptControl extends AppPageControl {
 		this.visualwidgets = [];
 		this.closedwidgets = [];
 		let that = this; 
+		this.sqleditor = undefined;
 		
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.topDropDownMenuEventHandler.bind(this));
 		
@@ -351,7 +352,9 @@ export class AppPageScriptControl extends AppPageControl {
 		} else if (mainWidgetName==="StatusGridItemTextOutput") {
 			this.statusTabOutput = null;
 		} else if (mainWidgetName==="gridItemSelectFileDialog") {
-			this.selectFileDialog = null;	
+			this.selectFileDialog = null;
+		} else if (mainWidgetName==="GridItemSQLEditor") {
+			this.sqleditor = null;		
 		} 
 		// *********************--------------------------------
 		console.log("grid items: ", this.gridItems);
@@ -511,7 +514,25 @@ export class AppPageScriptControl extends AppPageControl {
 				}
 				// **********************************************
 			}
-			
+		} else if (mainWidgetName==="GridItemSQLEditor") {
+			// GridItemSQLEditor
+			if (!this.sqleditor) {
+			// this.sqleditor = tabNavStatusTab.addGridItem( GridItemSQLEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "SQL", griditemoptions: {w:6,h:7,} });	
+				if (!widgetSettings) {
+					widgetSettings = {};
+					widgetSettings.griditemheader = "SQL";
+					widgetSettings.cmdhistory = undefined;
+				}
+				this.sqleditor = this.addGridItem( GridItemSQLEditor, 
+						{
+							templateid:"#gridItemPythonCodeEditor", 
+							headertext: widgetSettings.griditemheader, 
+							griditemoptions: gridlayoutoptions,
+							editorhistory: widgetSettings.cmdhistory,
+						});
+				this.sqleditor.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
+				this.sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ that.runCmdFromGridItem('sql',obj,eventdata);  }, this.uuid);
+			}	
 		} 
 		
 	}
@@ -543,7 +564,7 @@ export class AppPageScriptControl extends AppPageControl {
 		} else if (eventdata?.menuItemId === 'addpythoneditorwidget') { 
 			this.addMainWidget("GridItemPyEditor");
 		} else if (eventdata?.menuItemId === 'addsqleditorwidget') { 
-			// this.addMainWidget("gridItemSelectFileDialog");
+			this.addMainWidget("GridItemSQLEditor");
 		}
 		
 		//	this.grid.compact();   
