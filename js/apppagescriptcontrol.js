@@ -49,16 +49,17 @@ export class AppPageScriptControl extends AppPageControl {
 			this.setTabTitle(this.scriptControl.transformscript.scriptName);
 			
 			this.pyeditor = this.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonScriptControlCodeEditor", headertext: "Python", griditemoptions: {w:6,h:5,} });
+			this.pyeditor.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 			
 			this.dfview = this.addGridItem( griditemTableDFPagedTransform, {templateid:"#gridItemDFtransformview", headertext: "DataFrame edit view", griditemoptions: {w:6,h:5,},
 				coderunner: this.coderunner,
 				parentuuid: this.uuid
 			});
-			// closegriditem
+			// closegriditem 
 			this.dfview.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 			
 			this.statusTabOutput = this.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:5,} });
-			
+			this.statusTabOutput.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 
 			
 			// ---------------   gridItemSelectFileDialog ---------------------
@@ -71,6 +72,7 @@ export class AppPageScriptControl extends AppPageControl {
 				await that.addImportFileStep(eventdata); 
 				await that.runScriptOneStep(eventdata); 
 			}, this.scriptControl.uuid);
+			this.selectFileDialog.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
 			
 			// ----------------------------------------------------------------
 
@@ -84,9 +86,9 @@ export class AppPageScriptControl extends AppPageControl {
 			this.scriptControl.eventbus.subscribe('runonecodestepaction',(obj,eventdata)=>{  that.runScriptOneStep(eventdata); }, this.uuid);
 			this.scriptControl.eventbus.subscribe('runallcodestepsaction',(obj,eventdata)=>{  that.runScriptAllSteps(eventdata); }, this.uuid);
 			
-			this.scriptControl.eventbus.subscribe('showscriptaspythoneditable',(obj,eventdata)=>{  that.pyeditor.setValue(eventdata?.pycode); }, this.uuid);
+			this.scriptControl.eventbus.subscribe('showscriptaspythoneditable',(obj,eventdata)=>{  that.pyeditor.setValue(eventdata?.pycode); }, this.pyeditor.uuid);
 			
-			this.scriptControl.eventbus.subscribe('loadfrompythonscript',(obj,eventdata)=>{  that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue()); }, this.uuid);
+			this.scriptControl.eventbus.subscribe('loadfrompythonscript',(obj,eventdata)=>{  that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue()); }, this.pyeditor.uuid);
 			
 			this.pyeditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ that.runCmdFromGridItem('py',obj,eventdata);  }, this.uuid);
 			this.pyeditor.eventbus.subscribe('clickableactionclick',(obj,eventdata)=>{ 
@@ -173,6 +175,7 @@ export class AppPageScriptControl extends AppPageControl {
 							editorhistory: this.initscriptobj.gridwidgets[i].cmdhistory,
 						});
 					this.pyeditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ that.runCmdFromGridItem('py',obj,eventdata);  }, this.uuid);
+					this.pyeditor.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 						
 				} else if (this.initscriptobj.gridwidgets[i].griditemname==="griditemTableDFPagedTransform") {
 					this.dfview = this.addGridItem( griditemTableDFPagedTransform, 
@@ -199,6 +202,7 @@ export class AppPageScriptControl extends AppPageControl {
 							headertext: this.initscriptobj.gridwidgets[i].griditemheader, 
 							griditemoptions: gridlayoutoptions,
 						});
+					this.statusTabOutput.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 					this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
 					this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
 					this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.statusTabOutput.runExecutionFailure(eventdata);  }, this.statusTabOutput.uuid);
@@ -214,6 +218,7 @@ export class AppPageScriptControl extends AppPageControl {
 							columnlayout:  this.initscriptobj.gridwidgets[i].columnlayout,  
 						});
 					this.fileIOHandler.eventbus.subscribe('ioDirRefreshNeeded',(obj,eventdata)=>{  that.selectFileDialog.refreshData(eventdata); }, this.selectFileDialog.uuid);
+					this.selectFileDialog.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
 						
 				} else if (this.initscriptobj.gridwidgets[i].griditemname==="GridItemHTMLOutput") {
 					const id2 = this.initscriptobj.visualwidgets.findIndex((v)=>v.widgetObj.uuid===this.initscriptobj.gridwidgets[i].uuid);
@@ -246,8 +251,8 @@ export class AppPageScriptControl extends AppPageControl {
 						}
 					}, this.scriptControl.uuid);
 					
-					this.scriptControl.eventbus.subscribe('showscriptaspythoneditable',(obj,eventdata)=>{  that.pyeditor.setValue(eventdata?.pycode); }, this.uuid);
-					this.scriptControl.eventbus.subscribe('loadfrompythonscript',(obj,eventdata)=>{  that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue()); }, this.uuid);
+					this.scriptControl.eventbus.subscribe('showscriptaspythoneditable',(obj,eventdata)=>{  that.pyeditor.setValue(eventdata?.pycode); }, this.pyeditor.uuid);
+					this.scriptControl.eventbus.subscribe('loadfrompythonscript',(obj,eventdata)=>{  that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue()); }, this.pyeditor.uuid);
 				}
 				
 				if (this.selectFileDialog) {
@@ -358,23 +363,57 @@ export class AppPageScriptControl extends AppPageControl {
 		
 		let gridlayoutoptions = {w:6,h:5};
 		let that = this;
+		let widgetSettings = undefined;
+		const ind = this.closedwidgets.findIndex((v)=>v.griditemname===mainWidgetName);
+		if (ind>-1) {
+			widgetSettings = this.closedwidgets[ind];
+		}
+		console.log("Found closed widget: ",widgetSettings);
 		
 		if (mainWidgetName==="gridItemScript") {
-			//this.scriptControl = null;
+			if (!this.scriptControl) {
+			
+			}
 		} else if (mainWidgetName==="GridItemPyEditor") {
-			//this.pyeditor = null;
-		} else if (mainWidgetName==="griditemTableDFPagedTransform") {
-			if (!this.dfview) {
-				let widgetSettings = undefined;
-				const ind = this.closedwidgets.findIndex((v)=>v.griditemname===mainWidgetName);
-				if (ind>-1) {
-					widgetSettings = this.closedwidgets[ind];
+			// ------------------------------------
+			if (!this.pyeditor) {
+				if (!widgetSettings) {
+					widgetSettings = {};
+					widgetSettings.griditemheader = "Python";
+					widgetSettings.cmdhistory = undefined;
 				}
-				console.log("Found closed widget: ",widgetSettings);
+				this.pyeditor = this.addGridItem( GridItemPyEditor, 
+							{
+								templateid:"#gridItemPythonScriptControlCodeEditor", 
+								headertext: widgetSettings.griditemheader, 
+								griditemoptions: gridlayoutoptions,
+								editorhistory: widgetSettings.cmdhistory,
+							});
+				this.pyeditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ that.runCmdFromGridItem('py',obj,eventdata);  }, this.uuid);
+				this.pyeditor.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
+				//*****************
+				if (this.scriptControl) {
+					if (this.pyeditor) {
+						this.pyeditor.eventbus.subscribe('clickableactionclick',(obj,eventdata)=>{ 
+							if (eventdata?.menuItemId === "syncaction") {
+								that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue());  
+							}
+						}, this.scriptControl.uuid);
+						
+						this.scriptControl.eventbus.subscribe('showscriptaspythoneditable',(obj,eventdata)=>{  that.pyeditor.setValue(eventdata?.pycode); }, this.pyeditor.uuid);
+						this.scriptControl.eventbus.subscribe('loadfrompythonscript',(obj,eventdata)=>{  that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue()); }, this.pyeditor.uuid);
+					}
+				}
+				//****************
+			}
+			// ------------------------------------
+		} else if (mainWidgetName==="griditemTableDFPagedTransform") {
+			// ------------------------------------
+			if (!this.dfview) {
 				// ------------------------------------
 				if (!widgetSettings) {
 					widgetSettings = {};
-					widgetSettings.griditemheader = "DataFrame edit view",
+					widgetSettings.griditemheader = "DataFrame edit view";
 					widgetSettings.columnlayout = undefined;
 					widgetSettings.dfname = undefined;
 				}
@@ -415,9 +454,63 @@ export class AppPageScriptControl extends AppPageControl {
 				// ------------------------------------
 			}
 		} else if (mainWidgetName==="StatusGridItemTextOutput") {
-			//this.statusTabOutput = null;
+			if (!this.statusTabOutput) {
+				if (!widgetSettings) {
+					widgetSettings = {};
+					widgetSettings.griditemheader = "Output";
+				}
+				
+				this.statusTabOutput = this.addGridItem( StatusGridItemTextOutput, 
+						{
+							templateid:"#gridItemTextOutput", 
+							headertext: widgetSettings.griditemheader, 
+							griditemoptions: gridlayoutoptions,
+						});
+				this.statusTabOutput.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
+				this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+				this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+				this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.statusTabOutput.runExecutionFailure(eventdata);  }, this.statusTabOutput.uuid);
+				this.eventbus.subscribe('getVariableError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+				//*****************
+				
+				if (this.statusTabOutput && this.dfview) {
+					this.dfview.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+				}
+				//*****************
+			}
+			
 		} else if (mainWidgetName==="gridItemSelectFileDialog") {
-			//this.selectFileDialog = null;	
+			// ------------------------------------
+			if (!this.selectFileDialog) {
+				if (!widgetSettings) {
+						widgetSettings = {};
+						widgetSettings.griditemheader = "File selection";
+						widgetSettings.columnlayout = undefined;
+					}
+					
+				this.selectFileDialog = this.addGridItem( gridItemSelectFileDialog, 
+							{
+								templateid:"#gridItemFileDialog", 
+								headertext: widgetSettings.griditemheader, 
+								griditemoptions: gridlayoutoptions, 
+								fileIOHandler: this.fileIOHandler,
+								columnlayout:  widgetSettings.columnlayout,  
+							});
+				this.fileIOHandler.eventbus.subscribe('ioDirRefreshNeeded',(obj,eventdata)=>{  that.selectFileDialog.refreshData(eventdata); }, this.selectFileDialog.uuid);
+				this.selectFileDialog.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
+				
+				// **********************************************
+				if (this.scriptControl) {
+					if (this.selectFileDialog) {
+						this.selectFileDialog.eventbus.subscribe('importfiletodf',async (obj,eventdata)=>{  
+							await that.addImportFileStep(eventdata); 
+							await that.runScriptOneStep(eventdata); 
+						}, this.scriptControl.uuid);
+					}
+				}
+				// **********************************************
+			}
+			
 		} 
 		
 	}
@@ -442,10 +535,15 @@ export class AppPageScriptControl extends AppPageControl {
 			console.log(this.scriptControl.transformscript);
 		} else if (eventdata?.menuItemId === 'adddftransformwidget') { 
 			this.addMainWidget("griditemTableDFPagedTransform");
+		} else if (eventdata?.menuItemId === 'addfilepickerwidget') { 
+			this.addMainWidget("gridItemSelectFileDialog");
+		} else if (eventdata?.menuItemId === 'addstatusoutputwidget') { 
+			this.addMainWidget("StatusGridItemTextOutput");
+		} else if (eventdata?.menuItemId === 'addpythoneditorwidget') { 
+			this.addMainWidget("GridItemPyEditor");
+		} else if (eventdata?.menuItemId === 'addsqleditorwidget') { 
+			// this.addMainWidget("gridItemSelectFileDialog");
 		}
-		
-		
-		
 		
 		//	this.grid.compact();   
 		//} else if (eventdata?.menuItemId === 'savelayout') {   

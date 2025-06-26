@@ -60,7 +60,9 @@ export class StatusGridItemTextOutput extends GridItemTextOutput {
 	menuEventHandler(obj,eventdata) {
 		if (eventdata?.menuItemId === 'cleartextoutputitem') {
 			this.textoutput.value = '';	
-		}
+		} else if (eventdata?.menuItemId === "closegriditem") {
+			this.eventbus.dispatch('closegriditem', this, { });	
+		} 
 	}	
 	
 	statusUpdate(eventdata) {

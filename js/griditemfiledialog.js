@@ -27,7 +27,7 @@ export class gridItemFileDialog extends GridItemWithMenu {
 	}
 	// --------------------------------------------------------------------------
 	menuEventHandler(obj,eventdata) {
-		console.log("gridItemFileDialog widget",this.__proto__?.constructor?.name, this.headerText, "item click: ",obj,eventdata); 
+		//console.log("gridItemFileDialog widget",this.__proto__?.constructor?.name, this.headerText, "item click: ",obj,eventdata); 
 		
 		if (eventdata?.menuItemId === "mountlocaldirectoryitem") {
 			this.fileIOHandler.mountDirectory();
@@ -49,6 +49,8 @@ export class gridItemFileDialog extends GridItemWithMenu {
 			//~ this.runEditorCode("\n");
 		//~ } else if (eventdata?.menuItemId === "dumpallhistory") {
 			//~ this.showAllHistory();
+		} else if (eventdata?.menuItemId === "closegriditem") {
+			this.eventbus.dispatch('closegriditem', this, { });	
 		}
 		
 	}

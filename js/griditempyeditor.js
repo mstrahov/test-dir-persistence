@@ -86,7 +86,9 @@ export class GridItemPyEditor extends GridItemEditorWithHistory {
 			this.runEditorCode("\n");
 		} else if (eventdata?.menuItemId === "dumpallhistory") {
 			this.showAllHistory();
-		}
+		} else if (eventdata?.menuItemId === "closegriditem") {
+			this.eventbus.dispatch('closegriditem', this, { });	
+		} 
 		
 	}
 	
