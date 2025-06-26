@@ -31,6 +31,7 @@ export class AppPageScriptControl extends AppPageControl {
 		this.scriptObject = params.transformScript?params.transformScript:TransformScriptInit();
 		this.#modalInputDialog = params.modalInputDialog;
 		this.visualwidgets = [];
+		this.closedwidgets = [];
 		let that = this; 
 		
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.topDropDownMenuEventHandler.bind(this));
@@ -126,6 +127,10 @@ export class AppPageScriptControl extends AppPageControl {
 			} catch (err) {
 				console.error("Unable to restore grid layout: ", err);
 			}	
+			
+			// add closed widgets
+			this.closedwidgets = JSON.parse(JSON.stringify(this.initscriptobj.closedwidgets));
+			
 			
 			// add widgets
 			for (let i=0;i<this.initscriptobj?.gridwidgets?.length;i++) {
@@ -313,14 +318,23 @@ export class AppPageScriptControl extends AppPageControl {
 		}
 	}
 	// --------------------------------------------------------------------------------	
-	deleteMainWidget(obj, eventdata, localobj) {
+	deleteMainWidget(obj, eventdata) {
 		const mainWidgetName = obj.widgetName;
 		let widgetuuid = obj.uuid;
-		console.log("Removing object ", mainWidgetName, widgetuuid, localobj.uuid);
+		console.log("Removing object ", mainWidgetName, widgetuuid);
+		
+		let widgetSettings = obj.toOwnFormat();
+		const ind = this.closedwidgets.findIndex((v)=>v.griditemname===mainWidgetName);
+		if (ind>-1) {
+			this.closedwidgets[ind] = widgetSettings;
+		} else {
+			this.closedwidgets.push(widgetSettings);
+		}
+		
 		this.fileIOHandler.eventbus.unsubscribeUUID(widgetuuid);
 		this.destroyGridItem(obj);
 		
-		// *********************-------------------------------------------------------------------------------------------------
+		// *********************-------------------------------
 		if (mainWidgetName==="gridItemScript") {
 			this.scriptControl = null;
 		} else if (mainWidgetName==="GridItemPyEditor") {
@@ -332,10 +346,77 @@ export class AppPageScriptControl extends AppPageControl {
 		} else if (mainWidgetName==="gridItemSelectFileDialog") {
 			this.selectFileDialog = null;	
 		} 
-		// *********************-------------------------------------------------------------------------------------------------
+		// *********************--------------------------------
 		console.log("grid items: ", this.gridItems);
-		localobj = null;
 		console.log("Removed object ", mainWidgetName, widgetuuid);
+		console.log("Widget settings: ", this.closedwidgets);
+	}
+	
+	// --------------------------------------------------------------------------------	
+	addMainWidget(mainWidgetName) {
+		
+		let gridlayoutoptions = {w:6,h:5};
+		let that = this;
+		
+		if (mainWidgetName==="gridItemScript") {
+			//this.scriptControl = null;
+		} else if (mainWidgetName==="GridItemPyEditor") {
+			//this.pyeditor = null;
+		} else if (mainWidgetName==="griditemTableDFPagedTransform") {
+			if (!this.dfview) {
+				let widgetSettings = undefined;
+				const ind = this.closedwidgets.findIndex((v)=>v.griditemname===mainWidgetName);
+				if (ind>-1) {
+					widgetSettings = this.closedwidgets[ind];
+				}
+				console.log("Found closed widget: ",widgetSettings);
+				// ------------------------------------
+				if (!widgetSettings) {
+					widgetSettings = {};
+					widgetSettings.griditemheader = "DataFrame edit view",
+					widgetSettings.columnlayout = undefined;
+					widgetSettings.dfname = undefined;
+				}
+				this.dfview = this.addGridItem( griditemTableDFPagedTransform, 
+						{
+							templateid:"#gridItemDFtransformview", 
+							headertext: widgetSettings.griditemheader, 
+							griditemoptions: gridlayoutoptions,
+							columnlayout:  widgetSettings.columnlayout,  
+							dfname: widgetSettings.dfname, 
+							coderunner: this.coderunner,
+							parentuuid: this.uuid,
+						});
+				this.dfview.eventbus.subscribe('requestDataFrameChange',this.dfViewDataFrameChange.bind(this), this.uuid);
+				this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+				this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+				this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+				
+				// ***************************************
+				if (this.scriptControl) {
+					if (this.dfview) {
+						this.dfview.eventbus.subscribe('cmdActionEvent',async (obj,eventdata)=>{  
+							await that.scriptControl.addScriptStep(eventdata);
+							await that.runScriptOneStep(eventdata); 
+						}, this.scriptControl.uuid);
+						
+						this.dfview.showdf(); 
+					}
+				}
+				
+				if (this.statusTabOutput && this.dfview) {
+					this.dfview.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+				}
+				
+				// ****************************************
+				
+				// ------------------------------------
+			}
+		} else if (mainWidgetName==="StatusGridItemTextOutput") {
+			//this.statusTabOutput = null;
+		} else if (mainWidgetName==="gridItemSelectFileDialog") {
+			//this.selectFileDialog = null;	
+		} 
 		
 	}
 	
@@ -357,7 +438,13 @@ export class AppPageScriptControl extends AppPageControl {
 			// {"w":2,"h":2,"id":"0f1ab445-6b02-4d9e-bdec-d0eac4eb311e","x":6,"y":6},  
 			// but if size w=1,h=1: {"id":"0f1ab445-6b02-4d9e-bdec-d0eac4eb311e","x":6,"y":6},
 			console.log(this.scriptControl.transformscript);
+		} else if (eventdata?.menuItemId === 'adddftransformwidget') { 
+			this.addMainWidget("griditemTableDFPagedTransform");
 		}
+		
+		
+		
+		
 		//	this.grid.compact();   
 		//} else if (eventdata?.menuItemId === 'savelayout') {   
 		//	console.log(this.layoutToJSON());
@@ -746,6 +833,7 @@ sheetinfo
 		
 		// -----------
 		
+		res.closedwidgets = JSON.parse(JSON.stringify(this.closedwidgets));
 		res.scriptObject = this.scriptControl?this.scriptControl.transformscriptclone:this.scriptObject;
 		res.scriptname = this.scriptControl?this.scriptControl.transformscript.scriptName:this.scriptObject.scriptName;
 		

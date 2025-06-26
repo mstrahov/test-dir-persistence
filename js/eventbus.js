@@ -70,18 +70,25 @@ export default class EventBus {
 	}
 	// -------------------------------------------------------------------
 	unsubscribeUUID(srcuuid) {
-		const keyarr = Object.keys(this.events);
-		for (let i=0;i<keyarr.length;i++) {
-			let index = this.events[keyarr[i]].findIndex((item) => item.srcuuid === srcuuid);
-			const notifyflag = index;
-			while (index>-1) {
-				this.events[keyarr[i]].splice(index, 1);
-				index = this.events[keyarr[i]].findIndex((item) => item.srcuuid === srcuuid);				
-			}
-			if (notifyflag>-1) {
-				this._notifySubscriptionChange(keyarr[i], false);
-			}
-		}	
+		//~ const keyarr = Object.keys(this.events);
+		//~ for (let i=0;i<keyarr.length;i++) {
+			//~ let index = this.events[keyarr[i]].findIndex((item) => item.srcuuid === srcuuid);
+			//~ const notifyflag = index;
+			//~ while (index>-1) {
+				//~ this.events[keyarr[i]].splice(index, 1);
+				//~ index = this.events[keyarr[i]].findIndex((item) => item.srcuuid === srcuuid);				
+			//~ }
+			//~ if (notifyflag>-1) {
+				//~ this._notifySubscriptionChange(keyarr[i], false);
+			//~ }
+		//~ }	
+		let index = this.eventsources.findIndex((item) => item.srcuuid === srcuuid);
+		while (index>-1) {
+			this.unsubscribe(this.eventsources[index].key, this.eventsources[index].callback);
+			this.eventsources.splice(index, 1);
+			index = this.eventsources.findIndex((item) => item.srcuuid === srcuuid);
+		}
+		
 	}
 	// -------------------------------------------------------------------
 	subscribed(key){
