@@ -148,9 +148,9 @@ import fastparquet
 	},
 	// -------------------------------------------------------------------------------
 	{
-		actionid: "RenameDFColumns",
-		name: "Rename Columns",
-		description: "Rename Dataframe columns",
+		actionid: "RenameDFColumn",
+		name: "Rename column",
+		description: "Rename Dataframe column",
 		cmdtemplate: `{{df}}.rename(columns={ {{columnmap}} }, errors="raise", inplace=True)`,
 		cmdexample: `df.rename(columns={"A": "a", "B": "b", "C": "c"}, errors="raise", inplace=True)`,
 		actiontype: ["column"],
@@ -163,10 +163,10 @@ import fastparquet
 		name: "Convert to numeric",
 		description: "Convert Dataframe column to numeric",
 		cmdtemplate: `import pandas as pd
-{{df}}[["{{columnname}}"]] = {{df}}[["{{columnname}}"]].apply(pd.to_numeric)`,
-		cmdexample: `df[["Quantity"]] = df[["Quantity"]].apply(pd.to_numeric)`,
+{{df}}[[df.iloc[:,{{colnum}}].name]] = {{df}}[[df.iloc[:,{{colnum}}].name]].apply(pd.to_numeric)`,
+		cmdexample: `df[[df.iloc[:,4].name]] = df[[df.iloc[:,4].name]].apply(pd.to_numeric)`,
 		actiontype: ["column"],
-		parameters: { df: "string", columnname: "string",   },
+		parameters: { df: "string", colnum: "number",   },
 		targetEnv: "py",
 	},
 	// -------------------------------------------------------------------------------
@@ -182,14 +182,14 @@ import fastparquet
 	},
 	// -------------------------------------------------------------------------------
 	{
-		actionid: "ConvertDFColToNumeric",
+		actionid: "ConvertDFColToDateTime",
 		name: "Convert to datetime",
-		description: "Detect column types",
+		description: "Convert to datetime",
 		cmdtemplate: `import pandas as pd
-{{df}}['{{columnname}}'] = pd.to_datetime({{df}}['{{columnname}}'])`,
-		cmdexample: `df['Invoice Date'] = pd.to_datetime(df['Invoice Date'])`,
+{{df}}[df.iloc[:,{{colnum}}].name] = pd.to_datetime({{df}}[df.iloc[:,{{colnum}}].name])`,
+		cmdexample: `df[df.iloc[:,4].name] = pd.to_datetime(df[df.iloc[:,4].name])`,
 		actiontype: ["column"],
-		parameters: { df: "string", columnname: "string",   },
+		parameters: { df: "string", colnum: "number",  },
 		targetEnv: "py",
 	},
 	// -------------------------------------------------------------------------------

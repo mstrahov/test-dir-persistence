@@ -52,7 +52,8 @@ export class griditemTableDFPagedTransform extends griditemTableDFPaged {
 				label:a.name,
 				action: function(e, column){
 								let colIndex = column.getTable().getColumnLayout().findIndex((el)=>el.field===column.getField());
-								that.eventbus.dispatch('cmdActionEvent',that,{actionid:a.actionid, parameters:{df:that.dfname, colnum:colIndex-1}}  );
+								let columnmap = `"${that.columnstypes?.index[colIndex-1]}" : "${that.columnstypes?.index[colIndex-1]}"`;
+								that.eventbus.dispatch('cmdActionEvent',that,{actionid:a.actionid, parameters:{df:that.dfname, colnum:colIndex-1, columnmap:columnmap}}  );
 						}
 			});
 		}
