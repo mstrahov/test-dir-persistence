@@ -441,22 +441,27 @@ export class FileIOHandler {
 	}
 	
 	
-	async createDuckdbFileHandle(filenamestr, filehandle,filesource='') {
+	async createDuckdbFileHandle(filenamestr, filehandle, filesource='', transactionid='') {
 		// must be files in the form "/app/*"
 		// this.duckdbfilehandles
 		// window.duckdb.db.registerFileHandle('/app/opfs/onlineretail.csv', fileHandle, window.duckdb.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true)
 		// let h1 = await window.duckdb.db.registerFileHandle('/app/mount_dir/onlineretail.csv', await window.testfilehandle.getFile(), window.duckdb.duckdb.DuckDBDataProtocol.BROWSER_FILEREADER, true)
 
-		if (this.duckdbFileHandleExists(filenamestr)) {
-			return true;
-		}
+		//~ if (this.duckdbFileHandleExists(filenamestr)) {
+			//~ return true;
+		//~ }
+		
 		await this.FileIOinitialized();
 		await this.#duckdbloader.getdbconn();
+		
+		await this.duckdbRemoveFileHandleFromList(filenamestr);
+
+		
 		if (filesource===this.APP_ROOT_DIR+this.USER_DIR) {
 			// currently only opfs and memfs? are supported by duckdb for sync access to filehandles, mounted dir works only in read-only mode via filehandle.getFile()
 			try {
 				await this.#duckdbloader.db.registerFileHandle(filenamestr, await filehandle.getFile(), this.#duckdbloader.duckdb.DuckDBDataProtocol.BROWSER_FILEREADER, true);
-				this.duckdbfilehandles.push(filenamestr);
+				this.duckdbfilehandles.push({filename: filenamestr, transactionid:transactionid});
 			} catch (err) {
 				console.error('Error registering duckdb file handle ',filenamestr, filehandle, err);
 				return false;
@@ -465,7 +470,7 @@ export class FileIOHandler {
 			// for opfs/ memory attempt to open read-write handle
 			try {
 				await this.#duckdbloader.db.registerFileHandle(filenamestr, filehandle, this.#duckdbloader.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true);
-				this.duckdbfilehandles.push(filenamestr);
+				this.duckdbfilehandles.push({filename: filenamestr, transactionid:transactionid});
 			} catch (err) {
 				console.error('Error registering duckdb file handle ',filenamestr, filehandle, err);
 				return false;
@@ -474,16 +479,48 @@ export class FileIOHandler {
 		return true;
 	}
 	
+	// ----------------------------------------------
+	
 	duckdbFileHandleExists(filenamestr) {
-		return this.duckdbfilehandles.findIndex((el)=>el===filenamestr)>-1;
+		return this.duckdbfilehandles.findIndex((el)=>el.filename===filenamestr)>-1;
+	}
+	// ----------------------------------------------
+	
+	
+	
+	async duckdbRemoveFileHandleFromList(filenamestr) {
+		await this.FileIOinitialized();
+		await this.#duckdbloader.getdbconn();
+		let ind = this.duckdbfilehandles.findIndex((el)=>el.filename===filenamestr);
+		if (ind>-1) {
+			try {
+				await this.#duckdbloader.db.dropFile(filenamestr);
+				this.duckdbfilehandles.splice(ind,1);
+			} catch (e) {
+				console.error("Unable to remove duckdb file handle",e);
+			}
+		}
+	}
+	// ----------------------------------------------
+	async clearDuckDbFileHandles(transactionid) {
+	
+		let ind = this.duckdbfilehandles.findIndex((el)=>el.transactionid===transactionid);
+		while (ind>-1) {
+			await this.duckdbRemoveFileHandleFromList(this.duckdbfilehandles[ind].filename);
+			ind = this.duckdbfilehandles.findIndex((el)=>el.transactionid===transactionid);
+		}
+	
 	}
 	
-	async checkDuckdbHandleForFileName(filenamestr) {
+	// ----------------------------------------------
+	async checkDuckdbHandleForFileName(filenamestr, transactionid) {
 		// trying to automatically create duckdb file handles for every filename like '/app/*/*'
 		// TODO: handle directory change when different is mounted to /app/mount_dir.  delete duckdb file handles?
-		if (this.duckdbFileHandleExists(filenamestr)) {
-			return true;
-		}
+		
+		//~ if (this.duckdbFileHandleExists(filenamestr)) {
+			//~ return true;
+		//~ }
+		
 		let flname = filenamestr.trim();
 		await this.FileIOinitialized();
 		let rootFH = undefined;
@@ -527,7 +564,7 @@ export class FileIOHandler {
 		if (!filehandle) {
 			return false;
 		}
-		await this.createDuckdbFileHandle(filenamestr,filehandle,filesource);
+		await this.createDuckdbFileHandle(filenamestr,filehandle,filesource, transactionid);
 		return true;
 	}
 	

@@ -259,7 +259,8 @@ export class CodeRunner {
 		}
 		
 		// look for file references, register file handlers in duckdb for file names like '/app/*' in sql cmd.
-		await this.checkFileHandlersInSQLcmd(cmd);
+		const transactionid = self.crypto.randomUUID();
+		await this.checkFileHandlersInSQLcmd(cmd,transactionid);
 		try {
 			res.output = await conn.query(cmd);
 			res.runStatus = true;
@@ -281,6 +282,7 @@ export class CodeRunner {
 			res.error = err;
 			res.errorshort = res.errormessage;
 		}
+		await this.removeFileHandlersInSQLcmd(transactionid);
 		
 		res.lengthmilli = performance.now() - starttime;
 		res.lengthseconds = res.lengthmilli / 1000;
@@ -439,7 +441,8 @@ export class CodeRunner {
 				
 				
 			} else if (cmdarr[i].targetEnv==='sql') {
-				await this.checkFileHandlersInSQLcmd(cmdarr[i].scriptCode);
+				const transactionid = self.crypto.randomUUID();
+				await this.checkFileHandlersInSQLcmd(cmdarr[i].scriptCode,transactionid);
 				try {
 					res.output = await conn.query(cmdarr[i].scriptCode);	
 				} catch (err) {
@@ -458,6 +461,7 @@ export class CodeRunner {
 					res.error = err;
 					res.errorshort = res.errormessage;
 				}
+				await this.removeFileHandlersInSQLcmd(transactionid);
 			}
 			
 			
@@ -533,7 +537,7 @@ export class CodeRunner {
 	}
 	
 	// ----------------------------------------------------------------------------
-	async checkFileHandlersInSQLcmd(inputString) {
+	async checkFileHandlersInSQLcmd(inputString,transactionid) {
 		// file names expected inside single or double quotes, or $$__$$
 		// trying to automatically create duckdb file handles for every filename like '/app/*/*'
 		const regex = /(['"])(.*?)\1|\$\$(.*?)\$\$/g;
@@ -544,10 +548,10 @@ export class CodeRunner {
 				// Check which group matched and push the corresponding substring
 				if (match[2] !== undefined) {
 					//matches.push(match[2]); // For '' and ""
-					await this.#fileiohandler.checkDuckdbHandleForFileName(match[2]);
+					await this.#fileiohandler.checkDuckdbHandleForFileName(match[2],transactionid);
 				} else if (match[3] !== undefined) {
 					//matches.push(match[3]); // For $$
-					await this.#fileiohandler.checkDuckdbHandleForFileName(match[3]);
+					await this.#fileiohandler.checkDuckdbHandleForFileName(match[3],transactionid);
 				}
 			}
 		} catch (err) {
@@ -557,6 +561,11 @@ export class CodeRunner {
 		return true;
 	}
 
+	// ------------------------------------------------------------------------------
+	//
+	async removeFileHandlersInSQLcmd(transactionid) {
+		await this.#fileiohandler.clearDuckDbFileHandles(transactionid);
+	}
 	// ------------------------------------------------------------------------------
 	
 	extractPyError(err) {

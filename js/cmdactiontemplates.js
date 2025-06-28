@@ -195,15 +195,15 @@ import fastparquet
 	// -------------------------------------------------------------------------------
 	{
 		actionid: "ExportDFToParquet",
-		name: "Export to parquet",
-		description: "Export to parquet",
+		name: "Export Dataframe to parquet",
+		description: "Export data frame to parquet",
 		cmdtemplate: `import pandas as pd
 import fastparquet
 {{df}}.astype({col: 'string' for col in {{df}}.select_dtypes(include=['object']).columns}).to_parquet('/app/opfs/{{df}}.parquet', compression='zstd', engine='fastparquet', index=False)`,
 		cmdexample: `import pandas as pd
 import fastparquet
 df.astype({col: 'string' for col in df.select_dtypes(include=['object']).columns}).to_parquet('/app/opfs/df.parquet', compression='zstd', engine='fastparquet', index=False)`,
-		actiontype: ["cell"],
+		actiontype: ["cell", "column"],
 		parameters: { df: "string",   },
 		targetEnv: "py",
 	},
