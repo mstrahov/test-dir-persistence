@@ -146,9 +146,70 @@ import fastparquet
 		parameters: { df: "string", filepath: "string",   },
 		targetEnv: "py",
 	},
-	
-	
-	
+	// -------------------------------------------------------------------------------
+	{
+		actionid: "RenameDFColumns",
+		name: "Rename Columns",
+		description: "Rename Dataframe columns",
+		cmdtemplate: `{{df}}.rename(columns={ {{columnmap}} }, errors="raise", inplace=True)`,
+		cmdexample: `df.rename(columns={"A": "a", "B": "b", "C": "c"}, errors="raise", inplace=True)`,
+		actiontype: ["column"],
+		parameters: { df: "string", columnmap: "string",   },
+		targetEnv: "py",
+	},
+	// -------------------------------------------------------------------------------
+	{
+		actionid: "ConvertDFColToNumeric",
+		name: "Convert to numeric",
+		description: "Convert Dataframe column to numeric",
+		cmdtemplate: `import pandas as pd
+{{df}}[["{{columnname}}"]] = {{df}}[["{{columnname}}"]].apply(pd.to_numeric)`,
+		cmdexample: `df[["Quantity"]] = df[["Quantity"]].apply(pd.to_numeric)`,
+		actiontype: ["column"],
+		parameters: { df: "string", columnname: "string",   },
+		targetEnv: "py",
+	},
+	// -------------------------------------------------------------------------------
+	{
+		actionid: "DetectDFColumnTypes",
+		name: "Detect column types",
+		description: "Detect column types",
+		cmdtemplate: `{{df}}={{df}}.convert_dtypes()`,
+		cmdexample: `df=df.convert_dtypes()`,
+		actiontype: ["column"],
+		parameters: { df: "string",    },
+		targetEnv: "py",
+	},
+	// -------------------------------------------------------------------------------
+	{
+		actionid: "ConvertDFColToNumeric",
+		name: "Convert to datetime",
+		description: "Detect column types",
+		cmdtemplate: `import pandas as pd
+{{df}}['{{columnname}}'] = pd.to_datetime({{df}}['{{columnname}}'])`,
+		cmdexample: `df['Invoice Date'] = pd.to_datetime(df['Invoice Date'])`,
+		actiontype: ["column"],
+		parameters: { df: "string", columnname: "string",   },
+		targetEnv: "py",
+	},
+	// -------------------------------------------------------------------------------
+	{
+		actionid: "ExportDFToParquet",
+		name: "Export to parquet",
+		description: "Export to parquet",
+		cmdtemplate: `import pandas as pd
+import fastparquet
+{{df}}.astype({col: 'string' for col in {{df}}.select_dtypes(include=['object']).columns}).to_parquet('/app/opfs/{{df}}.parquet', compression='zstd', engine='fastparquet', index=False)`,
+		cmdexample: `import pandas as pd
+import fastparquet
+df.astype({col: 'string' for col in df.select_dtypes(include=['object']).columns}).to_parquet('/app/opfs/df.parquet', compression='zstd', engine='fastparquet', index=False)`,
+		actiontype: ["cell"],
+		parameters: { df: "string",   },
+		targetEnv: "py",
+	},
+	// -------------------------------------------------------------------------------
+	// create or replace table tbl_df as (select * from '/app/opfs/df.parquet'); CHECKPOINT;
+
 ];
 
 
