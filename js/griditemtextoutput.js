@@ -106,7 +106,18 @@ export class StatusGridItemTextOutput extends GridItemTextOutput {
 			if (eventdata?.result?.stdoutString) {
 				this.addToOutput(eventdata?.result?.stdoutString + "\n" + eventdata?.result?.output, eventdata?.cmd);
 			} else {
-				this.addToOutput(eventdata?.result?.output, eventdata?.cmd);
+				if (eventdata?.targetEnv==="sql") {
+					const nrows = eventdata?.result?.output?.numRows || 0;
+					if (nrows>50) {
+						this.addToOutput(eventdata?.result?.output?.slice(0,10).toString() 
+								+ "\n<.....>\n" 
+								+ eventdata?.result?.output?.slice(nrows-10,nrows).toString() + "\n" + nrows + " rows", eventdata?.cmd);
+					} else {
+						this.addToOutput(eventdata?.result?.output + "\n" + nrows + " rows", eventdata?.cmd);
+					}
+				} else {
+					this.addToOutput(eventdata?.result?.output, eventdata?.cmd);
+				}
 			}
 		} else {
 			this.addToOutput(null,' ');

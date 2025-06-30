@@ -15,6 +15,8 @@ import { gridItemSelectFileDialog } from "./griditemselectfiledialog.js";
 // import { griditemTableDFPaged } from "./griditemtabledfpaged.js";
 import { griditemTableDFPagedTransform } from "./griditemtabledfpagedtransform.js";
 import { GridItemHTMLOutput } from "./griditemhtmloutput.js";
+import { gridItemQueryView } from  "./griditemqueryview.js";
+
 
 export class AppPageScriptControl extends AppPageControl {
 	#tablePickerDialog;
@@ -34,6 +36,7 @@ export class AppPageScriptControl extends AppPageControl {
 		this.closedwidgets = [];
 		let that = this; 
 		this.sqleditor = undefined;
+		this.sqlqueryview = undefined;
 		
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.topDropDownMenuEventHandler.bind(this));
 		
@@ -355,7 +358,10 @@ export class AppPageScriptControl extends AppPageControl {
 			this.selectFileDialog = null;
 		} else if (mainWidgetName==="GridItemSQLEditor") {
 			this.sqleditor = null;		
+		} else if (mainWidgetName==="gridItemQueryView") {
+			this.sqlqueryview = null;		
 		} 
+		
 		// *********************--------------------------------
 		console.log("grid items: ", this.gridItems);
 		console.log("Removed object ", mainWidgetName, widgetuuid);
@@ -515,7 +521,6 @@ export class AppPageScriptControl extends AppPageControl {
 				// **********************************************
 			}
 		} else if (mainWidgetName==="GridItemSQLEditor") {
-			// GridItemSQLEditor
 			if (!this.sqleditor) {
 			// this.sqleditor = tabNavStatusTab.addGridItem( GridItemSQLEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "SQL", griditemoptions: {w:6,h:7,} });	
 				if (!widgetSettings) {
@@ -533,7 +538,35 @@ export class AppPageScriptControl extends AppPageControl {
 				this.sqleditor.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
 				this.sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ that.runCmdFromGridItem('sql',obj,eventdata);  }, this.uuid);
 			}	
-		} 
+		} else if (mainWidgetName==="gridItemQueryView") {
+			if (!this.sqlqueryview) {
+				if (!widgetSettings) {
+					widgetSettings = {};
+					widgetSettings.griditemheader = "SQL Query Result";
+					widgetSettings.columnlayout = undefined;
+					
+				}
+				this.sqlqueryview  = this.addGridItem( gridItemQueryView , 
+						{
+							templateid:"#gridItemSQLQueryView", 
+							headertext: widgetSettings.griditemheader, 
+							griditemoptions: gridlayoutoptions,
+							columnlayout:  widgetSettings.columnlayout,  
+							coderunner: this.coderunner,
+							parentuuid: this.uuid,
+						});
+				
+				this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.sqlqueryview.processCodeRunnerResult(obj,eventdata);  }, this.sqlqueryview.uuid);
+				//~ this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+				//~ this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+				
+				
+			}
+		}
+		
+		
+		
+		
 		
 	}
 	
@@ -565,8 +598,11 @@ export class AppPageScriptControl extends AppPageControl {
 			this.addMainWidget("GridItemPyEditor");
 		} else if (eventdata?.menuItemId === 'addsqleditorwidget') { 
 			this.addMainWidget("GridItemSQLEditor");
-		}
+		} else if (eventdata?.menuItemId === 'addsqlqueryviewwidget') { 
+			this.addMainWidget("gridItemQueryView");
+		} 
 		
+		// 
 		//	this.grid.compact();   
 		//} else if (eventdata?.menuItemId === 'savelayout') {   
 		//	console.log(this.layoutToJSON());

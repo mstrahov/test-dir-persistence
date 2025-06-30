@@ -175,6 +175,7 @@ Main app
 	  <li><a class="dropdown-item" href="#" id="addstatusoutputwidget">Open Output Window</a></li>
 	  <li><a class="dropdown-item" href="#" id="addpythoneditorwidget">Open Python Editor</a></li>
 	  <li><a class="dropdown-item" href="#" id="addsqleditorwidget">Open SQL Editor</a></li>
+	  <li><a class="dropdown-item" href="#" id="addsqlqueryviewwidget">Open SQL Query Viewer</a></li>
 	  <li><a class="dropdown-item" href="#" id="closebutton">Close</a></li>
 	</ul>
 </li>
@@ -550,6 +551,39 @@ Main app
 				</div>
 			</div>
 			<div class="grid-elem-body" id="grid-el-body">
+			</div>
+		</div>
+	</div>
+</template>
+<!-- =====  ========= ==================================== -->
+<!-- =====  ========= gridItemSQLQueryView ==================================== -->
+<template id="gridItemSQLQueryView">
+	<div class="grid-stack-item" id="item">
+		<div class="grid-stack-item-content">
+			<div class="grid-elem-header d-flex" id="grid-el-header">
+				<span class="griditemheadertext ms-1"></span>
+				<div class="ms-auto d-flex" id="controlelements">					
+					<span id="refreshaction" class="btn-ghost small-svg-button clickable-item-action"  data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" style="display: display;">
+						<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="1.75"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-refresh"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
+					</span>
+					<div class="dropdown small-svg-button">
+						<div id="menuaction" style="display: display;" class="small-svg-button" data-bs-toggle="dropdown">
+							<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="1.75"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-menu-2"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 6l16 0" /><path d="M4 12l16 0" /><path d="M4 18l16 0" /></svg>
+						</div>
+						 <div class="dropdown-menu" id="mainmenu">
+							<a class="dropdown-item" href="#" id="refreshgriditem">Refresh</a>
+							<a class="dropdown-item" href="#" id="closegriditem">Close</a>
+						  </div>
+					</div>
+					<span id="moveaction" class="small-svg-button grid-elem-draggable" style="margin-top:-1px;display: display;" data-bs-toggle="tooltip" data-bs-placement="top" title="Click and drag around to a new position.">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrows-move  " viewBox="0 0 16 16" stroke-width="1.75"  stroke-linecap="round"  stroke-linejoin="round">
+						  <path fill-rule="evenodd" d="M7.646.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 1.707V5.5a.5.5 0 0 1-1 0V1.707L6.354 2.854a.5.5 0 1 1-.708-.708zM8 10a.5.5 0 0 1 .5.5v3.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 14.293V10.5A.5.5 0 0 1 8 10M.146 8.354a.5.5 0 0 1 0-.708l2-2a.5.5 0 1 1 .708.708L1.707 7.5H5.5a.5.5 0 0 1 0 1H1.707l1.147 1.146a.5.5 0 0 1-.708.708zM10 8a.5.5 0 0 1 .5-.5h3.793l-1.147-1.146a.5.5 0 0 1 .708-.708l2 2a.5.5 0 0 1 0 .708l-2 2a.5.5 0 0 1-.708-.708L14.293 8.5H10.5A.5.5 0 0 1 10 8"/>
+						</svg>
+					</span>
+				</div>
+			</div>
+			<div class="grid-elem-body" id="grid-el-body">
+				
 			</div>
 		</div>
 	</div>
