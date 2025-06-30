@@ -22,16 +22,19 @@ export class gridItemQueryView extends GridItemWithMenu {
 		
 		this.awaitingrefresh = false;
 		
-		this.pyodidePromise = this.coderunner.getpyodidePromise();
-		this.dfname = params.dfname || 'df';
+		//~ this.pyodidePromise = this.coderunner.getpyodidePromise();
+		//~ this.dfname = params.dfname || 'df';
 		this.tabulatorProperties = params.tabulatorProperties || {};
 		this.headerContextMenuGeneratorFunction = undefined; 
 		this.cellContextMenuGeneratorFunction = undefined; 
 		this.#internalContainer = this.bodyelement;
-		this.pyodide = undefined;
-		this.getdfcmd =  this.dfname + ".to_json(orient='split',date_format='iso')";
-		this.gettypescmd = this.dfname + ".dtypes.to_json(orient='split',default_handler=str)";	
+		
+		//~ this.pyodide = undefined;
+		//~ this.getdfcmd =  this.dfname + ".to_json(orient='split',date_format='iso')";
+		//~ this.gettypescmd = this.dfname + ".dtypes.to_json(orient='split',default_handler=str)";	
 		// TODO: automatically adjust number of records to output based on df's length ??  	
+		
+		
 		this.tabulatorobj = undefined;
 		this.columnsarray = [];
 		this.columnstypes = undefined;
@@ -51,20 +54,20 @@ export class gridItemQueryView extends GridItemWithMenu {
 	
 	async init() {
 		
-		this.pyodide = await this.pyodidePromise;
+		//~ this.pyodide = await this.pyodidePromise;
 		
 	}
 	
 	// -------------------------------------------------------------------------
 	menuEventHandler(obj,eventdata) {
-		//~ console.log("griditemTableDFPaged widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
+		//~ console.log("gridItemQueryView widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
 		
 		if (eventdata?.menuItemId === "refreshaction") {
-			this.showdf();
+			//~ this.showdf();
 		} else if (eventdata?.menuItemId === "refreshgriditem") {
-			this.showdf();
+			//~ this.showdf();
 		} else if (eventdata?.menuItemId === "choosedataframegriditem") {
-			this.eventbus.dispatch('requestDataFrameChange', this, { dfname: this.dfname });
+			this.eventbus.dispatch('requestDataFrameChange', this, {  });
 		} else if (eventdata?.menuItemId === "closegriditem") {
 			this.eventbus.dispatch('closegriditem', this, { });		
 		}

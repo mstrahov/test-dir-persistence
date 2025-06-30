@@ -1020,3 +1020,25 @@ export const convertArrowToArray = (res1) => {
 	}
 	return resArray;
 }
+
+
+/*
+ * 
+ * type enums:
+ * https://github.com/apache/arrow-js/blob/aff7891ba602a76cd2de32020940bcd820551669/src/enum.ts#L4
+ * https://arrow.apache.org/docs/js/enums/Arrow.dom.Type.html#timestampnanosecond
+ * 
+ * r2.output.schema.fields[0].type.typeId == 10
+ *     Timestamp = 10,  // Exact timestamp encoded with int64 since UNIX epoch (Default unit millisecond) 
+ * 
+ * r2.output.schema.fields[0].name
+ * 
+ * r2.output.numRows
+ * r2.output.numCols
+ * https://arrow.apache.org/docs/js/classes/Arrow.dom.Table.html#slice
+ * r2.output.slice(0,1).get(0).d
+ * r2.output.slice(0,1).toString()
+ * 
+ * 
+ * 
+ */
