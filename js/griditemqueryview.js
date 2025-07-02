@@ -140,6 +140,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 		this.tabulatorobj = new Tabulator(this.#internalContainer, {
 						...this.tabulatorProperties,
 						index: "_row_index",
+						
 						columns: this.generateColumnDefinitions(arrowdata),
 						
 						// --------------------------------------
@@ -181,18 +182,41 @@ export class gridItemQueryView extends GridItemWithMenu {
 				width: colwidth,
 				hozAlign: "left",
 				sorter: "number",
+				headerSortTristate:true,
 				formatter: "plaintext",
 				frozen:false, 
 		});
 				
 		// ----- arrowdata.schema.fields[0].type.typeId
+		const arrowColTypes = arrowDataTypesToTabulatorCols();
+		let fldcount = {};
 		for (let i=0;i<arrowdata.numCols;i++) {
+			
+			if (!arrowdata.schema.fields[i].fldname) {
+			// ****  check if field name is repeated, add number at the end to make field names unique
+				fldcount[arrowdata.schema.fields[i].name] = (fldcount[arrowdata.schema.fields[i].name] || 0) + 1;
+				if (fldcount[arrowdata.schema.fields[i].name]>1) {
+					let newfldname = `${arrowdata.schema.fields[i].name}_${fldcount[arrowdata.schema.fields[i].name]}`;
+					const newfldname0 = newfldname+'_';
+					let newnamecnt = 1;
+					while (fldcount[newfldname] && newnamecnt<1000) {
+						newfldname = newfldname0 + newnamecnt;
+						newnamecnt++;
+					}
+					fldcount[newfldname] = 1;
+					arrowdata.schema.fields[i].fldname = newfldname;
+					console.log("Replaced field name: ", arrowdata.schema.fields[i].name, arrowdata.schema.fields[i].fldname);
+				} else {
+					arrowdata.schema.fields[i].fldname = arrowdata.schema.fields[i].name;
+				}
+			}
+			// ****
 			let oldlayout = undefined; 
 			if (this.lastcolumnlayout) {
-				oldlayout = this.lastcolumnlayout.find((e)=>e.title===arrowdata.schema.fields[i].name);
+				oldlayout = this.lastcolumnlayout.find((e)=>e.title===arrowdata.schema.fields[i].fldname);
 				if (!oldlayout) {
 					// do a second search in case column renamed, assume position is the same
-					oldlayout = this.lastcolumnlayout.find((e)=>e.field===`col${i}`);
+					oldlayout = this.lastcolumnlayout.find((e)=>e.field===arrowdata.schema.fields[i].fldname);
 				}
 			}
 			let colwidth = 130;
@@ -201,13 +225,23 @@ export class gridItemQueryView extends GridItemWithMenu {
 			}
 			let newcolumn = {
 				title: arrowdata.schema.fields[i].name,
-				field: arrowdata.schema.fields[i].name,
+				field: arrowdata.schema.fields[i].fldname,
 				width: colwidth,
 				hozAlign: "left",
 				sorter: "string",
+				headerSortTristate:true,
 				formatter: "plaintext",
 				frozen:false, 
 			};
+			
+			if (arrowColTypes[arrowdata.schema.fields[i].type.typeId]) {
+				// ,formatter:"plaintext",sorter:"number",hozAlign:"right"},
+				newcolumn.formatter = arrowColTypes[arrowdata.schema.fields[i].type.typeId].formatter;
+				newcolumn.sorter = arrowColTypes[arrowdata.schema.fields[i].type.typeId].sorter;
+				newcolumn.hozAlign = arrowColTypes[arrowdata.schema.fields[i].type.typeId].hozAlign;
+			}
+			
+			
 			if (this.headerContextMenuGeneratorFunction) {
 				newcolumn.headerContextMenu = this.headerContextMenuGeneratorFunction;
 			}
@@ -222,11 +256,41 @@ export class gridItemQueryView extends GridItemWithMenu {
 	generateTableData(arrowdata) {
 		let resArray = [];
 		// **********
+		
+		if (!arrowdata.schema.fields[0].fldname) {
+			let fldcount = {};
+			for (let i=0;i<arrowdata.numCols;i++) {
+				// ****  check if field name is repeated, add number at the end to make field names unique
+				fldcount[arrowdata.schema.fields[i].name] = (fldcount[arrowdata.schema.fields[i].name] || 0) + 1;
+				if (fldcount[arrowdata.schema.fields[i].name]>1) {
+					let newfldname = `${arrowdata.schema.fields[i].name}_${fldcount[arrowdata.schema.fields[i].name]}`;
+					const newfldname0 = newfldname+'_';
+					let newnamecnt = 1;
+					while (fldcount[newfldname] && newnamecnt<1000) {
+						newfldname = newfldname0 + newnamecnt;
+						newnamecnt++;
+					}
+					fldcount[newfldname] = 1;
+					arrowdata.schema.fields[i].fldname = newfldname;
+					console.log("Replaced field name: ", arrowdata.schema.fields[i].name, arrowdata.schema.fields[i].fldname);
+				} else {
+					arrowdata.schema.fields[i].fldname = arrowdata.schema.fields[i].name;
+				}
+			}
+		}
+		
+		// **********
 		for (let i=0;i<arrowdata.numRows;i++) {
 			let newrow = { "_row_index": i };
-			arrowdata.schema.fields.forEach((f)=>{
-				newrow[f.name]=''+arrowdata.get(i)[f.name];
-			});
+			// [...arrowdata.get(i)]   --->  [Array(2), Array(2)] 
+			const vals = [...arrowdata.get(i)];
+			for (let j=0;j<arrowdata.schema.fields.length;j++) {
+				newrow[arrowdata.schema.fields[j].fldname] = vals[j][1]; 
+			}
+			//~ arrowdata.schema.fields.forEach((f)=>{
+				
+				//~ newrow[f.name]=''+arrowdata.get(i)[f.name];
+			//~ });
 			resArray.push(newrow);
 		}
 		// **********
@@ -328,5 +392,64 @@ export class gridItemQueryView extends GridItemWithMenu {
 	
 	
 	// -------------------------------------------------------------------------
+	
+}
+
+export function arrowDataTypesToTabulatorCols() {
+	let res = {};
+	res[0]= {typeName:"NONE", typeId:0,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[1]= {typeName:"Null", typeId:1,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[2]= {typeName:"Int", typeId:2,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[3]= {typeName:"Float", typeId:3,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[4]= {typeName:"Binary", typeId:4,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[5]= {typeName:"Utf8", typeId:5,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[6]= {typeName:"Bool", typeId:6,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[7]= {typeName:"Decimal", typeId:7,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[8]= {typeName:"Date", typeId:8,formatter:"plaintext",sorter:"date",hozAlign:"left"};
+	res[9]= {typeName:"Time", typeId:9,formatter:"plaintext",sorter:"time",hozAlign:"left"};
+	res[10]= {typeName:"Timestamp", typeId:10,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[11]= {typeName:"Interval", typeId:11,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[12]= {typeName:"List", typeId:12,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[13]= {typeName:"Struct", typeId:13,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[14]= {typeName:"Union", typeId:14,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[15]= {typeName:"FixedSizeBinary", typeId:15,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[16]= {typeName:"FixedSizeList", typeId:16,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[17]= {typeName:"Map", typeId:17,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[18]= {typeName:"Duration", typeId:18,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[19]= {typeName:"LargeBinary", typeId:19,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[20]= {typeName:"LargeUtf8", typeId:20,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[-1]= {typeName:"Dictionary", typeId:-1,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[-2]= {typeName:"Int8", typeId:-2,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-3]= {typeName:"Int16", typeId:-3,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-4]= {typeName:"Int32", typeId:-4,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-5]= {typeName:"Int64", typeId:-5,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-6]= {typeName:"Uint8", typeId:-6,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-7]= {typeName:"Uint16", typeId:-7,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-8]= {typeName:"Uint32", typeId:-8,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-9]= {typeName:"Uint64", typeId:-9,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-10]= {typeName:"Float16", typeId:-10,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-11]= {typeName:"Float32", typeId:-11,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-12]= {typeName:"Float64", typeId:-12,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-13]= {typeName:"DateDay", typeId:-13,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-14]= {typeName:"DateMillisecond", typeId:-14,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-15]= {typeName:"TimestampSecond", typeId:-15,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-16]= {typeName:"TimestampMillisecond", typeId:-16,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-17]= {typeName:"TimestampMicrosecond", typeId:-17,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-18]= {typeName:"TimestampNanosecond", typeId:-18,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-19]= {typeName:"TimeSecond", typeId:-19,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-20]= {typeName:"TimeMillisecond", typeId:-20,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-21]= {typeName:"TimeMicrosecond", typeId:-21,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-22]= {typeName:"TimeNanosecond", typeId:-22,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-23]= {typeName:"DenseUnion", typeId:-23,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[-24]= {typeName:"SparseUnion", typeId:-24,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[-25]= {typeName:"IntervalDayTime", typeId:-25,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[-26]= {typeName:"IntervalYearMonth", typeId:-26,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[-27]= {typeName:"DurationSecond", typeId:-27,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	res[-28]= {typeName:"DurationMillisecond", typeId:-28,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-29]= {typeName:"DurationMicrosecond", typeId:-29,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-30]= {typeName:"DurationNanosecond", typeId:-30,formatter:"plaintext",sorter:"number",hozAlign:"right"};
+	res[-31]= {typeName:"IntervalMonthDayNano", typeId:-31,formatter:"plaintext",sorter:"string",hozAlign:"left"};
+	return res;
+	
 	
 }
