@@ -244,6 +244,13 @@ export class AppPageScriptControl extends AppPageControl {
 					} else {
 						console.error("Cannot add visual widget: ", this.initscriptobj.gridwidgets[i]);
 					}
+					
+				} else if (this.initscriptobj.gridwidgets[i].griditemname==="gridItemQueryView") {
+					
+					this.addMainWidget(this.initscriptobj.gridwidgets[i].griditemname, this.initscriptobj.gridwidgets[i], gridlayoutoptions);
+					
+					
+					
 				}  
 				
 			}
@@ -369,9 +376,12 @@ export class AppPageScriptControl extends AppPageControl {
 	}
 	
 	// --------------------------------------------------------------------------------	
-	addMainWidget(mainWidgetName) {
+	addMainWidget(mainWidgetName, initWidgetSettings, initgridlayoutoptions) {
 		
 		let gridlayoutoptions = {w:6,h:5};
+		if (initgridlayoutoptions) {
+			gridlayoutoptions = initgridlayoutoptions;
+		}
 		let that = this;
 		let widgetSettings = undefined;
 		const ind = this.closedwidgets.findIndex((v)=>v.griditemname===mainWidgetName);
@@ -379,6 +389,11 @@ export class AppPageScriptControl extends AppPageControl {
 			widgetSettings = this.closedwidgets[ind];
 		}
 		console.log("Found closed widget: ",widgetSettings);
+		
+		if (initWidgetSettings) {
+			widgetSettings = initWidgetSettings;
+		}
+		
 		
 		if (mainWidgetName==="gridItemScript") {
 			if (!this.scriptControl) {
@@ -537,6 +552,9 @@ export class AppPageScriptControl extends AppPageControl {
 						});
 				this.sqleditor.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
 				this.sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ that.runCmdFromGridItem('sql',obj,eventdata);  }, this.uuid);
+				if (this.sqlqueryview) {
+					this.sqlqueryview.eventbus.subscribe('editSQLcommandgriditem',(obj,eventdata)=>{  that.sqleditor.setValue(eventdata?.sqlcommand); }, this.sqleditor.uuid);
+				}
 			}	
 		} else if (mainWidgetName==="gridItemQueryView") {
 			if (!this.sqlqueryview) {
@@ -552,13 +570,19 @@ export class AppPageScriptControl extends AppPageControl {
 							headertext: widgetSettings.griditemheader, 
 							griditemoptions: gridlayoutoptions,
 							columnlayout:  widgetSettings.columnlayout,  
+							sqlcommand: widgetSettings.sqlcommand,  
 							coderunner: this.coderunner,
 							parentuuid: this.uuid,
 						});
-				
+				this.sqlqueryview.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
+				// editSQLcommandgriditem
 				this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.sqlqueryview.processCodeRunnerResult(obj,eventdata);  }, this.sqlqueryview.uuid);
 				//~ this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 				//~ this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+				if (this.sqleditor) {
+					this.sqlqueryview.eventbus.subscribe('editSQLcommandgriditem',(obj,eventdata)=>{  that.sqleditor.setValue(eventdata?.sqlcommand); }, this.sqleditor.uuid);
+				}
+				
 				
 				
 			}

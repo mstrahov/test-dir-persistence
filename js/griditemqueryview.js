@@ -29,7 +29,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 		//~ this.dfname = params.dfname || 'df';
 		this.tabulatorProperties = params.tabulatorProperties || {};
 		// this.arrowdata = null;
-		this.sqlcommand = null;
+		this.sqlcommand = params.sqlcommand?params.sqlcommand:'';
 		
 		this.displaymode = 0;  
 		this._PLAINTABLE = 0;
@@ -67,7 +67,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 	async init() {
 		
 		//~ this.pyodide = await this.pyodidePromise;
-		
+		await this.refreshData();
 	}
 	
 	// -------------------------------------------------------------------------
@@ -76,13 +76,12 @@ export class gridItemQueryView extends GridItemWithMenu {
 		
 		if (eventdata?.menuItemId === "refreshaction" || eventdata?.menuItemId === "refreshgriditem") {
 			this.refreshData();
-		} else if (eventdata?.menuItemId === "choosedataframegriditem") {
-			//this.eventbus.dispatch('requestDataFrameChange', this, {  });
+		} else if (eventdata?.menuItemId === "editSQLcommandgriditem") {
+			this.eventbus.dispatch('editSQLcommandgriditem', this, { sqlcommand: this.sqlcommand });
 		} else if (eventdata?.menuItemId === "closegriditem") {
 			this.eventbus.dispatch('closegriditem', this, { });		
 		}
 		
-		// 
 	}
 	// -------------------------------------------------------------------------
 	
@@ -401,6 +400,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 		// ------------
 		if (this.tabulatorobj) {
 			try {
+				//res.tabulatorProperties = JSON.parse(JSON.stringify(this.tabulatorProperties));
 				res.columnlayout = this.tabulatorobj.getColumnLayout();
 			} catch (e) { console.warn("Column layout save error",e); }
 		}	
