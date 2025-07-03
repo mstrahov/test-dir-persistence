@@ -74,12 +74,10 @@ export class gridItemQueryView extends GridItemWithMenu {
 	menuEventHandler(obj,eventdata) {
 		//~ console.log("gridItemQueryView widget",this.__proto__?.constructor?.name, this.headerText, "drop down menu item click",obj,eventdata); 
 		
-		if (eventdata?.menuItemId === "refreshaction") {
-			//~ this.showdf();
-		} else if (eventdata?.menuItemId === "refreshgriditem") {
-			//~ this.showdf();
+		if (eventdata?.menuItemId === "refreshaction" || eventdata?.menuItemId === "refreshgriditem") {
+			this.refreshData();
 		} else if (eventdata?.menuItemId === "choosedataframegriditem") {
-			this.eventbus.dispatch('requestDataFrameChange', this, {  });
+			//this.eventbus.dispatch('requestDataFrameChange', this, {  });
 		} else if (eventdata?.menuItemId === "closegriditem") {
 			this.eventbus.dispatch('closegriditem', this, { });		
 		}
@@ -94,10 +92,28 @@ export class gridItemQueryView extends GridItemWithMenu {
 			return;
 		}
 		if (eventdata.result?.runStatus) {
+			this.sqlcommand = eventdata?.cmd;
 			await this.showQueryResult(eventdata.result.output);
 		}
 	}
+	// ------------------------------------------------------------------------
 	
+	async refreshData() {
+	
+		if (!this.sqlcommand) {
+			return false;
+		}
+		
+		const res = await this.coderunner.runSQLAsync(this.sqlcommand);
+		if (res?.runStatus) {
+			await this.showQueryResult(res.output);
+		} else {
+			console.error("Query view update error:", res.error);
+			this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: 'sql', cmd: this.sqlcommand, result: res });
+			
+		}
+		
+	}
 	
 	// -------------------------------------------------------------------------
 	async showQueryResult(arrowdata) {
@@ -381,6 +397,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 		
 		//~ res.dfname = this.dfname;
 		res.parentuuid = this.parentuuid;
+		res.sqlcommand = this.sqlcommand;
 		// ------------
 		if (this.tabulatorobj) {
 			try {
