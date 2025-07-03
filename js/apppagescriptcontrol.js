@@ -245,8 +245,8 @@ export class AppPageScriptControl extends AppPageControl {
 						console.error("Cannot add visual widget: ", this.initscriptobj.gridwidgets[i]);
 					}
 					
-				} else if (this.initscriptobj.gridwidgets[i].griditemname==="gridItemQueryView") {
-					
+				} else /* if (this.initscriptobj.gridwidgets[i].griditemname==="gridItemQueryView" ) */ {
+					//GridItemSQLEditor
 					this.addMainWidget(this.initscriptobj.gridwidgets[i].griditemname, this.initscriptobj.gridwidgets[i], gridlayoutoptions);
 					
 					
