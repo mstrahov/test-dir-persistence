@@ -80,6 +80,10 @@ export class gridItemQueryView extends GridItemWithMenu {
 			this.eventbus.dispatch('editSQLcommandgriditem', this, { sqlcommand: this.sqlcommand });
 		} else if (eventdata?.menuItemId === "closegriditem") {
 			this.eventbus.dispatch('closegriditem', this, { });		
+		} else if (eventdata?.menuItemId === "editcolumnsgriditem") {
+			if (this.tabulatorobj) {
+				this.eventbus.dispatch('editcolumnsgriditem', this, { columnlayout: this.tabulatorobj.getColumnLayout(),  } );	
+			}	
 		}
 		
 	}
@@ -151,10 +155,17 @@ export class gridItemQueryView extends GridItemWithMenu {
 		
 		this.exectimer.timeit(`NEW DATA for table generated`);
 		
+		if (arrowdata.numRows<10000) {
+			this.tabulatorProperties['clipboard'] = 'copy';
+		} 
+		
 		// -------------------   tabulator with regular columns
 		this.tabulatorobj = new Tabulator(this.#internalContainer, {
 						...this.tabulatorProperties,
 						index: "_row_index",
+						selectableRange:true,
+						//selectableRangeRows:true,
+						clipboardCopyRowRange:"range",
 						
 						columns: this.generateColumnDefinitions(arrowdata),
 						
@@ -384,6 +395,83 @@ export class gridItemQueryView extends GridItemWithMenu {
 	}
 	// ------------------------------------
 	
+	applyColumnLayout(newColumnLayout) {
+		console.log("Received new col layout ",newColumnLayout);
+		
+		if (!this.tabulatorobj) {
+			return false;
+		}
+		
+		//~ if (this.tabulatorobj) {
+			//~ try {
+				//~ //res.tabulatorProperties = JSON.parse(JSON.stringify(this.tabulatorProperties));
+				//~ //let oldcolumnlayout = this.tabulatorobj.getColumnLayout();
+				//~ this.tabulatorobj.setColumnLayout(newColumnLayout);
+			//~ } catch (e) { console.warn("Column layout apply error",e); }
+		//~ }	
+		
+		
+		//  need to rebuild the table??
+		const lengthmilli = this.exectimer.timeit(`Updating column definitions`);
+
+		let currentData = this.tabulatorobj.getData();
+		try {
+			if (this.tabulatorobj) {
+				this.lastcolumnlayout = this.tabulatorobj.getColumnLayout();
+				this.tabulatorobj.destroy();
+			}
+		} catch (err) { console.error(err); }
+		
+		if (this.displaymode===this._PLAINTABLE) {
+			this.tabulatorProperties = {
+					...this.tabulatorProperties,
+					data: currentData,   
+			};
+		} else if (this.displaymode===this._PAGINATED) {
+			this.tabulatorProperties = {
+					...this.tabulatorProperties,
+					// --------------------------------------
+					data: "",    // this has to set to "" in order for ajaxRequestFunc to work
+					pagination:true,
+					paginationMode:"remote",
+					paginationCounter:"rows",
+					paginationSize:50,
+					ajaxURL:"x",
+					ajaxRequestFunc: this.internalDataFeed.bind(this),
+			};
+		}
+		
+		if (currentData.length<10000) {
+			this.tabulatorProperties['clipboard'] = 'copy';
+		} 
+		
+		// -------------------   tabulator with regular columns
+		this.tabulatorobj = new Tabulator(this.#internalContainer, {
+						...this.tabulatorProperties,
+						index: "_row_index",
+						selectableRange:true,
+						//selectableRangeRows:true,
+						clipboardCopyRowRange:"range",
+						
+						columns: newColumnLayout,
+						
+						// --------------------------------------
+						columnDefaults:{
+							tooltip:function(e, cell, onRendered){
+								var el = document.createElement("div");
+								el.innerText = cell.getValue(); 
+								return el; 
+							},
+						}	
+					});
+		
+		//~ this.columnsarray = [...dfarray.columns];
+		this.tabulatorobj.on("tableBuilt", this.eventTableBuilt.bind(this));
+		
+		
+	}
+	
+	// ------------------------------------
 	toOwnFormat() {
 		let res = super.toOwnFormat();
 		// -----------

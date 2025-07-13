@@ -122,14 +122,14 @@ export class gridItemFileDialog extends GridItemWithMenu {
 				{
 					label:"Copy path to clipboard",
 					action:function(e, row){
-						console.log(row.getData());
+						//console.log(row.getData());
 						(async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
 					}
 				},
 				{
 					label:"Save file as ...",
 					action:function(e, row){
-						console.log(row.getData());
+						//console.log(row.getData());
 						(async (path)=> {await that.filesaveasdialog.downloadFromFSPath(path); })(row.getData().fullpath);
 					}
 				},

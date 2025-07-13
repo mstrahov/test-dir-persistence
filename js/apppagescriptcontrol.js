@@ -16,7 +16,7 @@ import { gridItemSelectFileDialog } from "./griditemselectfiledialog.js";
 import { griditemTableDFPagedTransform } from "./griditemtabledfpagedtransform.js";
 import { GridItemHTMLOutput } from "./griditemhtmloutput.js";
 import { gridItemQueryView } from  "./griditemqueryview.js";
-
+import { gridItemTableProps } from  "./griditemtableprops.js";
 
 export class AppPageScriptControl extends AppPageControl {
 	#tablePickerDialog;
@@ -37,6 +37,7 @@ export class AppPageScriptControl extends AppPageControl {
 		let that = this; 
 		this.sqleditor = undefined;
 		this.sqlqueryview = undefined;
+		this.tablepropseditor = undefined;
 		
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.topDropDownMenuEventHandler.bind(this));
 		
@@ -367,7 +368,10 @@ export class AppPageScriptControl extends AppPageControl {
 			this.sqleditor = null;		
 		} else if (mainWidgetName==="gridItemQueryView") {
 			this.sqlqueryview = null;		
+		} else if (mainWidgetName==="gridItemTableProps") {
+			this.tablepropseditor = null;		
 		} 
+		
 		
 		// *********************--------------------------------
 		console.log("grid items: ", this.gridItems);
@@ -575,6 +579,9 @@ export class AppPageScriptControl extends AppPageControl {
 							parentuuid: this.uuid,
 						});
 				this.sqlqueryview.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
+				// 
+				this.sqlqueryview.eventbus.subscribe('editcolumnsgriditem', this.editTabulatorColumns.bind(this), this.uuid);
+				
 				// editSQLcommandgriditem
 				this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.sqlqueryview.processCodeRunnerResult(obj,eventdata);  }, this.sqlqueryview.uuid);
 				//~ this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
@@ -585,6 +592,35 @@ export class AppPageScriptControl extends AppPageControl {
 				
 				
 				
+			}
+		} else if (mainWidgetName==="gridItemTableProps") {
+			if (!this.tablepropseditor) {
+				if (!widgetSettings) {
+					widgetSettings = {};
+					widgetSettings.griditemheader = "Column properties editor";
+					widgetSettings.columnlayout = undefined;
+					
+				}
+				this.tablepropseditor  = this.addGridItem( gridItemTableProps, 
+						{
+							templateid:"#gridItemTableProps", 
+							headertext: widgetSettings.griditemheader, 
+							griditemoptions: gridlayoutoptions,
+							columnlayout:  widgetSettings.columnlayout,  
+							sqlcommand: widgetSettings.sqlcommand,  
+							coderunner: this.coderunner,
+							parentuuid: this.uuid,
+						});
+				this.tablepropseditor.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
+				this.tablepropseditor.eventbus.subscribe('updatecolumnscmdgriditem', this.updateTabulatorColumnProperties.bind(this), this.uuid);
+				// editSQLcommandgriditem
+				//~ this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.sqlqueryview.processCodeRunnerResult(obj,eventdata);  }, this.sqlqueryview.uuid);
+				//~ this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+				//~ this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+				//~ if (this.sqleditor) {
+					//~ this.sqlqueryview.eventbus.subscribe('editSQLcommandgriditem',(obj,eventdata)=>{  that.sqleditor.setValue(eventdata?.sqlcommand); }, this.sqleditor.uuid);
+				//~ }
+
 			}
 		}
 		
@@ -1003,6 +1039,26 @@ sheetinfo
 		
 		
 	}
+	// --------------------------------------------------------------------------------
+	
+	editTabulatorColumns(obj,eventdata) {
+		console.log("editTabulatorColumns",obj,eventdata);
+		if (!this.tablepropseditor) {
+			this.addMainWidget("gridItemTableProps");
+		}
+		
+		this.tablepropseditor.updateColProps(eventdata.columnlayout);
+	}
+	
+	// -------------------------------------------------------------------------------
+	
+	updateTabulatorColumnProperties(obj,eventdata) {
+			// updatecolumnscmdgriditem   newColumnProperties  
+		if (this.sqlqueryview && eventdata?.newColumnProperties) {
+			this.sqlqueryview.applyColumnLayout(eventdata.newColumnProperties);
+		}
+	}
+	
 	// --------------------------------------------------------------------------------
 	toOwnFormat() {
 		let res = super.toOwnFormat();
