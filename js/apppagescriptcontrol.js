@@ -566,6 +566,7 @@ export class AppPageScriptControl extends AppPageControl {
 					widgetSettings = {};
 					widgetSettings.griditemheader = "SQL Query Result";
 					widgetSettings.columnlayout = undefined;
+					widgetSettings.usercolumnlayout = undefined;
 					
 				}
 				this.sqlqueryview  = this.addGridItem( gridItemQueryView , 
@@ -574,6 +575,7 @@ export class AppPageScriptControl extends AppPageControl {
 							headertext: widgetSettings.griditemheader, 
 							griditemoptions: gridlayoutoptions,
 							columnlayout:  widgetSettings.columnlayout,  
+							usercolumnlayout: widgetSettings.usercolumnlayout,
 							sqlcommand: widgetSettings.sqlcommand,  
 							coderunner: this.coderunner,
 							parentuuid: this.uuid,
@@ -584,6 +586,8 @@ export class AppPageScriptControl extends AppPageControl {
 				
 				// editSQLcommandgriditem
 				this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.sqlqueryview.processCodeRunnerResult(obj,eventdata);  }, this.sqlqueryview.uuid);
+				// clonethistablegriditem
+				
 				//~ this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 				//~ this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 				if (this.sqleditor) {

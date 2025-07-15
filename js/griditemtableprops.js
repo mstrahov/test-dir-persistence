@@ -50,7 +50,7 @@ export class gridItemTableProps extends GridItemWithMenu {
 		
 		if (eventdata?.menuItemId === "refreshaction" || eventdata?.menuItemId === "refreshgriditem") {
 			this.refreshData();
-		} else if (eventdata?.menuItemId === "updatecolumnscmdgriditem") {
+		} else if (eventdata?.menuItemId === "updatecolumnscmdgriditem" || eventdata?.menuItemId === "syncaction"  ) {   // 
 			//~ this.eventbus.dispatch('editSQLcommandgriditem', this, { sqlcommand: this.sqlcommand });
 			const newColumnProperties = this.generateNewDefinitions();
 			console.log("Generating new columns definitions: ", newColumnProperties);
@@ -388,24 +388,88 @@ export class gridItemTableProps extends GridItemWithMenu {
 	generateTableData() {
 		let resArray = [];
 		// this.columnprops
-		for (let i=0;i<this.columnprops.length;i++) {
-			let newrow = { "_row_index": i };
-			for (let j=0;j<tabulatorColumnPropertiesNames.length;j++) {
-				if (tabulatorColumnPropertiesNames[j].field in this.columnprops[i]) {
+		
+		// **********
+		//~ for (let i=0;i<this.columnprops.length;i++) {
+			//~ let newrow = { "_row_index": i };
+			//~ for (let j=0;j<tabulatorColumnPropertiesNames.length;j++) {
+				//~ if (tabulatorColumnPropertiesNames[j].field in this.columnprops[i]) {
 					
-					if (typeof this.columnprops[i][tabulatorColumnPropertiesNames[j].field] === 'boolean') {
-						newrow[tabulatorColumnPropertiesNames[j].field] = this.columnprops[i][tabulatorColumnPropertiesNames[j].field].toString();
+					//~ if (typeof this.columnprops[i][tabulatorColumnPropertiesNames[j].field] === 'boolean') {
+						//~ newrow[tabulatorColumnPropertiesNames[j].field] = this.columnprops[i][tabulatorColumnPropertiesNames[j].field].toString();
+					//~ } else {
+						//~ newrow[tabulatorColumnPropertiesNames[j].field] = this.columnprops[i][tabulatorColumnPropertiesNames[j].field];
+					//~ }
+				//~ } else {
+					//~ newrow[tabulatorColumnPropertiesNames[j].field] = " ";
+				//~ }
+				
+			//~ }
+			//~ resArray.push(newrow);
+		//~ }
+		// ***********
+		
+		function createNewRow(propsrowobj, colArray) {
+			let newrow = { "_row_index": resArray.length };
+			
+			for (let j=0;j<colArray.length && j<2;j++) {     //  flatten max 2 nested column groups: ColumnGroup1, ColumnGroup2
+				// `ColumnGroup${j+1}`    title
+				// `ColumnGroup${j+1}cssClass`   cssClass
+				// `ColumnGroup${j+1}headerHozAlign`   headerHozAlign
+				if (colArray[j].hasOwnProperty('title')) {
+					newrow[`ColumnGroup${j+1}`] = colArray[j].title;
+				} else {
+					newrow[`ColumnGroup${j+1}`] = 'Unknown';
+				}
+				if (colArray[j].hasOwnProperty('cssClass')) {
+					newrow[`ColumnGroup${j+1}cssClass`] = colArray[j].cssClass.toString();
+				}
+				if (colArray[j].hasOwnProperty('headerHozAlign')) {
+					newrow[`ColumnGroup${j+1}headerHozAlign`] = colArray[j].headerHozAlign.toString();
+				}	
+			}
+			
+			for (let j=0;j<tabulatorColumnPropertiesNames.length;j++) {
+				if (tabulatorColumnPropertiesNames[j].field in propsrowobj) {
+					
+					if (typeof propsrowobj[tabulatorColumnPropertiesNames[j].field] === 'boolean') {
+						newrow[tabulatorColumnPropertiesNames[j].field] = propsrowobj[tabulatorColumnPropertiesNames[j].field].toString();
 					} else {
-						newrow[tabulatorColumnPropertiesNames[j].field] = this.columnprops[i][tabulatorColumnPropertiesNames[j].field];
+						newrow[tabulatorColumnPropertiesNames[j].field] = propsrowobj[tabulatorColumnPropertiesNames[j].field];
 					}
 				} else {
-					newrow[tabulatorColumnPropertiesNames[j].field] = " ";
+					if (!newrow.hasOwnProperty(tabulatorColumnPropertiesNames[j].field)) {
+						newrow[tabulatorColumnPropertiesNames[j].field] = " ";
+					}
 				}
 				
 			}
-			resArray.push(newrow);
+			
+			return newrow;
 		}
-
+		// ***********
+		function addMergedColumn(colobj, colArray ) {
+			let curcolArray = [...colArray,colobj];
+			for (let i=0;i<colobj.columns.length;i++) {
+				if (colobj.columns[i].hasOwnProperty('columns')) {
+					addMergedColumn(colobj.columns[i] , curcolArray );
+				} else {
+					resArray.push(createNewRow(colobj.columns[i], curcolArray));
+				}
+			}	
+			return true;
+		}
+		
+		// ***********
+		for (let i=0;i<this.columnprops.length;i++) {
+			if (this.columnprops[i].hasOwnProperty('columns')) {
+				addMergedColumn(this.columnprops[i] , [] );
+			} else {
+				resArray.push(createNewRow(this.columnprops[i], []));
+			}
+		}
+		
+		
 		// **********
 		return resArray;
 	}
@@ -442,13 +506,13 @@ export class gridItemTableProps extends GridItemWithMenu {
 export const tabulatorColumnPropertiesNames =
 [
 
-{field:"title", docs:"", name:"title", fieldtype:"string", valuelist:[""], frozen: true, visible: true, width:110,},
 {field:"field", docs:"", name:"field", fieldtype:"string", valuelist:[""], frozen: true, visible: true, width:110,},
+{field:"title", docs:"", name:"title", fieldtype:"string", valuelist:[""], frozen: false, visible: true, width:180,},
 {field:"ColumnGroup1", docs:"", name:"Column Group 1", fieldtype:"string", valuelist:[""], frozen: false, visible: true, width:110,},
-{field:"ColumnGroup1cssClass", docs:"", name:"Column Group1 cssClass", fieldtype:"multilistopen", valuelist:[".text-primary",".text-secondary",".text-success",".text-danger",".text-warning",".text-info",".text-light",".text-dark",".text-body",".text-muted",".text-white",".text-black-50",".text-white-50",".bg-primary",".bg-secondary",".bg-success",".bg-danger",".bg-warning",".bg-info",".bg-light",".bg-dark",".bg-body",".bg-white",".bg-transparent"," "], frozen: false, visible: true, width:110,},
+{field:"ColumnGroup1cssClass", docs:"", name:"Column Group1 cssClass", fieldtype:"multilistopen", valuelist:["text-primary","text-secondary","text-success","text-danger","text-warning","text-info","text-light","text-dark","text-body","text-muted","text-white","text-black-50","text-white-50","bg-primary","bg-secondary","bg-success","bg-danger","bg-warning","bg-info","bg-light","bg-dark","bg-body","bg-white","bg-transparent"," "], frozen: false, visible: true, width:110,},
 {field:"ColumnGroup1headerHozAlign", docs:"", name:"Column Group1 headerHozAlign", fieldtype:"list", valuelist:["left","center","right"," "], frozen: false, visible: true, width:110,},
 {field:"ColumnGroup2", docs:"", name:"Column Group 2", fieldtype:"string", valuelist:[""], frozen: false, visible: true, width:110,},
-{field:"ColumnGroup2cssClass", docs:"", name:"Column Group 2 cssClass", fieldtype:"multilistopen", valuelist:[".text-primary",".text-secondary",".text-success",".text-danger",".text-warning",".text-info",".text-light",".text-dark",".text-body",".text-muted",".text-white",".text-black-50",".text-white-50",".bg-primary",".bg-secondary",".bg-success",".bg-danger",".bg-warning",".bg-info",".bg-light",".bg-dark",".bg-body",".bg-white",".bg-transparent"," "], frozen: false, visible: true, width:110,},
+{field:"ColumnGroup2cssClass", docs:"", name:"Column Group 2 cssClass", fieldtype:"multilistopen", valuelist:["text-primary","text-secondary","text-success","text-danger","text-warning","text-info","text-light","text-dark","text-body","text-muted","text-white","text-black-50","text-white-50","bg-primary","bg-secondary","bg-success","bg-danger","bg-warning","bg-info","bg-light","bg-dark","bg-body","bg-white","bg-transparent"," "], frozen: false, visible: true, width:110,},
 {field:"ColumnGroup2headerHozAlign", docs:"", name:"Column Group 2 headerHozAlign", fieldtype:"list", valuelist:["left","center","right"," "], frozen: false, visible: true, width:110,},
 {field:"visible", docs:"", name:"visible", fieldtype:"list", valuelist:["true","false"," "], frozen: false, visible: true, width:110,},
 {field:"width", docs:"", name:"width", fieldtype:"number", valuelist:[""], frozen: false, visible: true, width:110,},
@@ -472,12 +536,12 @@ export const tabulatorColumnPropertiesNames =
 {field:"variableHeight", docs:"", name:"variableHeight", fieldtype:"list", valuelist:["false","true"," "], frozen: false, visible: true, width:110,},
 {field:"editor", docs:"https://tabulator.info/docs/6.3/edit", name:"editor", fieldtype:"list", valuelist:["false","true","number","textarea","input"," "], frozen: false, visible: true, width:110,},
 {field:"validator", docs:"https://tabulator.info/docs/6.3/validate", name:"validator", fieldtype:"list", valuelist:["required","unique","integer","float","numeric","string","alphanumeric"," "], frozen: false, visible: true, width:110,},
-{field:"topCalc", docs:"", name:"topCalc", fieldtype:"list", valuelist:["avg","max","min","sum","count","unique","none"," "], frozen: false, visible: true, width:110,},
-{field:"bottomCalc", docs:"", name:"bottomCalc", fieldtype:"list", valuelist:["avg","max","min","sum","count","unique","none"," "], frozen: false, visible: true, width:110,},
+{field:"topCalc", docs:"", name:"topCalc", fieldtype:"list", valuelist:["avg","max","min","sum","count","unique","false"," "], frozen: false, visible: true, width:110,},
+{field:"bottomCalc", docs:"", name:"bottomCalc", fieldtype:"list", valuelist:["avg","max","min","sum","count","unique","false"," "], frozen: false, visible: true, width:110,},
 {field:"headerSort", docs:"", name:"headerSort", fieldtype:"list", valuelist:["true","false"," "], frozen: false, visible: true, width:110,},
 {field:"headerWordWrap", docs:"", name:"headerWordWrap", fieldtype:"list", valuelist:["false","true"," "], frozen: false, visible: true, width:110,},
 {field:"editableTitle", docs:"", name:"editableTitle", fieldtype:"list", valuelist:["false","true"," "], frozen: false, visible: true, width:110,},
-{field:"cssClass", docs:"value should be a string containing space separated class names", name:"cssClass", fieldtype:"multilistopen", valuelist:[".text-primary",".text-secondary",".text-success",".text-danger",".text-warning",".text-info",".text-light",".text-dark",".text-body",".text-muted",".text-white",".text-black-50",".text-white-50",".bg-primary",".bg-secondary",".bg-success",".bg-danger",".bg-warning",".bg-info",".bg-light",".bg-dark",".bg-body",".bg-white",".bg-transparent"," "], frozen: false, visible: true, width:110,},
+{field:"cssClass", docs:"value should be a string containing space separated class names", name:"cssClass", fieldtype:"multilistopen", valuelist:["text-primary","text-secondary","text-success","text-danger","text-warning","text-info","text-light","text-dark","text-body","text-muted","text-white","text-black-50","text-white-50","bg-primary","bg-secondary","bg-success","bg-danger","bg-warning","bg-info","bg-light","bg-dark","bg-body","bg-white","bg-transparent"," "], frozen: false, visible: true, width:110,},
 
 
 ];

@@ -30,12 +30,14 @@ export class gridItemQueryView extends GridItemWithMenu {
 		this.tabulatorProperties = params.tabulatorProperties || {};
 		// this.arrowdata = null;
 		this.sqlcommand = params.sqlcommand?params.sqlcommand:'';
+		this.preferuserlayout = params.preferuserlayout?params.preferuserlayout:false;
 		
 		this.displaymode = 0;  
 		this._PLAINTABLE = 0;
 		this._PROGRESSIVELOAD = 1;
 		this._PAGINATED = 2;
 		this._DATATREE = 3;
+		
 		
 		this.headerContextMenuGeneratorFunction = undefined; 
 		this.cellContextMenuGeneratorFunction = undefined; 
@@ -48,6 +50,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 		
 		
 		this.tabulatorobj = undefined;
+		this.usercolumnlayout = params.usercolumnlayout?params.usercolumnlayout:undefined;
 		//~ this.columnsarray = [];
 		//~ this.columnstypes = undefined;
 		this.lastcolumnlayout = undefined;
@@ -82,13 +85,62 @@ export class gridItemQueryView extends GridItemWithMenu {
 			this.eventbus.dispatch('closegriditem', this, { });		
 		} else if (eventdata?.menuItemId === "editcolumnsgriditem") {
 			if (this.tabulatorobj) {
-				this.eventbus.dispatch('editcolumnsgriditem', this, { columnlayout: this.tabulatorobj.getColumnLayout(),  } );	
+				this.eventbus.dispatch('editcolumnsgriditem', this, { columnlayout: this.getTabulatorColumnLayout(),  } );	
+			}	
+		} else if (eventdata?.menuItemId === "showusercolumnsgriditem") {
+			if (this.tabulatorobj && this.usercolumnlayout) {
+				this.applyColumnLayout(this.usercolumnlayout);
+			}
+		} else if (eventdata?.menuItemId === "clonethistablegriditem") {
+			if (this.tabulatorobj) {
+				this.eventbus.dispatch('clonethistablegriditem', this, { } );	
 			}	
 		}
 		
+		// 
 	}
 	// -------------------------------------------------------------------------
 	
+	getTabulatorColumnLayout() {
+		let res = [];
+		
+		if (this.tabulatorobj) {
+			
+			res = this.tabulatorobj.getColumnLayout();
+			const colDefs = this.tabulatorobj.getColumnDefinitions();
+			
+			
+			
+			//  for some reason getColumnLayout does not export properties of the column groups, need to copy from this.tabulatorobj.getColumnDefinitions()
+			
+			function getNestedMergedColumnLayout(colobjdef, colobjres) {
+				if (colobjdef.hasOwnProperty('cssClass')) {
+					colobjres['cssClass'] = colobjdef['cssClass'];
+				}
+				if (colobjdef.hasOwnProperty('headerHozAlign')) {
+					colobjres['headerHozAlign'] = colobjdef['headerHozAlign'];
+				}
+				for (let i=0;i<colobjres.columns.length;i++) {
+					if (colobjres.columns[i].hasOwnProperty('columns') && colobjdef.columns[i].hasOwnProperty('columns') && colobjres.columns[i].title===colobjdef.columns[i].title) {
+						getNestedMergedColumnLayout(colobjdef.columns[i], colobjres.columns[i]);
+					}
+				}
+			} 
+			
+			
+			for (let i=0;i<res.length;i++) {
+				if (res[i].hasOwnProperty('columns') && colDefs[i].hasOwnProperty('columns') && res[i].title===colDefs[i].title) {
+					getNestedMergedColumnLayout(colDefs[i], res[i]);
+				}
+			}
+			
+			
+		}
+		
+		return res;
+	}
+	
+	// -------------------------------------------------------------------------
 	async processCodeRunnerResult(obj,eventdata) {
 		// { targetEnv: targetEnv, cmd: cmdparams.cmd, result: res }
 		if (eventdata.targetEnv!=='sql') {
@@ -160,6 +212,13 @@ export class gridItemQueryView extends GridItemWithMenu {
 		} 
 		
 		// -------------------   tabulator with regular columns
+		
+		if (this.preferuserlayout && this.usercolumnlayout) {
+			this.tabulatorProperties.columns = this.usercolumnlayout;	
+		} else {
+			this.tabulatorProperties.columns = this.generateColumnDefinitions(arrowdata);	
+		}
+		
 		this.tabulatorobj = new Tabulator(this.#internalContainer, {
 						...this.tabulatorProperties,
 						index: "_row_index",
@@ -167,7 +226,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 						//selectableRangeRows:true,
 						clipboardCopyRowRange:"range",
 						
-						columns: this.generateColumnDefinitions(arrowdata),
+						//~ columns: this.generateColumnDefinitions(arrowdata),
 						
 						// --------------------------------------
 						columnDefaults:{
@@ -396,12 +455,13 @@ export class gridItemQueryView extends GridItemWithMenu {
 	// ------------------------------------
 	
 	applyColumnLayout(newColumnLayout) {
-		console.log("Received new col layout ",newColumnLayout);
+		console.log("Received new col layout ", newColumnLayout);
 		
 		if (!this.tabulatorobj) {
 			return false;
 		}
 		
+		this.usercolumnlayout = newColumnLayout;
 		//~ if (this.tabulatorobj) {
 			//~ try {
 				//~ //res.tabulatorProperties = JSON.parse(JSON.stringify(this.tabulatorProperties));
@@ -485,11 +545,15 @@ export class gridItemQueryView extends GridItemWithMenu {
 		//~ res.dfname = this.dfname;
 		res.parentuuid = this.parentuuid;
 		res.sqlcommand = this.sqlcommand;
+		res.preferuserlayout = this.preferuserlayout;
 		// ------------
 		if (this.tabulatorobj) {
 			try {
 				//res.tabulatorProperties = JSON.parse(JSON.stringify(this.tabulatorProperties));
 				res.columnlayout = this.tabulatorobj.getColumnLayout();
+				if (this.usercolumnlayout) {
+					res.usercolumnlayout = JSON.parse(JSON.stringify(this.usercolumnlayout));
+				}
 			} catch (e) { console.warn("Column layout save error",e); }
 		}	
 		return res;
