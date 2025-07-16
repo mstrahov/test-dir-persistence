@@ -438,6 +438,23 @@ export class gridItemTableProps extends GridItemWithMenu {
 						newrow[tabulatorColumnPropertiesNames[j].field] = propsrowobj[tabulatorColumnPropertiesNames[j].field];
 					}
 				} else {
+					
+					//~ {field:"sorterParams_format"
+					//~ {field:"sorterParams_alignEmptyValues"
+					//~ {field:"formatterParams_inputFormat"
+					//~ {field:"formatterParams_outputFormat"
+					if (tabulatorColumnPropertiesNames[j].field.includes('_')) {
+						const fldArr = tabulatorColumnPropertiesNames[j].field.split("_");
+						if ((fldArr.length>1) && (fldArr[0] in propsrowobj) && propsrowobj[fldArr[0]].hasOwnProperty(fldArr[1])) {
+							if (typeof propsrowobj[fldArr[0]][fldArr[1]] === 'boolean') {
+								newrow[tabulatorColumnPropertiesNames[j].field] = propsrowobj[fldArr[0]][fldArr[1]].toString();
+							} else {
+								newrow[tabulatorColumnPropertiesNames[j].field] = propsrowobj[fldArr[0]][fldArr[1]];
+							}
+						}
+					}
+					
+					
 					if (!newrow.hasOwnProperty(tabulatorColumnPropertiesNames[j].field)) {
 						newrow[tabulatorColumnPropertiesNames[j].field] = " ";
 					}

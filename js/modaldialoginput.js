@@ -80,10 +80,14 @@ export class modalDialogInput {
 		
 		if (props?.inputOneLine) { 
 			this.#inputOneLineElement.value = props?.inputOneLine;
+		} else {
+			this.#inputOneLineElement.value = "";
 		}
 		
 		if (props?.inputOneLinePlaceHolder) { 
 			this.#inputOneLineElement.placeholder = props?.inputOneLinePlaceHolder;
+		} else {
+			this.#inputOneLineElement.placeholder = "";
 		}
 		
 		this.#modalobject.show();

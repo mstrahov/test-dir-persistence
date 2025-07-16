@@ -17,6 +17,8 @@ import { griditemTableDFPagedTransform } from "./griditemtabledfpagedtransform.j
 import { GridItemHTMLOutput } from "./griditemhtmloutput.js";
 import { gridItemQueryView } from  "./griditemqueryview.js";
 import { gridItemTableProps } from  "./griditemtableprops.js";
+import { gridItemStaticQueryView } from  "./griditemstaticqueryview.js";
+
 
 export class AppPageScriptControl extends AppPageControl {
 	#tablePickerDialog;
@@ -34,6 +36,7 @@ export class AppPageScriptControl extends AppPageControl {
 		this.#modalInputDialog = params.modalInputDialog;
 		this.visualwidgets = [];
 		this.closedwidgets = [];
+		this.staticqueryviews = [];
 		let that = this; 
 		this.sqleditor = undefined;
 		this.sqlqueryview = undefined;
@@ -337,6 +340,29 @@ export class AppPageScriptControl extends AppPageControl {
 		}
 	}
 	// --------------------------------------------------------------------------------	
+	async deleteStaticQueryViewWidget(obj,eventdata) {
+		//~ { 
+			//~ targetEnv: "py",
+			//~ namespaceuuid: namespaceuuid,
+			//~ headertext: namespacekeys[i],
+			//~ varName: namespacekeys[i],
+			//~ varType: "Figure",
+			//~ widgetObject: null,
+		//~ }
+		const widgetIndex = this.staticqueryviews.findIndex((v)=>v.widgetObject===obj);
+		if (widgetIndex>-1) {
+			// console.log("Close request from "+this.visualwidgets[widgetIndex].widgetObject.widgetName + " id: " + this.visualwidgets[widgetIndex].widgetObject.uuid );
+			let widgetuuid = this.staticqueryviews[widgetIndex].widgetObject.uuid;
+			this.fileIOHandler.eventbus.unsubscribeUUID(widgetuuid);
+			this.destroyGridItem(this.staticqueryviews[widgetIndex].widgetObject);
+			delete this.staticqueryviews[widgetIndex].widgetObject;
+			this.staticqueryviews.splice(widgetIndex, 1);
+			
+		} else {
+			console.error("Widget to delete not found!");
+		}
+	}
+	// --------------------------------------------------------------------------------	
 	deleteMainWidget(obj, eventdata) {
 		const mainWidgetName = obj.widgetName;
 		let widgetuuid = obj.uuid;
@@ -583,8 +609,8 @@ export class AppPageScriptControl extends AppPageControl {
 				this.sqlqueryview.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
 				// 
 				this.sqlqueryview.eventbus.subscribe('editcolumnsgriditem', this.editTabulatorColumns.bind(this), this.uuid);
+				this.sqlqueryview.eventbus.subscribe('clonethistablegriditem', this.cloneQueryView.bind(this), this.uuid);
 				
-				// editSQLcommandgriditem
 				this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.sqlqueryview.processCodeRunnerResult(obj,eventdata);  }, this.sqlqueryview.uuid);
 				// clonethistablegriditem
 				
@@ -764,6 +790,60 @@ export class AppPageScriptControl extends AppPageControl {
 	
 	// --------------------------------------------------------------------------------
 	
+	async cloneQueryView() {
+		let tableheader = "";
+		
+		if (!this.sqlqueryview) {
+			return false;
+		}
+		
+		// ** table headertext
+		try {
+			const props = {
+				dialogTitle: "Enter table header:",
+				inputOneLine: "",
+				inputOneLinePlaceHolder: "Table header",
+			};
+			const selectedOption = await this.#modalInputDialog.showdialog(props);
+			tableheader = selectedOption.inputOneLine.trim();
+			console.log('Return value for table header:', tableheader);
+		} catch (error) {
+			console.error('Error:', error.message);
+		}
+		// ****
+		let usercolumnlayout;
+		if (this.sqlqueryview.usercolumnlayout) {
+			usercolumnlayout = JSON.parse(JSON.stringify(this.sqlqueryview.usercolumnlayout));
+		} else {
+			usercolumnlayout = this.sqlqueryview.getTabulatorColumnLayout();
+		}
+		
+		const newWidgetObject = this.addGridItem( gridItemStaticQueryView, 
+				{	templateid:"#gridItemSQLStaticQueryView", 
+					headertext: tableheader, 
+					griditemoptions: {w:6,h:5,}, 
+					columnlayout:  this.sqlqueryview.getTabulatorColumnLayout(),  
+					usercolumnlayout: usercolumnlayout,
+					preferuserlayout: true,
+					sqlcommand: this.sqlqueryview.sqlcommand,  
+					coderunner: this.coderunner,
+					parentuuid: this.uuid,
+				});
+		//~ newWidgetObject.eventbus.subscribe('contentsRefreshRequest', this.refreshVisualWidget.bind(this), this.uuid);
+		newWidgetObject.eventbus.subscribe('closegriditem', this.deleteStaticQueryViewWidget.bind(this), this.uuid);
+		this.staticqueryviews.push({
+			headertext: tableheader,
+			widgetObject : newWidgetObject,
+		});
+		//~ newWidgetObject.eventbus.dispatch('contentsRefreshRequest', newWidgetObject, { elementheight: newWidgetObject.getBodyElementHeight() });
+		//~ newWidgetObject.refreshData();
+		// ---
+		
+		
+	}
+
+	
+	// --------------------------------------------------------------------------------
 	setScriptName(newName) {
 		this.scriptControl.transformscript.scriptName = newName;
 		this.setTabTitle(newName);
