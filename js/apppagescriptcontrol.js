@@ -249,12 +249,33 @@ export class AppPageScriptControl extends AppPageControl {
 						console.error("Cannot add visual widget: ", this.initscriptobj.gridwidgets[i]);
 					}
 					
+				}  else if (this.initscriptobj.gridwidgets[i].griditemname==="gridItemStaticQueryView") {
+					const id2 = this.initscriptobj.staticqueryviews.findIndex((v)=>v.widgetObj.uuid===this.initscriptobj.gridwidgets[i].uuid);
+					if (id2>-1) {
+						const newWidgetObject = this.addGridItem( gridItemStaticQueryView, 
+								{	templateid:"#gridItemSQLStaticQueryView", 
+									headertext: this.initscriptobj.staticqueryviews[id2].headertext, 
+									griditemoptions: gridlayoutoptions,
+									columnlayout:  JSON.parse(JSON.stringify(this.initscriptobj.staticqueryviews[id2].widgetObj.columnlayout)),  
+									usercolumnlayout: JSON.parse(JSON.stringify(this.initscriptobj.staticqueryviews[id2].widgetObj.usercolumnlayout)),
+									preferuserlayout: this.initscriptobj.staticqueryviews[id2].widgetObj.preferuserlayout,
+									sqlcommand: this.initscriptobj.staticqueryviews[id2].widgetObj.sqlcommand,  
+									coderunner: this.coderunner,
+									parentuuid: this.uuid,
+								});
+						newWidgetObject.eventbus.subscribe('closegriditem', this.deleteStaticQueryViewWidget.bind(this), this.uuid);
+						newWidgetObject.eventbus.subscribe('edittablelayoutgriditem', this.editLayoutStaticQueryViewWidget.bind(this), this.uuid);
+						this.staticqueryviews.push({
+							...this.initscriptobj.staticqueryviews[id2],
+							widgetObject : newWidgetObject,
+						});
+						
+					} else {
+						console.error("Cannot add static query view widget: ", this.initscriptobj.gridwidgets[i]);
+					}
 				} else /* if (this.initscriptobj.gridwidgets[i].griditemname==="gridItemQueryView" ) */ {
 					//GridItemSQLEditor
-					this.addMainWidget(this.initscriptobj.gridwidgets[i].griditemname, this.initscriptobj.gridwidgets[i], gridlayoutoptions);
-					
-					
-					
+					this.addMainWidget(this.initscriptobj.gridwidgets[i].griditemname, this.initscriptobj.gridwidgets[i], gridlayoutoptions);	
 				}  
 				
 			}
@@ -678,6 +699,7 @@ export class AppPageScriptControl extends AppPageControl {
 			// {"w":2,"h":2,"id":"0f1ab445-6b02-4d9e-bdec-d0eac4eb311e","x":6,"y":6},  
 			// but if size w=1,h=1: {"id":"0f1ab445-6b02-4d9e-bdec-d0eac4eb311e","x":6,"y":6},
 			console.log(this.scriptControl.transformscript);
+			console.log("Data table widgets ", this.staticqueryviews);
 		} else if (eventdata?.menuItemId === 'adddftransformwidget') { 
 			this.addMainWidget("griditemTableDFPagedTransform");
 		} else if (eventdata?.menuItemId === 'addfilepickerwidget') { 
@@ -831,6 +853,8 @@ export class AppPageScriptControl extends AppPageControl {
 				});
 		//~ newWidgetObject.eventbus.subscribe('contentsRefreshRequest', this.refreshVisualWidget.bind(this), this.uuid);
 		newWidgetObject.eventbus.subscribe('closegriditem', this.deleteStaticQueryViewWidget.bind(this), this.uuid);
+		newWidgetObject.eventbus.subscribe('edittablelayoutgriditem', this.editLayoutStaticQueryViewWidget.bind(this), this.uuid);
+		// edittablelayoutgriditem  
 		this.staticqueryviews.push({
 			headertext: tableheader,
 			widgetObject : newWidgetObject,
@@ -841,7 +865,38 @@ export class AppPageScriptControl extends AppPageControl {
 		
 		
 	}
-
+	// --------------------------------------------------------------------------------
+	
+	async editLayoutStaticQueryViewWidget(obj,eventdata) {
+		// add sql editor, add sql query view, add layout props view
+		if (!obj) { return false; }
+		let sqlqueryviewisopen = true;
+		if (!this.sqlqueryview) {
+			sqlqueryviewisopen = false;
+		}
+		this.addMainWidget("GridItemSQLEditor");
+		this.addMainWidget("gridItemQueryView");
+		
+		if (!this.tablepropseditor) {
+			this.addMainWidget("gridItemTableProps");
+		}
+		if (this.sqleditor) {
+			this.sqleditor.setValue(obj.sqlcommand);
+		}
+		if (this.tablepropseditor) {
+			this.tablepropseditor.updateColProps(obj.usercolumnlayout);
+		}
+		if (this.sqlqueryview) {
+			this.sqlqueryview.sqlcommand = obj.sqlcommand;
+			this.sqlqueryview.usercolumnlayout = JSON.parse(JSON.stringify(obj.usercolumnlayout));
+			this.sqlqueryview.preferuserlayout = true;
+			if (sqlqueryviewisopen) {
+				await this.sqlqueryview.refreshData();   //  need to add a lock
+			}
+			//this.sqlqueryview.applyColumnLayout(obj.usercolumnlayout);
+		}
+		
+	}
 	
 	// --------------------------------------------------------------------------------
 	setScriptName(newName) {
@@ -1154,7 +1209,13 @@ sheetinfo
 		}
 		
 		// -----------
+		res.staticqueryviews = [];
 		
+		for (let i=0;i<this.staticqueryviews.length;i++) {
+			res.staticqueryviews.push(Object.assign({},this.staticqueryviews[i],{widgetObject:null, widgetObj:this.staticqueryviews[i].widgetObject.toOwnFormat() }))
+		}
+		
+		// -----------
 		res.closedwidgets = JSON.parse(JSON.stringify(this.closedwidgets));
 		res.scriptObject = this.scriptControl?this.scriptControl.transformscriptclone:this.scriptObject;
 		res.scriptname = this.scriptControl?this.scriptControl.transformscript.scriptName:this.scriptObject.scriptName;

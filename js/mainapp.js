@@ -67,9 +67,9 @@ tabNavStatusTab.appuuid="globals";
 
 window.testgrid = tabNavStatusTab;
 
-const pyeditor = tabNavStatusTab.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Python", griditemoptions: {w:6,h:7,} });
-const statusTabOutput = tabNavStatusTab.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:7,} });
-const sqleditor = tabNavStatusTab.addGridItem( GridItemSQLEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "SQL", griditemoptions: {w:6,h:7,} });
+const pyeditor = tabNavStatusTab.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Python", griditemoptions: {w:6,h:3,} });
+const statusTabOutput = tabNavStatusTab.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:6,} });
+const sqleditor = tabNavStatusTab.addGridItem( GridItemSQLEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "SQL", griditemoptions: {w:6,h:3,} });
 const ownformatdialog = tabNavStatusTab.addGridItem( gridItemOwnFormat, {templateid:"#gridItemOwnFormatDialog", headertext: "Project file", griditemoptions: {w:6,h:7,}, OwnFormatHandler: window.localFormatSaver });
 const filedialog = tabNavStatusTab.addGridItem( gridItemFileDialog, {templateid:"#gridItemFileDialog", headertext: "Local files", griditemoptions: {w:6,h:7,}, fileIOHandler: window.fileiohandler });
 
@@ -210,6 +210,7 @@ const OpenProjectFile = async () => {
 	
 	window.localFormatSaver.scriptsarr = await window.localFormatSaver.getScriptsArrayFromOwnFormatFile();
 	console.log('Scripts: ', window.localFormatSaver.scriptsarr);
+	window.localFormatSaver.scriptsarr.sort((a, b)=>a.runorder-b.runorder);
 	
 	for (let i=0;i<window.localFormatSaver.scriptsarr.length;i++) {
 		const ind = activetabs.findIndex((v)=>v.uuid===window.localFormatSaver.scriptsarr[i].objuuid);

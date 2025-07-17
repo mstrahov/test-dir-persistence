@@ -58,7 +58,13 @@ export class gridItemTableProps extends GridItemWithMenu {
 			
 		} else if (eventdata?.menuItemId === "closegriditem") {
 			this.eventbus.dispatch('closegriditem', this, { });		
+		}  else if (eventdata?.menuItemId === "copylayoutasjsoncmdgriditem") {
+			const newColumnProperties = this.generateNewDefinitions();
+			(async (text)=> {await navigator.clipboard.writeText(text);})(JSON.stringify(newColumnProperties, null, " "));
 		}
+		
+		
+		
 		
 	}
 	// -------------------------------------------------------------------------

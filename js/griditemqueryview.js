@@ -11,6 +11,9 @@ import { ExecTimer } from "./exectimer.js";
 
 export class gridItemQueryView extends GridItemWithMenu {
 	#internalContainer;
+	#defer;
+	#resolve;
+	#reject;
 	
 	constructor (params) {
 		super(params);
@@ -51,6 +54,8 @@ export class gridItemQueryView extends GridItemWithMenu {
 		
 		this.tabulatorobj = undefined;
 		this.usercolumnlayout = params.usercolumnlayout?params.usercolumnlayout:undefined;
+		this.addFunctionsToUserLayout();
+		this.usercolumnlayouthistory = [];
 		//~ this.columnsarray = [];
 		//~ this.columnstypes = undefined;
 		this.lastcolumnlayout = undefined;
@@ -61,6 +66,15 @@ export class gridItemQueryView extends GridItemWithMenu {
 				console.warn("Error processing initial column layout",err);
 			}
 		}
+		
+		this.defaultCellContextMenu = [
+			{
+				label:"Copy",
+				action:function(e, cell){
+					(async (text)=> {await navigator.clipboard.writeText(text);})(cell.getValue());
+				}
+			},
+		];
 		
 		
 	}
@@ -89,12 +103,21 @@ export class gridItemQueryView extends GridItemWithMenu {
 			}	
 		} else if (eventdata?.menuItemId === "showusercolumnsgriditem") {
 			if (this.tabulatorobj && this.usercolumnlayout) {
+				
 				this.applyColumnLayout(this.usercolumnlayout);
+		
+			} else if (this.tabulatorobj && this.usercolumnlayouthistory.length>0) {
+		
+				this.usercolumnlayout = this.usercolumnlayouthistory.pop();
+				this.applyColumnLayout(this.usercolumnlayout);
+			
 			}
 		} else if (eventdata?.menuItemId === "clonethistablegriditem") {
 			if (this.tabulatorobj) {
 				this.eventbus.dispatch('clonethistablegriditem', this, { } );	
 			}	
+		} else if (eventdata?.menuItemId === "edittablelayoutgriditem") {
+			this.eventbus.dispatch('edittablelayoutgriditem', this, { });		
 		}
 		
 		// 
@@ -141,6 +164,32 @@ export class gridItemQueryView extends GridItemWithMenu {
 	}
 	
 	// -------------------------------------------------------------------------
+	
+	addFunctionsToUserLayout() {
+		if (this.usercolumnlayout) {
+			let that = this;
+			function getNestedMergedColumnLayout(colobjdef) {
+				for (let i=0;i<colobjdef.columns.length;i++) {
+					if (colobjdef.columns[i].hasOwnProperty('columns')) {
+						getNestedMergedColumnLayout(colobjdef.columns[i]);
+					} else {
+						colobjdef.columns[i].contextMenu = that.defaultCellContextMenu;
+					}
+				}
+			} 
+		
+			for (let i=0;i<this.usercolumnlayout.length;i++) {
+				if (this.usercolumnlayout[i].hasOwnProperty('columns')) {
+					getNestedMergedColumnLayout(this.usercolumnlayout[i]);
+				} else {
+					this.usercolumnlayout[i].contextMenu = this.defaultCellContextMenu;
+				}
+			}	
+		}
+	}
+	
+	
+	// -------------------------------------------------------------------------
 	async processCodeRunnerResult(obj,eventdata) {
 		// { targetEnv: targetEnv, cmd: cmdparams.cmd, result: res }
 		if (eventdata.targetEnv!=='sql') {
@@ -148,7 +197,11 @@ export class gridItemQueryView extends GridItemWithMenu {
 		}
 		if (eventdata.result?.runStatus) {
 			this.sqlcommand = eventdata?.cmd;
-			await this.showQueryResult(eventdata.result.output);
+			if (this.usercolumnlayout) {
+				this.usercolumnlayouthistory.push(JSON.parse(JSON.stringify(this.usercolumnlayout)));
+				this.usercolumnlayout = undefined;
+			}
+			await this.showQueryResult(eventdata.result.output, true);   // receivednewdata
 		}
 	}
 	// ------------------------------------------------------------------------
@@ -171,7 +224,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 	}
 	
 	// -------------------------------------------------------------------------
-	async showQueryResult(arrowdata) {
+	async showQueryResult(arrowdata, receivednewdata=false) {
 		
 		const lengthmilli = this.exectimer.timeit(`Showing query result: starting tabulator output`);
 		//this.arrowdata = arrowdata;
@@ -213,7 +266,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 		
 		// -------------------   tabulator with regular columns
 		
-		if (this.preferuserlayout && this.usercolumnlayout) {
+		if (this.preferuserlayout && this.usercolumnlayout && !receivednewdata) {
 			this.tabulatorProperties.columns = this.usercolumnlayout;	
 		} else {
 			this.tabulatorProperties.columns = this.generateColumnDefinitions(arrowdata);	
@@ -317,6 +370,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 				headerSortTristate:true,
 				formatter: "plaintext",
 				frozen:false, 
+				contextMenu: this.defaultCellContextMenu,
 			};
 			
 			if (arrowColTypes[arrowdata.schema.fields[i].type.typeId]) {
@@ -462,6 +516,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 		}
 		
 		this.usercolumnlayout = newColumnLayout;
+		this.addFunctionsToUserLayout();
 		//~ if (this.tabulatorobj) {
 			//~ try {
 				//~ //res.tabulatorProperties = JSON.parse(JSON.stringify(this.tabulatorProperties));

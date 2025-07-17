@@ -309,12 +309,16 @@ conn_internal_data
 		let res = [];
 		
 		let scriptlist = await this.getAllObjectsOfType('script');
+		if (!scriptlist) {
+			console.error('Script list is not received from file!');
+			return res;
+		}
 		for (let i=0;i<scriptlist.length;i++) {
 			try {
 				let scriptobj = JSON.parse((new TextDecoder()).decode(scriptlist[i][2]));
 				res.push(scriptobj);
 			} catch (err) {
-				console.log('Script parsing from json error:',scriptlist[i],err);	
+				console.error('Script parsing from json error:',scriptlist[i],err);	
 			}
 			
 		}
