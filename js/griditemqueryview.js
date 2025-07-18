@@ -53,9 +53,20 @@ export class gridItemQueryView extends GridItemWithMenu {
 		
 		
 		this.tabulatorobj = undefined;
+		
+		this.defaultCellContextMenu = [
+			{
+				label:"Copy",
+				action:function(e, cell){
+					(async (text)=> {await navigator.clipboard.writeText(text);})(cell.getValue());
+				}
+			},
+		];
+		
 		this.usercolumnlayout = params.usercolumnlayout?params.usercolumnlayout:undefined;
 		this.addFunctionsToUserLayout();
 		this.usercolumnlayouthistory = [];
+		
 		//~ this.columnsarray = [];
 		//~ this.columnstypes = undefined;
 		this.lastcolumnlayout = undefined;
@@ -67,14 +78,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 			}
 		}
 		
-		this.defaultCellContextMenu = [
-			{
-				label:"Copy",
-				action:function(e, cell){
-					(async (text)=> {await navigator.clipboard.writeText(text);})(cell.getValue());
-				}
-			},
-		];
+		
 		
 		
 	}
