@@ -5,7 +5,7 @@
 //import { FileSystemHandler } from "./fileshandlers.js";
 import EventBus from "./eventbus.js";
 
-const FILE_EXTENSION = "dbsqlite";
+const FILE_EXTENSION = "adhocdb";
 
 export class OwnFormatHandler {
 	#pyodidePromise;

@@ -37,6 +37,7 @@ export class AppPageScriptControl extends AppPageControl {
 		this.visualwidgets = [];
 		this.closedwidgets = [];
 		this.staticqueryviews = [];
+		this.initiallayout = params.initiallayout?params.initiallayout:1;
 		let that = this; 
 		this.sqleditor = undefined;
 		this.sqlqueryview = undefined;
@@ -50,82 +51,94 @@ export class AppPageScriptControl extends AppPageControl {
 		 * 
 		 * 
 		 **/
+		let initialwidgetslist = [];
+		if (this.initiallayout===1) {
+			initialwidgetslist = ["gridItemScript", "GridItemPyEditor", "StatusGridItemTextOutput", "griditemTableDFPagedTransform", "gridItemSelectFileDialog"];
+		} else if (this.initiallayout===2) {
+			initialwidgetslist = ["GridItemSQLEditor", "StatusGridItemTextOutput", "gridItemQueryView"];
+		}
 		
 		if (!this.initscriptobj) {
-			this.scriptControl = this.addGridItem( gridItemScript,   
-				{	
-					templateid:"#gridItemScriptDialog", 
-					headertext: "Script", 
-					griditemoptions: {w:6,h:5,},
-					transformscript: this.scriptObject,
-					scriptname: "",
-				}
-			);
-			this.setTabTitle(this.scriptControl.transformscript.scriptName);
 			
-			this.pyeditor = this.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonScriptControlCodeEditor", headertext: "Python", griditemoptions: {w:6,h:5,} });
-			this.pyeditor.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
+			for (let i=0;i<initialwidgetslist.length;i++) {
+				this.addMainWidget(initialwidgetslist[i]);
+			}
 			
-			this.dfview = this.addGridItem( griditemTableDFPagedTransform, {templateid:"#gridItemDFtransformview", headertext: "DataFrame edit view", griditemoptions: {w:6,h:5,},
-				coderunner: this.coderunner,
-				parentuuid: this.uuid
-			});
-			// closegriditem 
-			this.dfview.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
+			//~ this.scriptControl = this.addGridItem( gridItemScript,   
+				//~ {	
+					//~ templateid:"#gridItemScriptDialog", 
+					//~ headertext: "Script", 
+					//~ griditemoptions: {w:6,h:5,},
+					//~ transformscript: this.scriptObject,
+					//~ scriptname: "",
+				//~ }
+			//~ );
+			//~ this.setTabTitle(this.scriptControl.transformscript.scriptName);
 			
-			this.statusTabOutput = this.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:5,} });
-			this.statusTabOutput.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
+			//~ this.pyeditor = this.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonScriptControlCodeEditor", headertext: "Python", griditemoptions: {w:6,h:5,} });
+			//~ this.pyeditor.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
+			
+			//~ this.dfview = this.addGridItem( griditemTableDFPagedTransform, {templateid:"#gridItemDFtransformview", headertext: "DataFrame edit view", griditemoptions: {w:6,h:5,},
+				//~ coderunner: this.coderunner,
+				//~ parentuuid: this.uuid
+			//~ });
+			//~ // closegriditem 
+			//~ this.dfview.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
+			
+			//~ this.statusTabOutput = this.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:5,} });
+			//~ this.statusTabOutput.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 
 			
-			// ---------------   gridItemSelectFileDialog ---------------------
-			this.selectFileDialog = this.addGridItem( gridItemSelectFileDialog, {templateid:"#gridItemFileDialog", headertext: "File selection", griditemoptions: {w:6,h:5,}, 
-				fileIOHandler: this.fileIOHandler 
-			});
+			//~ // ---------------   gridItemSelectFileDialog ---------------------
+			//~ this.selectFileDialog = this.addGridItem( gridItemSelectFileDialog, {templateid:"#gridItemFileDialog", headertext: "File selection", griditemoptions: {w:6,h:5,}, 
+				//~ fileIOHandler: this.fileIOHandler 
+			//~ });
 					
-			this.fileIOHandler.eventbus.subscribe('ioDirRefreshNeeded',(obj,eventdata)=>{  that.selectFileDialog.refreshData(eventdata); }, this.selectFileDialog.uuid);
-			this.selectFileDialog.eventbus.subscribe('importfiletodf',async (obj,eventdata)=>{  
-				await that.addImportFileStep(eventdata); 
-				await that.runScriptOneStep(eventdata); 
-			}, this.scriptControl.uuid);
-			this.selectFileDialog.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
+			//~ this.fileIOHandler.eventbus.subscribe('ioDirRefreshNeeded',(obj,eventdata)=>{  that.selectFileDialog.refreshData(eventdata); }, this.selectFileDialog.uuid);
+			//~ this.selectFileDialog.eventbus.subscribe('importfiletodf',async (obj,eventdata)=>{  
+				//~ await that.addImportFileStep(eventdata); 
+				//~ await that.runScriptOneStep(eventdata); 
+			//~ }, this.scriptControl.uuid);
+			//~ this.selectFileDialog.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
 			
-			// ----------------------------------------------------------------
+			//~ // ----------------------------------------------------------------
 
-			// ----------------------------------------------------------------
+			//~ // ----------------------------------------------------------------
 			
-			this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
-			this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
-			this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.statusTabOutput.runExecutionFailure(eventdata);  }, this.statusTabOutput.uuid);
-			this.eventbus.subscribe('getVariableError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+			//~ this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+			//~ this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+			//~ this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.statusTabOutput.runExecutionFailure(eventdata);  }, this.statusTabOutput.uuid);
+			//~ this.eventbus.subscribe('getVariableError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
 			
-			this.scriptControl.eventbus.subscribe('runonecodestepaction',(obj,eventdata)=>{  that.runScriptOneStep(eventdata); }, this.uuid);
-			this.scriptControl.eventbus.subscribe('runallcodestepsaction',(obj,eventdata)=>{  that.runScriptAllSteps(eventdata); }, this.uuid);
+			//~ this.scriptControl.eventbus.subscribe('runonecodestepaction',(obj,eventdata)=>{  that.runScriptOneStep(eventdata); }, this.uuid);
+			//~ this.scriptControl.eventbus.subscribe('runallcodestepsaction',(obj,eventdata)=>{  that.runScriptAllSteps(eventdata); }, this.uuid);
 			
-			this.scriptControl.eventbus.subscribe('showscriptaspythoneditable',(obj,eventdata)=>{  that.pyeditor.setValue(eventdata?.pycode); }, this.pyeditor.uuid);
+			//~ this.scriptControl.eventbus.subscribe('showscriptaspythoneditable',(obj,eventdata)=>{  that.pyeditor.setValue(eventdata?.pycode); }, this.pyeditor.uuid);
 			
-			this.scriptControl.eventbus.subscribe('loadfrompythonscript',(obj,eventdata)=>{  that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue()); }, this.pyeditor.uuid);
-			this.scriptControl.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
-			
-			
-			this.pyeditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ that.runCmdFromGridItem('py',obj,eventdata);  }, this.uuid);
-			this.pyeditor.eventbus.subscribe('clickableactionclick',(obj,eventdata)=>{ 
-				if (eventdata?.menuItemId === "syncaction") {
-					that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue());  
-				}
-			}, this.uuid);
-			
-			this.dfview.eventbus.subscribe('cmdActionEvent',async (obj,eventdata)=>{  
-				await that.scriptControl.addScriptStep(eventdata);
-				await that.runScriptOneStep(eventdata); 
-			}, this.scriptControl.uuid);
-			
-			this.dfview.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
-			this.dfview.eventbus.subscribe('requestDataFrameChange',this.dfViewDataFrameChange.bind(this), this.uuid);
+			//~ this.scriptControl.eventbus.subscribe('loadfrompythonscript',(obj,eventdata)=>{  that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue()); }, this.pyeditor.uuid);
+			//~ this.scriptControl.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 			
 			
-			this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
-			this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
-			this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+			//~ this.pyeditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ that.runCmdFromGridItem('py',obj,eventdata);  }, this.uuid);
+			//~ this.pyeditor.eventbus.subscribe('clickableactionclick',(obj,eventdata)=>{ 
+				//~ if (eventdata?.menuItemId === "syncaction") {
+					//~ that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue());  
+				//~ }
+			//~ }, this.uuid);
+			
+			//~ this.dfview.eventbus.subscribe('cmdActionEvent',async (obj,eventdata)=>{  
+				//~ await that.scriptControl.addScriptStep(eventdata);
+				//~ await that.runScriptOneStep(eventdata); 
+			//~ }, this.scriptControl.uuid);
+			
+			//~ this.dfview.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
+			//~ this.dfview.eventbus.subscribe('requestDataFrameChange',this.dfViewDataFrameChange.bind(this), this.uuid);
+			
+			
+			//~ this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+			//~ this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+			//~ this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
+			
 		} else {
 			
 			try {

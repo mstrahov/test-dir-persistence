@@ -45,7 +45,7 @@ window.localFormatSaver = new OwnFormatHandler({
 		FileIOHandler: window.fileiohandler,
 		coderunner: window.coderunner,  
 		namespaceuuid: "globals",
-		dbFileName: "/app/mount_dir/default.dbsqlite"
+		dbFileName: "/app/opfs/default.adhocdb"
 });
 window.localFormatSaver.init();
 
@@ -121,9 +121,10 @@ sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.
 
 // ================================================================== newscriptmenuaction
 let activetabs = [];
-const OpenNewScriptTab = (scriptobj) => {   
+const OpenNewScriptTab = (scriptobj, initiallayout=1) => {   
 	let newtab = new AppPageScriptControl( { 
 			scriptobj: scriptobj,
+			initiallayout: initiallayout,
 			tabnavcontrol: tabnavcontrol,  
 			baseTabControlType:BaseTabControl, 
 			insertBeforePosition:-1, 
@@ -264,8 +265,9 @@ mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{
 		if (eventdata?.menuItemId === "openmntdir") {
 			window.fileiohandler.mountDirectory();
 		} else if (eventdata?.menuItemId === "newscriptmenuaction") { 	
-			//console.log("NEW SCRIPT");
 			OpenNewScriptTab();
+		} else if (eventdata?.menuItemId === "newscriptsqlmenuaction") { 	
+			OpenNewScriptTab(undefined,2);
 		} else if (eventdata?.menuItemId === "saveprojectfilemenuaction") { 
 			//console.log("saveprojectfilemenuaction");
 			SaveProjectFile(); 
@@ -275,6 +277,7 @@ mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{
 		}
 	});
 
+//
 // -------------------------------------------------------------------------------------------------
 // newAppMenu templates :  #menuAppTab01
 // -------------------------------------------------------------------------------------------------

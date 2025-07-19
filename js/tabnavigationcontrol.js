@@ -119,7 +119,7 @@ export class BaseTabControl {
 		const that=this;
 		this.tabnavelement.addEventListener('click', event => {
 			event.preventDefault();
-			console.log("Click on tab: ", that.TabNavTitleElement.textContent);
+			//console.log("Click on tab: ", that.TabNavTitleElement.textContent);
 			tabTrigger.show();
 		});
 		this.tabnavelement.addEventListener('shown.bs.tab', this.tabShown.bind(this));
@@ -128,7 +128,7 @@ export class BaseTabControl {
 	tabShown(event) {
 		// event.target // newly activated tab
 		  // event.relatedTarget // previous active tab
-		console.log("Shown tab: ", this.TabNavTitleElement.textContent);
+		// console.log("Shown tab: ", this.TabNavTitleElement.textContent);
 	}
 	
 	show() {
