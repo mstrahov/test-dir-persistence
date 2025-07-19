@@ -34,6 +34,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 		// this.arrowdata = null;
 		this.sqlcommand = params.sqlcommand?params.sqlcommand:'';
 		this.preferuserlayout = params.preferuserlayout?params.preferuserlayout:false;
+		this.lastheadertext = params.lastheadertext?params.lastheadertext:'';
 		
 		this.displaymode = 0;  
 		this._PLAINTABLE = 0;

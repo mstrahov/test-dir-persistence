@@ -67,11 +67,11 @@ tabNavStatusTab.appuuid="globals";
 
 window.testgrid = tabNavStatusTab;
 
-const pyeditor = tabNavStatusTab.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Python", griditemoptions: {w:6,h:3,} });
-const statusTabOutput = tabNavStatusTab.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:6,} });
-const sqleditor = tabNavStatusTab.addGridItem( GridItemSQLEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "SQL", griditemoptions: {w:6,h:3,} });
-const ownformatdialog = tabNavStatusTab.addGridItem( gridItemOwnFormat, {templateid:"#gridItemOwnFormatDialog", headertext: "Project file", griditemoptions: {w:6,h:7,}, OwnFormatHandler: window.localFormatSaver });
-const filedialog = tabNavStatusTab.addGridItem( gridItemFileDialog, {templateid:"#gridItemFileDialog", headertext: "Local files", griditemoptions: {w:6,h:7,}, fileIOHandler: window.fileiohandler });
+const pyeditor = tabNavStatusTab.addGridItem( GridItemPyEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "Python", griditemoptions: {w:6,h:4,} });
+const statusTabOutput = tabNavStatusTab.addGridItem( StatusGridItemTextOutput, {templateid:"#gridItemTextOutput", headertext: "Output", griditemoptions: {w:6,h:8,} });
+const sqleditor = tabNavStatusTab.addGridItem( GridItemSQLEditor, {templateid:"#gridItemPythonCodeEditor", headertext: "SQL", griditemoptions: {w:6,h:4,} });
+const ownformatdialog = tabNavStatusTab.addGridItem( gridItemOwnFormat, {templateid:"#gridItemOwnFormatDialog", headertext: "Project file", griditemoptions: {w:6,h:6,}, OwnFormatHandler: window.localFormatSaver });
+const filedialog = tabNavStatusTab.addGridItem( gridItemFileDialog, {templateid:"#gridItemFileDialog", headertext: "Local files", griditemoptions: {w:6,h:6,}, fileIOHandler: window.fileiohandler });
 
 //  ---------- Menu tab (left-most)
 let tabNavMainMenuTab = tabnavcontrol.addNewTab(DropDownTabControl, {insertBeforePosition:0,  navitemtemplateid: "#mainmenuTabNavItemTemplate", });

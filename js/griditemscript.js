@@ -222,6 +222,9 @@ export class gridItemScript extends GridItemWithMenu {
 			
 		} else if (eventdata?.menuItemId === "loadfrompythonscript") {
 			this.eventbus.dispatch('loadfrompythonscript', this, {});
+			
+		}  else if (eventdata?.menuItemId === "closegriditem") {
+			this.eventbus.dispatch('closegriditem', this, {});
 		}
 		
 	}

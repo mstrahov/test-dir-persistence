@@ -142,6 +142,9 @@ export class AppPageControl {
 	destroy() {
 		//  dropdownMenuControl - clear eventbus
 		//  dropdownmenutab  - destroy
+		// grid - removeAll(removeDOM = true)
+		// grid -  destroy([removeDOM=true])
+		// https://getbootstrap.com/docs/5.0/components/navs-tabs/ - dispose()  :  Destroys an element’s tab.
 		
 	}
 	// ------------------------------------------------------------------------------------------

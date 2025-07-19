@@ -44,8 +44,15 @@ export class AppPageScriptControl extends AppPageControl {
 		
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.topDropDownMenuEventHandler.bind(this));
 		
+		/* Widget groups:
+		 * "gridItemScript", "GridItemPyEditor", "StatusGridItemTextOutput", "griditemTableDFPagedTransform", "gridItemSelectFileDialog"
+		 * "GridItemSQLEditor", "StatusGridItemTextOutput", "gridItemQueryView"
+		 * 
+		 * 
+		 **/
+		
 		if (!this.initscriptobj) {
-			this.scriptControl = this.addGridItem( gridItemScript, 
+			this.scriptControl = this.addGridItem( gridItemScript,   
 				{	
 					templateid:"#gridItemScriptDialog", 
 					headertext: "Script", 
@@ -97,6 +104,8 @@ export class AppPageScriptControl extends AppPageControl {
 			this.scriptControl.eventbus.subscribe('showscriptaspythoneditable',(obj,eventdata)=>{  that.pyeditor.setValue(eventdata?.pycode); }, this.pyeditor.uuid);
 			
 			this.scriptControl.eventbus.subscribe('loadfrompythonscript',(obj,eventdata)=>{  that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue()); }, this.pyeditor.uuid);
+			this.scriptControl.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
+			
 			
 			this.pyeditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ that.runCmdFromGridItem('py',obj,eventdata);  }, this.uuid);
 			this.pyeditor.eventbus.subscribe('clickableactionclick',(obj,eventdata)=>{ 
@@ -174,6 +183,7 @@ export class AppPageScriptControl extends AppPageControl {
 					);
 					this.scriptControl.eventbus.subscribe('runonecodestepaction',(obj,eventdata)=>{  that.runScriptOneStep(eventdata); }, this.uuid);
 					this.scriptControl.eventbus.subscribe('runallcodestepsaction',(obj,eventdata)=>{  that.runScriptAllSteps(eventdata); }, this.uuid);
+					this.scriptControl.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 					
 				} else if (this.initscriptobj.gridwidgets[i].griditemname==="GridItemPyEditor") {
 					this.pyeditor = this.addGridItem( GridItemPyEditor, 
@@ -389,6 +399,12 @@ export class AppPageScriptControl extends AppPageControl {
 		let widgetuuid = obj.uuid;
 		console.log("Removing object ", mainWidgetName, widgetuuid);
 		
+		if (mainWidgetName==="gridItemScript") {
+			if (this.scriptControl) {
+				this.scriptObject = this.scriptControl.transformscriptclone;
+			}
+		}
+		
 		let widgetSettings = obj.toOwnFormat();
 		const ind = this.closedwidgets.findIndex((v)=>v.griditemname===mainWidgetName);
 		if (ind>-1) {
@@ -445,10 +461,59 @@ export class AppPageScriptControl extends AppPageControl {
 			widgetSettings = initWidgetSettings;
 		}
 		
-		
 		if (mainWidgetName==="gridItemScript") {
 			if (!this.scriptControl) {
-			
+				if (!widgetSettings) {
+					widgetSettings = {};
+					widgetSettings.griditemheader = "Script";
+					widgetSettings.columnlayout = undefined;
+					widgetSettings.scriptname = "";
+					widgetSettings.transformscript = {};	
+				}
+				this.scriptControl = this.addGridItem( gridItemScript, 
+					{	
+						templateid:"#gridItemScriptDialog", 
+						headertext: widgetSettings.griditemheader,
+						columnlayout:  widgetSettings.columnlayout,
+						griditemoptions: gridlayoutoptions,
+						transformscript: this.scriptObject,
+						scriptname: this.scriptObject.scriptName,
+					}
+				);
+				this.scriptControl.eventbus.subscribe('runonecodestepaction',(obj,eventdata)=>{  that.runScriptOneStep(eventdata); }, this.uuid);
+				this.scriptControl.eventbus.subscribe('runallcodestepsaction',(obj,eventdata)=>{  that.runScriptAllSteps(eventdata); }, this.uuid);
+				this.scriptControl.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
+				// *************************
+				if (this.scriptControl) {
+					if (this.pyeditor) {
+						this.pyeditor.eventbus.subscribe('clickableactionclick',(obj,eventdata)=>{ 
+							if (eventdata?.menuItemId === "syncaction") {
+								that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue());  
+							}
+						}, this.scriptControl.uuid);
+						
+						this.scriptControl.eventbus.subscribe('showscriptaspythoneditable',(obj,eventdata)=>{  that.pyeditor.setValue(eventdata?.pycode); }, this.pyeditor.uuid);
+						this.scriptControl.eventbus.subscribe('loadfrompythonscript',(obj,eventdata)=>{  that.scriptControl.loadScriptFromPyCode(that.pyeditor.getValue()); }, this.pyeditor.uuid);
+					}
+					
+					if (this.selectFileDialog) {
+						this.selectFileDialog.eventbus.subscribe('importfiletodf',async (obj,eventdata)=>{  
+							await that.addImportFileStep(eventdata); 
+							await that.runScriptOneStep(eventdata); 
+						}, this.scriptControl.uuid);
+					}
+				
+					if (this.dfview) {
+						this.dfview.eventbus.subscribe('cmdActionEvent',async (obj,eventdata)=>{  
+							await that.scriptControl.addScriptStep(eventdata);
+							await that.runScriptOneStep(eventdata); 
+						}, this.scriptControl.uuid);
+						
+						this.dfview.showdf(); 
+					}
+				}
+				
+				// *************************
 			}
 		} else if (mainWidgetName==="GridItemPyEditor") {
 			// ------------------------------------
@@ -712,7 +777,9 @@ export class AppPageScriptControl extends AppPageControl {
 			this.addMainWidget("GridItemSQLEditor");
 		} else if (eventdata?.menuItemId === 'addsqlqueryviewwidget') { 
 			this.addMainWidget("gridItemQueryView");
-		} 
+		} else if (eventdata?.menuItemId === 'addscriptstepswidget') { 
+			this.addMainWidget("gridItemScript"); 
+		}
 		
 		// 
 		//	this.grid.compact();   
@@ -784,9 +851,16 @@ export class AppPageScriptControl extends AppPageControl {
 	// --------------------------------------------------------------------------------
 	async renameScript() {
 		try {
+			let curScriptName;
+			if (this.scriptControl) {
+				curScriptName = this.scriptControl.transformscript.scriptName; 
+			} else if (this.scriptObject) {
+				curScriptName = this.scriptObject.scriptName;
+			}
+			
 			const props = {
 				dialogTitle: "Script name:",
-				inputOneLine: this.scriptControl.transformscript.scriptName,
+				inputOneLine: curScriptName,
 				inputOneLinePlaceHolder: "Script name",
 			};
 			const selectedOption = await this.#modalInputDialog.showdialog(props);
@@ -794,11 +868,11 @@ export class AppPageScriptControl extends AppPageControl {
 			
 			//~ this.scriptControl.transformscript.scriptName = selectedOption.inputOneLine.trim();
 			//~ this.setTabTitle(selectedOption.inputOneLine.trim());
-			if (selectedOption.inputOneLine.trim() !== this.scriptControl.transformscript.scriptName) {
+			if (selectedOption.inputOneLine.trim() !== curScriptName) {
 				this.setScriptName(selectedOption.inputOneLine.trim());
 				this.eventbus.dispatch('scriptnamechange', this, {
 						fieldname: 'name', 
-						oldvalue: this.scriptControl.transformscript.scriptName, 
+						oldvalue: curScriptName, 
 						newvalue:selectedOption.inputOneLine.trim(), 
 						scriptuuid: this.uuid,
 						rowdata: { objuuid: this.uuid }, 
@@ -823,7 +897,7 @@ export class AppPageScriptControl extends AppPageControl {
 		try {
 			const props = {
 				dialogTitle: "Enter table header:",
-				inputOneLine: "",
+				inputOneLine: this.sqlqueryview.lastheadertext,
 				inputOneLinePlaceHolder: "Table header",
 			};
 			const selectedOption = await this.#modalInputDialog.showdialog(props);
@@ -890,6 +964,7 @@ export class AppPageScriptControl extends AppPageControl {
 			this.sqlqueryview.sqlcommand = obj.sqlcommand;
 			this.sqlqueryview.usercolumnlayout = JSON.parse(JSON.stringify(obj.usercolumnlayout));
 			this.sqlqueryview.preferuserlayout = true;
+			this.sqlqueryview.lastheadertext = obj.headerText;
 			if (sqlqueryviewisopen) {
 				await this.sqlqueryview.refreshData();   //  need to add a lock
 			}
@@ -900,7 +975,11 @@ export class AppPageScriptControl extends AppPageControl {
 	
 	// --------------------------------------------------------------------------------
 	setScriptName(newName) {
-		this.scriptControl.transformscript.scriptName = newName;
+		if (this.scriptControl) {
+			this.scriptControl.transformscript.scriptName = newName;
+		} else if (this.scriptObject) {
+			this.scriptObject.scriptName = newName;;
+		} 
 		this.setTabTitle(newName);
 	}
 	
@@ -1088,11 +1167,17 @@ export class AppPageScriptControl extends AppPageControl {
 	
 	// --------------------------------------------------------------------------------
 	async addImportParquetFileStep(eventdata) {
+		if (!this.scriptControl) {
+			this.addMainWidget("gridItemScript");
+		}
 		await this.scriptControl.addScriptStep({actionid:'ImportParquetFileToDF', parameters:{df:"df",filepath:eventdata.fullpath, }});
 	}
 	
 	// --------------------------------------------------------------------------------
 	async addImportCSVFileStep(eventdata) {
+		if (!this.scriptControl) {
+			this.addMainWidget("gridItemScript");
+		}
 		await this.scriptControl.addScriptStep({actionid:'ImportCSVFileToDF', parameters:{df:"df",filepath:eventdata.fullpath, }});
 	}
 	
@@ -1170,6 +1255,9 @@ sheetinfo
 			if (selectedOption) {
 				// that.eventbus.dispatch('dfActionEvent',that,{actionid:a.actionid, parameters:{df:"df",rownum:cell.getRow().getIndex(), colnum:colIndex-1}}  );
 				// window.teststeps.addScriptStep(eventdata);
+				if (!this.scriptControl) {
+					this.addMainWidget("gridItemScript");
+				}
 				await this.scriptControl.addScriptStep({actionid:'ImportExcelFileToDF', parameters:{df:"df",filepath:eventdata.fullpath, sheetname:selectedOption.sheetname}});
 				
 			}
