@@ -139,10 +139,27 @@ const OpenNewScriptTab = (scriptobj) => {
 	activetabs.push(newtab);
 	
 	newtab.eventbus.subscribe('scriptnamechange', (obj,eventdata)=> {  
-		window.localFormatSaver.updateScriptArrayData(eventdata);
-		updateOwnFormatDialogData();
-	} , tabNavStatusTab.uuid);
+			window.localFormatSaver.updateScriptArrayData(eventdata);
+			updateOwnFormatDialogData();  
+		}
+	, tabNavStatusTab.uuid);
+	// -------------- 
+	newtab.eventbus.subscribe('closebuttonaction', (obj,eventdata)=> {  
+			console.log('Script tab close command!');
+			obj.destroy();	
+			tabNavStatusTab.contenttab.show();
+		} 
+	, tabNavStatusTab.uuid);
+	// -------------- 
+	newtab.eventbus.subscribe('savelayout', (obj,eventdata)=> {  
+			console.log('Script tab savelayout command!');
+		} 
+	, tabNavStatusTab.uuid);
+		
+	
 };
+
+
 // ================================================================== own format handler
 
 const updateOwnFormatDialogData = () => {

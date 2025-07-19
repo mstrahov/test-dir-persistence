@@ -145,6 +145,24 @@ export class AppPageControl {
 		// grid - removeAll(removeDOM = true)
 		// grid -  destroy([removeDOM=true])
 		// https://getbootstrap.com/docs/5.0/components/navs-tabs/ - dispose()  :  Destroys an element’s tab.
+		// bootstrap dropdown  bootstrap.Dropdown  
+		//  bootstrap.Dropdown.getInstance(element)   -- then dispose()   https://getbootstrap.com/docs/5.0/components/dropdowns/#methods
+		//  
+		while (this.gridItems.length>0) {
+			this.destroyGridItem(this.gridItems[0]);
+		}
+		if (this.grid) {
+			this.grid.destroy(true);
+		}
+		// ***
+		if (this.dropdownmenutab) {
+			bootstrap.Dropdown.getInstance(this.dropdownmenutab.tabnavelement)?.dispose();
+			this.tabnavcontrol.destroyTab(this.dropdownmenutab);
+		}
+		// ***
+		this.tabnavcontrol.destroyTab(this.contenttab);
+		
+		//***
 		
 	}
 	// ------------------------------------------------------------------------------------------

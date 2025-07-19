@@ -60,6 +60,13 @@ export class TabNavigationControl {
 		
 		return newtab;
 	}
+	// ---------------
+	destroyTab(tabobj) {
+		let tabind = this.tabs.findIndex((v)=>v===tabobj);
+		tabobj.destroy();
+		this.tabs.splice(tabind, 1);
+	}
+	
 	
 }
 
@@ -152,6 +159,13 @@ export class BaseTabControl {
 		return this.TabBodyElement.getAttribute('id');
 	}
 	
+	destroy() {
+		bootstrap.Tab.getInstance(this.tabnavelement)?.dispose();
+		this.tabnavelement.remove();
+		this.TabBodyElement.remove(); 
+		this.element.remove(); 
+	}
+	
 }
 
 
@@ -241,5 +255,12 @@ export class DropDownTabControl {
 	//~ get BodyElementId() {
 		//~ return this.TabBodyElement.getAttribute('id');
 	//~ }
+	
+	destroy() {
+		
+		this.tabnavelement.remove();
+		//this.TabBodyElement?.remove(); 
+		this.element.remove(); 
+	}
 	
 }
