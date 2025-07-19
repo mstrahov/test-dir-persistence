@@ -247,6 +247,12 @@ const OpenProjectFile = async () => {
 	}
 	
 	updateOwnFormatDialogData();
+	if (activetabs.length>0) {
+		activetabs[0].contenttab.show();
+	}
+	
+	
+	
 	
 };
 
