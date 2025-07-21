@@ -121,13 +121,13 @@ sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.
 
 // ================================================================== newscriptmenuaction
 let activetabs = [];
-const OpenNewScriptTab = (scriptobj, initiallayout=1) => {   
+const OpenNewScriptTab = (scriptobj, initiallayout=1, insertbeforeind=-1) => {   
 	let newtab = new AppPageScriptControl( { 
 			scriptobj: scriptobj,
 			initiallayout: initiallayout,
 			tabnavcontrol: tabnavcontrol,  
 			baseTabControlType:BaseTabControl, 
-			insertBeforePosition:-1, 
+			insertBeforePosition: insertbeforeind, 
 			templateid: "#emptyTabContentTemplate", 
 			navitemtemplateid: "#emptyTabNavItemTemplate", 
 			coderunner: window.coderunner,
@@ -146,18 +146,29 @@ const OpenNewScriptTab = (scriptobj, initiallayout=1) => {
 	, tabNavStatusTab.uuid);
 	// -------------- 
 	newtab.eventbus.subscribe('closebuttonaction', (obj,eventdata)=> {  
-			console.log('Script tab close command!');
-			obj.destroy();	
-			tabNavStatusTab.contenttab.show();
+			//console.log('Script tab close command!');
+			(async ()=>{
+				const ind = activetabs.findIndex((val)=>val.uuid===obj.uuid);
+				await window.localFormatSaver.saveScriptData(obj, false);
+				obj.destroy();	
+				updateOwnFormatDialogData();
+				tabNavStatusTab.contenttab.show();
+				if (ind>-1) {
+					activetabs.splice(ind,1);
+				}
+			})(obj);
 		} 
 	, tabNavStatusTab.uuid);
 	// -------------- 
 	newtab.eventbus.subscribe('savelayout', (obj,eventdata)=> {  
 			console.log('Script tab savelayout command!');
+			(async ()=>{
+				await window.localFormatSaver.saveScriptData(obj);
+				updateOwnFormatDialogData();
+			})(obj);
 		} 
 	, tabNavStatusTab.uuid);
 		
-	
 };
 
 
@@ -185,8 +196,87 @@ ownformatdialog.eventbus.subscribe('datacelledited',
 		}
 , tabNavStatusTab.uuid);
 
-
 ownformatdialog.eventbus.subscribe('datarefreshrequested', (obj,eventdata)=>  { updateOwnFormatDialogData(); } , tabNavStatusTab.uuid);
+// openscriptcommand
+
+ownformatdialog.eventbus.subscribe('openscriptcommand',
+	(obj,eventdata)=>
+		{ 
+			//console.log("datacelledited",eventdata);
+			// { objtype: currow.objtype, objuuid: currow.objuuid, }
+			const ind = activetabs.findIndex((v)=>v.uuid===eventdata.objuuid);
+			if (ind>-1) {
+				// already open
+				activetabs[ind].contenttab.show();
+			} else {
+				window.localFormatSaver.scriptsarr.sort((a, b)=>a.runorder-b.runorder);
+				const ind1 = window.localFormatSaver.scriptsarr.findIndex((v)=>v.objuuid===eventdata.objuuid);
+				if (ind1>-1) {
+					
+					let insertbeforeind=0;
+					for (let i=0;i<ind1;i++) {
+						if (activetabs.findIndex((v)=>v.uuid===window.localFormatSaver.scriptsarr[i].objuuid)>-1) {
+							insertbeforeind+=2;
+						};
+					}
+					
+					OpenNewScriptTab(window.localFormatSaver.scriptsarr[ind1], undefined, insertbeforeind+1);
+				} 
+			}
+			
+		}
+, tabNavStatusTab.uuid);
+
+ownformatdialog.eventbus.subscribe('runscriptcommand',
+	(obj,eventdata)=>
+		{ 
+			//console.log("datacelledited",eventdata);
+			// { objtype: currow.objtype, objuuid: currow.objuuid, }   eventdata.objuuid
+			(async (obj,eventdata)=>{
+				const ind = activetabs.findIndex((v)=>v.uuid===eventdata.objuuid);
+				if (ind>-1) {
+					// already open, save script data before running
+					await window.localFormatSaver.saveScriptData(activetabs[ind]);
+				} 
+				
+				const ind1 = window.localFormatSaver.scriptsarr.findIndex((v)=>v.objuuid===eventdata.objuuid);
+				if (ind1>-1) {
+					if (window.localFormatSaver.scriptsarr[ind1].scriptObject?.transformSteps?.length>0) {
+						let res = await window.coderunner.runScriptStepsAndUpdateInPlace(
+														window.localFormatSaver.scriptsarr[ind1].scriptObject?.transformSteps, 
+														window.localFormatSaver.scriptsarr[ind1].objuuid
+												);
+						if (res?.runStatus) {
+							window.localFormatSaver.scriptsarr[ind1].scriptObject.lastRunStatus = res.runStatus;
+							window.localFormatSaver.scriptsarr[ind1].scriptObject.lastRunResult = res.runResult;
+						}	
+						
+						updateOwnFormatDialogData();					
+					}
+				}
+			})(obj,eventdata);
+		}
+, tabNavStatusTab.uuid);
+
+ownformatdialog.eventbus.subscribe('deletescriptcommand',
+	(obj,eventdata)=>
+		{ 
+			//console.log("datacelledited",eventdata);
+			// { objtype: currow.objtype, objuuid: currow.objuuid, }   eventdata.objuuid
+			(async (obj,eventdata)=>{
+				const ind = activetabs.findIndex((v)=>v.uuid===eventdata.objuuid);
+				if (ind>-1) {
+					// already open, save script data before running
+					console.log("Only closed scripts can be permanently deleted.");
+				} else {
+					await window.localFormatSaver.deleteScript(eventdata.objuuid);
+					updateOwnFormatDialogData();
+				}		
+			})(obj,eventdata);
+		}
+, tabNavStatusTab.uuid);
+
+
 
 // ================================================================== save project menu action
 
@@ -198,17 +288,26 @@ const SaveProjectFile = async () => {
 		activetabs = []
 	
 	*/
+	// save scripts open in the interface
 	for (let i=0;i<activetabs.length;i++) {
-		let tabobj = activetabs[i].toOwnFormat();
-		tabobj.isopen = true;
-		tabobj.autorun = true;
-		tabobj.runorder = (i+1)*10;
+		await window.localFormatSaver.saveScriptData(activetabs[i]);
 		
-		
-		//console.log(`TAB: ${i}`, tabobj , JSON.stringify(tabobj));
-		await window.localFormatSaver.writeObjectFromString(tabobj.name, tabobj.objuuid, tabobj.objtype, JSON.stringify(tabobj));
-		//console.log("GRID LAYOUT ",activetabs[i].layoutToJSON());
+		//~ let tabobj = activetabs[i].toOwnFormat();
+		//~ tabobj.isopen = true;
+		//~ tabobj.autorun = true;
+		//~ tabobj.runorder = (i+1)*10;
+		//~ //console.log(`TAB: ${i}`, tabobj , JSON.stringify(tabobj));
+		//~ await window.localFormatSaver.writeObjectFromString(tabobj.name, tabobj.objuuid, tabobj.objtype, JSON.stringify(tabobj));
+		//~ //console.log("GRID LAYOUT ",activetabs[i].layoutToJSON());
 	}
+	// save closed scripts
+	for (let i=0;i<window.localFormatSaver.scriptsarr.length;i++) {
+		const ind = activetabs.findIndex((v)=>v.uuid===window.localFormatSaver.scriptsarr[i].objuuid);
+		if (ind===-1) {
+			await window.localFormatSaver.saveScriptByUuid(window.localFormatSaver.scriptsarr[i].objuuid);
+		}
+	}
+		
 };
 
 // ================================================================== open project menu action
@@ -233,17 +332,22 @@ const OpenProjectFile = async () => {
 	for (let i=0;i<window.localFormatSaver.scriptsarr.length;i++) {
 		const ind = activetabs.findIndex((v)=>v.uuid===window.localFormatSaver.scriptsarr[i].objuuid);
 		if (ind===-1) { 
-			if (window.localFormatSaver.scriptsarr[i].scriptObject?.transformSteps?.length>0) {
+			if (window.localFormatSaver.scriptsarr[i].autorun && window.localFormatSaver.scriptsarr[i].scriptObject?.transformSteps?.length>0) {
 				let res = await window.coderunner.runScriptStepsAndUpdateInPlace(
 												window.localFormatSaver.scriptsarr[i].scriptObject?.transformSteps, 
 												window.localFormatSaver.scriptsarr[i].objuuid
 										);
+				
+				window.localFormatSaver.scriptsarr[i].scriptObject.lastRunStatus = res?.runStatus;
 				if (res?.runStatus) {
-					window.localFormatSaver.scriptsarr[i].scriptObject.lastRunStatus = res.runStatus;
 					window.localFormatSaver.scriptsarr[i].scriptObject.lastRunResult = res.runResult;
-				}						
+				} 					
+			} else {
+				window.localFormatSaver.scriptsarr[i].scriptObject.lastRunStatus = null;
 			}
-			OpenNewScriptTab(window.localFormatSaver.scriptsarr[i]); 
+			if (window.localFormatSaver.scriptsarr[i].isopen) {
+				OpenNewScriptTab(window.localFormatSaver.scriptsarr[i]);
+			} 
 		}
 	}
 	
@@ -251,9 +355,6 @@ const OpenProjectFile = async () => {
 	if (activetabs.length>0) {
 		activetabs[0].contenttab.show();
 	}
-	
-	
-	
 	
 };
 

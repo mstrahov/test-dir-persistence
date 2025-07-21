@@ -776,7 +776,7 @@ export class AppPageScriptControl extends AppPageControl {
 			console.log("Grid items ", this.gridItems);
 			// {"w":2,"h":2,"id":"0f1ab445-6b02-4d9e-bdec-d0eac4eb311e","x":6,"y":6},  
 			// but if size w=1,h=1: {"id":"0f1ab445-6b02-4d9e-bdec-d0eac4eb311e","x":6,"y":6},
-			console.log(this.scriptControl.transformscript);
+			console.log("Script: ",this.scriptControl?this.scriptControl.transformscriptclone:this.scriptObject);
 			console.log("Data table widgets ", this.staticqueryviews);
 			this.eventbus.dispatch('savelayout', this, {} );
 			

@@ -105,6 +105,10 @@ conn_internal.close()
 	}
 	
 	// -----------------------------------------------------------------------------------------------------
+	async syncFS() {
+		await this.#iohandler.syncFS();
+	}
+	// -----------------------------------------------------------------------------------------------------
 	
 	async writeObjectFromString(name, objuuid, objtype, stringval){
 		//window.exectimer.timeit("writing object from string...");
@@ -305,6 +309,43 @@ conn_internal_data
 	
 	// -----------------------------------------------------------------------------------------------------
 	
+	async deleteObjectByUuid(objuuid, objtype) {
+		
+		const cmd = `
+conn_internal.execute('''
+	DELETE FROM tbl_objects WHERE objuuid=? AND objtype=?;
+''',('${objuuid}','${objtype}'))
+`;
+		let output = undefined;
+		await this.openConn();
+		try {
+			let res = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
+			if (res.runStatus) {
+				output = res.output;
+			} else {
+				console.error('Error deleting object',this.#dbfilename, objuuid, objtype, res.error);
+			}
+		} catch (err) {
+			console.error('Failed to delete object ',this.#dbfilename, objuuid, objtype, err);
+		}
+		await this.closeConn();
+		return output;
+		
+	}
+	
+	// -----------------------------------------------------------------------------------------------------
+	
+	async deleteScript(objuuid) { 
+		
+		const ind1 = this.scriptsarr.findIndex((v)=>v.objuuid===objuuid);
+		if (ind1>-1) {
+			await this.deleteObjectByUuid(objuuid, 'script');
+			this.scriptsarr.splice(ind1,1);
+		}
+	}
+	
+	// -----------------------------------------------------------------------------------------------------
+	
 	async getScriptsArrayFromOwnFormatFile(){
 		let res = [];
 		
@@ -395,5 +436,40 @@ conn_internal_data
 	
 	}
 	// -----------------------------------------------------------------------------------------------------
+	
+	async saveScriptData(scriptobj, isopenvalue=null) {
+		let scriptownformat = scriptobj.toOwnFormat();
+		const ind = this.scriptsarr.findIndex((val)=>val.objuuid===scriptownformat.objuuid);
+		let scriptjson = '';
+		
+		if (ind>-1) {
+			let savedproperties = ['isopen', 'autorun', 'runorder'];
+			savedproperties.forEach(v=>scriptownformat[v]=this.scriptsarr[ind][v]);
+			if (isopenvalue!==null) {
+				scriptownformat.isopen = isopenvalue;
+			}
+			scriptjson = JSON.stringify(scriptownformat);
+			this.scriptsarr[ind] = JSON.parse(scriptjson);
+		} else {
+			scriptownformat.isopen = isopenvalue!==null?isopenvalue:true;
+			scriptownformat.autorun = true;
+			scriptownformat.runorder = (this.scriptsarr.length+1)*10;
+			scriptjson = JSON.stringify(scriptownformat);
+			this.scriptsarr.push(JSON.parse(scriptjson));
+		}
+		console.log("script saved: ", scriptownformat);
+		await this.writeObjectFromString(scriptownformat.name, scriptownformat.objuuid, scriptownformat.objtype, scriptjson);
+		
+	}
+	
+	// -------------------------------------------------------------------------------------------------------
+	
+	async saveScriptByUuid(objuuid, isopenvalue=null) {
+		const ind = this.scriptsarr.findIndex((val)=>val.objuuid===objuuid);
+		if (ind>-1) {
+			await this.writeObjectFromString(this.scriptsarr[ind].name, this.scriptsarr[ind].objuuid, this.scriptsarr[ind].objtype, JSON.stringify(this.scriptsarr[ind]));
+		}
+	}
+	// -------------------------------------------------------------------------------------------------------
 	
 }   // end of class OwnFormatHandler

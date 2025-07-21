@@ -148,6 +148,11 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 					action:function(e, row){
 						console.log(row.getData());
 						//~ (async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().fullpath);
+						//  objtype  objuuid
+						const currow = row.getData();
+						if (currow.objtype==='script') {
+							that.eventbus.dispatch('openscriptcommand', this, {objtype: currow.objtype, objuuid: currow.objuuid, });
+						}
 					}
 				},
 				{
@@ -155,6 +160,23 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 					action:function(e, row){
 						console.log(row.getData());
 						//~ (async (path)=> {await that.filesaveasdialog.downloadFromFSPath(path); })(row.getData().fullpath);
+						const currow = row.getData();
+						if (currow.objtype==='script') {
+							that.eventbus.dispatch('runscriptcommand', this, {objtype: currow.objtype, objuuid: currow.objuuid, });
+						}
+						
+					}
+				},
+				{
+					label:"Delete script",
+					action:function(e, row){
+						console.log(row.getData());
+						//~ (async (path)=> {await that.filesaveasdialog.downloadFromFSPath(path); })(row.getData().fullpath);
+						const currow = row.getData();
+						if (currow.objtype==='script') {
+							that.eventbus.dispatch('deletescriptcommand', this, {objtype: currow.objtype, objuuid: currow.objuuid, });
+						}
+						
 					}
 				},
 				
