@@ -229,7 +229,7 @@ export class gridItemOwnFormat extends GridItemWithMenu {
 			}
 			//~ console.log(cell);
 		});
-		this.tabulatorObj.on("cellTap", function(e, cell) {
+		this.tabulatorObj.on("cellDblTap", function(e, cell) {
 			if (cell.getData()['_level']===1 && (cell.getField()==='isopen' || cell.getField()==='autorun')) {
 				let curVal = cell.getValue();
 				if (curVal) { 
