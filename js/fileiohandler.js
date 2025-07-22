@@ -30,6 +30,7 @@ export class FileIOHandler {
 		this.APP_ROOT_DIR = "/app";
 		this.OPFS_DIR = this.APP_ROOT_DIR + "/opfs";
 		this.USER_DIR = "/mount_dir";
+		this.TEMP_DIR = this.APP_ROOT_DIR + "/temp";
 		this.#duckdbloader = params.duckdbloader;
 		this.#pyodideloader = params.pyodideloader;
 		this.#pyodidePromise = this.#pyodideloader.pyodideReadyPromise();
@@ -57,7 +58,8 @@ export class FileIOHandler {
 		
 		// load opfs
 		await pyodide.FS.mkdir(this.APP_ROOT_DIR);
-		await pyodide.FS.mkdir(this.OPFS_DIR);
+		await pyodide.FS.mkdir(this.OPFS_DIR); 
+		await pyodide.FS.mkdir(this.TEMP_DIR); 
 		this.opfsmountpoint.dirHandle = await navigator.storage.getDirectory();
 		this.opfsmountpoint.dirPath = this.OPFS_DIR;	
 		this.opfsmountpoint.mountPoint = await pyodide.mountNativeFS(this.opfsmountpoint.dirPath, this.opfsmountpoint.dirHandle);
@@ -453,6 +455,7 @@ export class FileIOHandler {
 		
 		await this.FileIOinitialized();
 		await this.#duckdbloader.getdbconn();
+		let pyodide = await this.#pyodidePromise;
 		
 		await this.duckdbRemoveFileHandleFromList(filenamestr);
 
@@ -466,8 +469,8 @@ export class FileIOHandler {
 				console.error('Error registering duckdb file handle ',filenamestr, filehandle, err);
 				return false;
 			}
-		} else {
-			// for opfs/ memory attempt to open read-write handle
+		}  else if (filesource===this.OPFS_DIR) {
+			// for opfs/ memory attempt to open read-write handle  this.OPFS_DIR
 			try {
 				await this.#duckdbloader.db.registerFileHandle(filenamestr, filehandle, this.#duckdbloader.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true);
 				this.duckdbfilehandles.push({filename: filenamestr, transactionid:transactionid});
@@ -475,7 +478,38 @@ export class FileIOHandler {
 				console.error('Error registering duckdb file handle ',filenamestr, filehandle, err);
 				return false;
 			}
+		} else  {
+			// temporary in-memory file handle, register as a Uint8Array buffer
+			try {
+				//await this.#duckdbloader.db.registerFileHandle(filenamestr, filehandle, this.#duckdbloader.duckdb.DuckDBDataProtocol.BROWSER_FSACCESS, true);
+				
+				const fileinfo = pyodide.FS.analyzePath(filenamestr);
+				
+				if (fileinfo.exists===true && (fileinfo.object?.isFolder || fileinfo.object.isDevice)) {
+					console.error('Cannot register temp duckdb file handle, path exists, but not a file. ',filenamestr, filehandle);
+					return false;
+				}
+				
+				let buffer;
+				if (fileinfo.exists===true) {
+					buffer = await pyodide.FS.readFile(filenamestr);	
+				} else {
+					buffer = new Uint8Array();				
+				}
+				await this.#duckdbloader.db.registerFileBuffer(filenamestr, buffer);	
+				this.duckdbfilehandles.push({filename: filenamestr, transactionid:transactionid, buffer: buffer});
+				
+				
+			} catch (err) {
+				console.error('Error registering temp duckdb file handle ',filenamestr, filehandle, err);
+				return false;
+			}
 		}
+		
+		
+		
+		
+		
 		return true;
 	}
 	
@@ -489,10 +523,23 @@ export class FileIOHandler {
 	
 	
 	async duckdbRemoveFileHandleFromList(filenamestr) {
+		// {filename: filenamestr, transactionid:transactionid, buffer: buffer}
 		await this.FileIOinitialized();
 		await this.#duckdbloader.getdbconn();
+		let pyodide = await this.#pyodidePromise;
+		
 		let ind = this.duckdbfilehandles.findIndex((el)=>el.filename===filenamestr);
 		if (ind>-1) {
+			try {
+				if (this.duckdbfilehandles[ind]?.buffer) {
+					// writing contents of the buffer registered for sql statement back as a file to pyodide memory FS:
+					const buffer = await this.#duckdbloader.db.copyFileToBuffer(this.duckdbfilehandles[ind].filename); 
+					await pyodide.FS.writeFile(this.duckdbfilehandles[ind].filename, buffer);
+				}
+			} catch (e) {
+				console.error("Unable to write buffer as a temp file",e);
+			}
+			
 			try {
 				await this.#duckdbloader.db.dropFile(filenamestr);
 				this.duckdbfilehandles.splice(ind,1);
@@ -534,11 +581,21 @@ export class FileIOHandler {
 				rootFH = this.dirmountpoints[0].dirHandle;
 				flname = flname.replace(this.APP_ROOT_DIR+this.USER_DIR+'/','');
 				filesource = this.APP_ROOT_DIR+this.USER_DIR;
+			} else {
+				filesource = this.APP_ROOT_DIR;
 			}
+			
 		}
 		if (!rootFH) {
-			return false;
+			// file is not in a mounted file system, memory only
+			if (filesource === this.APP_ROOT_DIR) {
+				await this.createDuckdbFileHandle(filenamestr, null, filesource, transactionid);
+				return true;
+			} else {
+				return false;
+			}
 		}
+		//  file is in a mounted file system folder, trying to find a file handle
 		let filepath = flname.split('/');
 		let filehandle = undefined;
 		let curdirhandle = rootFH;

@@ -126,6 +126,8 @@ file = pd.ExcelFile('{{filepath}}')
 		description: "Import Parquet File To Dataframe",
 		cmdtemplate: `import pandas as pd
 import fastparquet
+import numpy as np
+np.float_ = np.float64
 {{df}} = pd.read_parquet('{{filepath}}', engine='fastparquet')
 `,
 		cmdexample: `df = pd.read_parquet("/app/opfs/buffer1.parquet", engine="fastparquet")`,
