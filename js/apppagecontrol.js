@@ -70,7 +70,7 @@ export class AppPageControl {
 			  handle: '.grid-elem-draggable' ,
 			  margin: 1,
 			  cellHeight: 65,
-			  animate: true, // show immediate (animate: true is nice for user dragging though)
+			  animate: false, // show immediate (animate: true is nice for user dragging though)
 			  columnOpts: {
 				layout: "moveScale",
 				breakpointForWindow: true,  // test window vs grid size
