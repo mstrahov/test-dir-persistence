@@ -43,6 +43,12 @@ export class FileIOHandler {
 		
 	}
 	// ------------------------------------------------------------------
+	
+	async getduckdbloader() {
+		return await this.#duckdbloader;
+	}
+	
+	// ------------------------------------------------------------------
 	_iostatechange(newstate, addmessage='', params={}) {
 		this.iostate = newstate;
 		console.log(addmessage, params);
@@ -395,7 +401,7 @@ export class FileIOHandler {
 			}
 			
 			// unmount current directory handle
-			//  !!!! TODO !!!   syncFS is not a proper promise
+		
 			await this.syncFS();
 			await pyodide.FS.unmount(this.dirmountpoints[0].dirPath);
 			msg = `Directory ${this.dirmountpoints[0].dirHandle.name} is unmounted.`;
@@ -560,18 +566,14 @@ export class FileIOHandler {
 	}
 	
 	// ----------------------------------------------
-	async checkDuckdbHandleForFileName(filenamestr, transactionid) {
-		// trying to automatically create duckdb file handles for every filename like '/app/*/*'
-		// TODO: handle directory change when different is mounted to /app/mount_dir.  delete duckdb file handles?
-		
-		//~ if (this.duckdbFileHandleExists(filenamestr)) {
-			//~ return true;
-		//~ }
-		
-		let flname = filenamestr.trim();
+	
+	async findRootFileHandle(filepath) {	
+		let res = { rootFH: undefined, filesource: '', relativefilename: filepath };
 		await this.FileIOinitialized();
+		let flname = filepath.trim();
 		let rootFH = undefined;
 		let filesource = '';
+		
 		if (flname.startsWith(this.APP_ROOT_DIR+'/')) {
 			if (flname.startsWith(this.OPFS_DIR+'/')) {
 				rootFH = this.opfsmountpoint.dirHandle;
@@ -583,22 +585,38 @@ export class FileIOHandler {
 				filesource = this.APP_ROOT_DIR+this.USER_DIR;
 			} else {
 				filesource = this.APP_ROOT_DIR;
-			}
-			
-		}
-		if (!rootFH) {
-			// file is not in a mounted file system, memory only
-			if (filesource === this.APP_ROOT_DIR) {
-				await this.createDuckdbFileHandle(filenamestr, null, filesource, transactionid);
-				return true;
-			} else {
-				return false;
+				flname = flname.replace(this.APP_ROOT_DIR+'/','');
 			}
 		}
-		//  file is in a mounted file system folder, trying to find a file handle
-		let filepath = flname.split('/');
+		res.rootFH = rootFH;
+		res.filesource = filesource;
+		res.relativefilename = flname;
+		return res;
+	}
+	
+	// ----------------------------------------------
+	
+	async findOrCreateFileHandleByFilePath(filename, rootFH) {
 		let filehandle = undefined;
+		await this.FileIOinitialized();
+		let flname = filename.trim();
+				
 		let curdirhandle = rootFH;
+		if (!curdirhandle) {
+			const rootFileHandle = await this.findRootFileHandle(flname);
+			curdirhandle = rootFileHandle.rootFH; 
+			flname = rootFileHandle.relativefilename;
+		}
+		
+		if (!curdirhandle) {
+			console.error(`Error getting root file handle for ${flname}`);
+			return undefined;
+		}
+		if (flname.endsWith("/")) {
+			flname = flname.substring(0,flname.length-1);
+		}
+		
+		let filepath = flname.split('/');
 		for (let i=0;i<filepath.length;i++) {
 			if (filepath[i]?.length>0) {
 				if (i<(filepath.length-1)) {
@@ -611,13 +629,135 @@ export class FileIOHandler {
 				} else {
 					try {
 						filehandle = await curdirhandle.getFileHandle(filepath[i], { create: true });
-						window.testfilehandle = filehandle;
+						//window.testfilehandle = filehandle;
 					} catch (err) {
 						console.error('Error getting file handle for ', filepath[i], err);
 					}
 				}		
 			}
 		}
+	
+		return filehandle;
+	}
+	// ----------------------------------------------
+	
+	async findOrCreateDirectoryHandleByFilePath(filename, rootFH) {
+		let filehandle = undefined;
+		await this.FileIOinitialized();
+		let flname = filename.trim();
+		
+		let curdirhandle = rootFH;
+		if (!curdirhandle) {
+			const rootFileHandle = await this.findRootFileHandle(flname);
+			curdirhandle = rootFileHandle.rootFH; 
+			flname = rootFileHandle.relativefilename;
+		}
+		
+		if (!curdirhandle) {
+			console.error(`Error getting root file handle for ${flname}`);
+			return undefined;
+		}
+		if (flname.endsWith("/")) {
+			flname = flname.substring(0,flname.length-1);
+		}
+		
+		let filepath = flname.split('/');
+		for (let i=0;i<filepath.length;i++) {
+			if (filepath[i]?.length>0) {
+				if (i<(filepath.length-1)) {
+					try {
+						curdirhandle = await curdirhandle.getDirectoryHandle(filepath[i], { create: true });
+					} catch (err) {
+						console.error('Error getting dir handle for ', filepath[i], err);
+						break;
+					};
+				} else {
+					try {
+						filehandle = await curdirhandle.getDirectoryHandle(filepath[i], { create: true });
+						//window.testfilehandle = filehandle;
+					} catch (err) {
+						console.error('Error getting directory handle for ', filepath[i], err);
+					}
+				}		
+			}
+		}
+	
+		return filehandle;
+	}
+	
+	// ----------------------------------------------
+	async checkDuckdbHandleForFileName(filenamestr, transactionid) {
+		// trying to automatically create duckdb file handles for every filename like '/app/*/*'
+		// TODO: handle directory change when different is mounted to /app/mount_dir.  delete duckdb file handles?
+		
+		//~ if (this.duckdbFileHandleExists(filenamestr)) {
+			//~ return true;
+		//~ }
+		
+		let flname = filenamestr.trim();
+		await this.FileIOinitialized();
+		// *****
+		//~ let rootFH = undefined;
+		//~ let filesource = '';
+		//~ if (flname.startsWith(this.APP_ROOT_DIR+'/')) {
+			//~ if (flname.startsWith(this.OPFS_DIR+'/')) {
+				//~ rootFH = this.opfsmountpoint.dirHandle;
+				//~ flname = flname.replace(this.OPFS_DIR+'/','');
+				//~ filesource = this.OPFS_DIR;
+			//~ } else if (flname.startsWith(this.APP_ROOT_DIR+this.USER_DIR+'/') && this.dirmountpoints.length>0) {
+				//~ rootFH = this.dirmountpoints[0].dirHandle;
+				//~ flname = flname.replace(this.APP_ROOT_DIR+this.USER_DIR+'/','');
+				//~ filesource = this.APP_ROOT_DIR+this.USER_DIR;
+			//~ } else {
+				//~ filesource = this.APP_ROOT_DIR;
+			//~ }
+			
+		//~ }
+		// *****
+		const rootFileHandle = await this.findRootFileHandle(flname);
+		let rootFH = rootFileHandle.rootFH;
+		let filesource = rootFileHandle.filesource;
+		flname = rootFileHandle.relativefilename;
+		// *****
+		
+		if (!rootFH) {
+			// file is not in a mounted file system, memory only
+			if (filesource === this.APP_ROOT_DIR) {
+				await this.createDuckdbFileHandle(filenamestr, null, filesource, transactionid);
+				return true;
+			} else {
+				return false;
+			}
+		}
+		
+		//  file is in a mounted file system folder, trying to find a file handle
+		// *********
+		//~ let filepath = flname.split('/');
+		//~ let filehandle = undefined;
+		//~ let curdirhandle = rootFH;
+		//~ for (let i=0;i<filepath.length;i++) {
+			//~ if (filepath[i]?.length>0) {
+				//~ if (i<(filepath.length-1)) {
+					//~ try {
+						//~ curdirhandle = await curdirhandle.getDirectoryHandle(filepath[i], { create: true });
+					//~ } catch (err) {
+						//~ console.error('Error getting dir handle for ', filepath[i], err);
+						//~ break;
+					//~ };
+				//~ } else {
+					//~ try {
+						//~ filehandle = await curdirhandle.getFileHandle(filepath[i], { create: true });
+						//~ window.testfilehandle = filehandle;
+					//~ } catch (err) {
+						//~ console.error('Error getting file handle for ', filepath[i], err);
+					//~ }
+				//~ }		
+			//~ }
+		//~ }
+		// *********
+		let filehandle = await this.findOrCreateFileHandleByFilePath(flname, rootFH);
+		
+		// *****
 		if (!filehandle) {
 			return false;
 		}

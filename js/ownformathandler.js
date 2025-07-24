@@ -22,12 +22,26 @@ export class OwnFormatHandler {
 		this.namespaceuuid = params.namespaceuuid;
 		this.coderunner = params.coderunner;
 		this.scriptsarr = [];
+		this.iostate = '';
 	}
 	
 	
 	// ------------------------------------------------------------------------------------------------------------------------
 	get dbfilename() {
 		return this.#dbfilename;
+	}
+	
+	// -----------------------------------------------------------------------------------------------------
+	_statechange(newstate, addmessage='', params={}) {
+		this.iostate = newstate;
+		
+		if (params?.error) {
+			console.error(addmessage, params);
+		} else {
+			console.log(addmessage, params);
+		}
+		
+		this.eventbus.dispatch('statechange',this,{state:newstate, message:addmessage, lengthmilli:params?.lengthmilli||0, lengthseconds: params?.lengthseconds||0,  ...params } );
 	}
 	// -----------------------------------------------------------------------------------------------------
 	async init() {
@@ -472,4 +486,139 @@ conn_internal.execute('''
 	}
 	// -------------------------------------------------------------------------------------------------------
 	
+	async exportDuckbToDirPath(dirPath) {
+		
+		let containerDirHandle = await this.#iohandler.findOrCreateDirectoryHandleByFilePath(dirPath);
+		await this.exportDuckbToDir(containerDirHandle);
+		
+	}
+	
+	// -------------------------------------------------------------------------------------------------------
+	
+	async exportDuckbToDir(containerDirHandle) {
+		//~ EXPORT DATABASE 'exportdb' (FORMAT parquet, COMPRESSION zstd);
+		//~ SELECT * FROM glob("*");
+		//~ const buffer = await window.duckdb.db.copyFileToBuffer('exportdb/tbl_df.parquet');   // Uint8Array
+		//~ await window.duckdb.db.dropFile('exportdb/tbl_df.parquet');   // const buffer = await this.#duckdbloader.db.copyFileToBuffer(this.duckdbfilehandles[ind].filename); 
+		//~ let pyodide = await window.pyodideReadyPromise;
+		//~ await pyodide.FS.writeFile('/app/tbl_df.parquet',buffer)
+		
+		const EXPORT_DIR_NAME = 'exportdb';
+		if (!containerDirHandle) {
+			return false;
+		}
+		
+		const starttime = performance.now();   
+		this._statechange('db_export_to_dir_start', `Starting database export to directory: ${containerDirHandle.name}/${exportDir.name}`);
+
+		
+		try {
+			
+			if (containerDirHandle.kind!=='directory') {
+				this._statechange('db_export_to_dir_error', `${containerDirHandle.name} must be a directory. Cannot export database!`);
+				return false;
+			}
+			
+			const permission = await containerDirHandle.queryPermission({mode: 'readwrite'});
+			if (permission!=='granted') {
+				this._statechange('db_export_to_dir_error', `Write permission is not granted for directory ${containerDirHandle.name}. Cannot export database!`);
+				return false;
+			}
+			
+		} catch (e) {
+			this._statechange('db_export_to_dir_error', `Error checking permission on directory: ${containerDirHandle.name}. Cannot write to a directory!`);
+			return false;
+		}
+		
+		
+		let exportDir;
+		try {
+			exportDir = await containerDirHandle.getDirectoryHandle(EXPORT_DIR_NAME, { create: true });
+		} catch (e) {
+			this._statechange('db_export_to_dir_error', `Error exporting database to: ${containerDirHandle.name}/${exportDir.name}. Cannot create a directory!`, { error: e });
+			return false;
+		}	
+		
+		try {
+			if (!(await (await exportDir.entries()).next()).done) {
+				this._statechange('db_export_to_dir_error', `Error exporting database to: ${containerDirHandle.name}/${exportDir.name}. Directory must be empty!`);
+				return false;
+			}	
+		} catch (e) {
+			this._statechange('db_export_to_dir_error', `Error exporting database, cannot open directory ${containerDirHandle.name}/${exportDir.name} !`, { error: e });
+			return false;
+		}
+		
+		await this.#iohandler.FileIOinitialized();
+		let duckdbloader = await this.#iohandler.getduckdbloader();
+		
+		try {
+			
+			await this.coderunner.runSQLAsync(`EXPORT DATABASE '${EXPORT_DIR_NAME}' (FORMAT parquet, COMPRESSION zstd);`);
+			let qryres = await this.coderunner.runSQLAsync(`SELECT "file" FROM glob("${EXPORT_DIR_NAME}/*");`);
+			
+			if (qryres?.runResult) {
+				this._statechange('db_export_to_dir_status', `Database exported to memory, total files: ${qryres?.output?.numRows}`);
+				for (let i=0;i<qryres?.output?.numRows;i++) {
+					const filename = qryres?.output?.get(i)['file']?.toString();
+					const filenameShort = filename.replaceAll(`${EXPORT_DIR_NAME}/`,'');
+					this._statechange('db_export_to_dir_status', `Database export, processing file: ${filename}`);
+					const buffer = await duckdbloader.db.copyFileToBuffer(filename);
+					
+					const fileHandle = await exportDir.getFileHandle(filenameShort, { create: true });
+					const writable = await fileHandle.createWritable();
+					await writable.write(buffer);
+					await writable.close();				
+					
+					await duckdbloader.db.dropFile(filename);
+				}
+			}
+			
+			
+		} catch (e) {
+			this._statechange('db_export_to_dir_error', `Error exporting database, cannot open directory ${containerDirHandle.name}/${exportDir.name} !`, { error: e });
+			return false;
+		}
+		
+		let lengthmilli = performance.now() - starttime;
+		let lengthseconds = lengthmilli / 1000;
+		// let executionTime = Math.round(res.lengthmilli)/1000;
+		this._statechange('db_export_to_dir_success', `Export to directory ${containerDirHandle.name}/${exportDir.name} complete.`,
+						{
+							lengthmilli: lengthmilli,
+							lengthseconds: lengthseconds/1000,
+						}
+					);
+		
+		return true;
+	}
+	
+	// -------------------------------------------------------------------------------------------------------
+	
+	async importDuckbFromDir(containerDirHandle) {
+		// container dir handle must be duckdb export directory
+		// await sd01.queryPermission({mode: 'read'})
+		// const fileName = file.name;
+		// const fileData = new Uint8Array(await file.arrayBuffer());
+		
+		//~ if (containerDirHandle.kind!=='directory') {
+			//~ this._statechange('db_export_to_dir_error', `${containerDirHandle.name} must be a directory. Cannot export database!`);
+			//~ return false;
+		//~ }
+			
+			
+	}
+	// -------------------------------------------------------------------------------------------------------
+	
+	async exportDuckbToOwnFormat() {
+		
+	}
+	
+	// -------------------------------------------------------------------------------------------------------
+	
+	async importDuckbFromOwnFormat() {
+		
+	}
+	
+	// -------------------------------------------------------------------------------------------------------
 }   // end of class OwnFormatHandler
