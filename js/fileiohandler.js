@@ -353,6 +353,42 @@ export class FileIOHandler {
 	}
 	// ------------------------------------------------------------------
 	
+	async openDirectoryHandleFromDialog(mode="readwrite") {
+		let directoryHandle;
+		
+		const opts = {
+			mode: mode,
+		};
+	
+		if (!this.browserSupportsDirectoryPicker) {
+			const msg = "File System Access API is not supported!";
+			console.error(msg);
+			this.eventbus.dispatch('ioUnsupportedError', this, { source: "mountDirectory", msg: msg });
+			return false;
+		}
+		
+		let permissionStatus;
+		let msg = '';
+		try {
+			directoryHandle = await showDirectoryPicker(opts);
+			permissionStatus = await directoryHandle.requestPermission(opts);
+		} catch (err) {
+			this.eventbus.dispatch('ioError', this, { source: "mountDirectory", error: err, msg: "Directory handle opening error." });
+			console.error(err);
+			return false;
+		}
+				
+		if (permissionStatus !== "granted") {
+			msg = `Readwrite access to directory ${directoryHandle?.name} not granted`;
+			this.eventbus.dispatch('ioError', this, { source: "mountDirectory", msg: msg, error: undefined });
+			console.error(msg);
+			return false;
+		}
+	
+		return directoryHandle;
+	}
+	
+	// ------------------------------------------------------------------
 	async mountDirectory() {
 		const opts = {
 			id: "mountdirid",

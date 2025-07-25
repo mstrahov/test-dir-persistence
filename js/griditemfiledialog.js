@@ -133,7 +133,13 @@ export class gridItemFileDialog extends GridItemWithMenu {
 						(async (path)=> {await that.filesaveasdialog.downloadFromFSPath(path); })(row.getData().fullpath);
 					}
 				},
-				
+				{
+					label:"Export database to this directory ...",
+					action:function(e, row){
+						//console.log(row.getData());
+						that.eventbus.dispatch('exportdatabasetodir', that, { fullpath: row.getData().fullpath, type: row.getData().type});	  //rowdata.type === 'directory'
+					}
+				},
 			],
 			
 		};

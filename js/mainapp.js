@@ -118,6 +118,27 @@ tabNavStatusTab.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{   sta
 
 sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.runCmdFromGridItem('sql',obj,eventdata);  }, tabNavStatusTab.uuid);
 
+// =====  file dialog events
+
+filedialog.eventbus.subscribe('exportdatabasetodir', (obj,eventdata)=>{  
+	// { fullpath: row.getData().fullpath, type: row.getData().type}   //rowdata.type === 'directory'
+	
+	(async (obj,eventdata)=>{
+		let dirPath = eventdata?.fullpath;
+		if (eventdata?.type!=='directory') {
+			const spl = dirPath.split('/');
+			if (spl.length>0) {
+				dirPath = dirPath.substring(0,dirPath.length-spl[spl.length-1].length);
+			} 
+			if (dirPath.endsWith('/')) { dirPath = dirPath.substring(0,dirPath.length-1); }
+		}
+		await window.localFormatSaver.exportDuckbToDirPath(dirPath);
+		
+	})(obj,eventdata);
+	
+	
+});
+
 
 // ================================================================== newscriptmenuaction
 let activetabs = [];
@@ -358,6 +379,12 @@ const OpenProjectFile = async () => {
 	
 };
 
+// ================================================================== exportdatabasemenuaction menu action
+
+const exportDatabaseAction = async () => {   
+	const dirHandle = await window.fileiohandler.openDirectoryHandleFromDialog();
+	await window.localFormatSaver.exportDuckbToDir(dirHandle);
+}
 
 // ====== tabNavMainMenuTab - main left menu actions in tabs events    
 
@@ -375,7 +402,13 @@ mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{
 		} else if (eventdata?.menuItemId === "openprojectfile") { 
 			//console.log("saveprojectfilemenuaction");
 			OpenProjectFile(); 
+		} else if (eventdata?.menuItemId === "exportdatabasemenuaction") { 
+			//console.log("saveprojectfilemenuaction");
+			exportDatabaseAction(); 
 		}
+		
+		
+		
 	});
 
 //

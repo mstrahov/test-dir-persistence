@@ -15,6 +15,7 @@ export class OwnFormatHandler {
 	
 	constructor(params) {
 		this.FORMAT_VERSION = "0.1";
+		this.eventbus = new EventBus();
 		this.#pyodidePromise = params.pyodidePromise;
 		this.#pyodide = undefined;
 		this.#dbfilename = params.dbFileName;
@@ -509,7 +510,7 @@ conn_internal.execute('''
 		}
 		
 		const starttime = performance.now();   
-		this._statechange('db_export_to_dir_start', `Starting database export to directory: ${containerDirHandle.name}/${exportDir.name}`);
+		this._statechange('db_export_to_dir_start', `Starting database export to directory: ${containerDirHandle.name}/${EXPORT_DIR_NAME}`);
 
 		
 		try {
@@ -535,17 +536,17 @@ conn_internal.execute('''
 		try {
 			exportDir = await containerDirHandle.getDirectoryHandle(EXPORT_DIR_NAME, { create: true });
 		} catch (e) {
-			this._statechange('db_export_to_dir_error', `Error exporting database to: ${containerDirHandle.name}/${exportDir.name}. Cannot create a directory!`, { error: e });
+			this._statechange('db_export_to_dir_error', `Error exporting database to: ${containerDirHandle.name}/${EXPORT_DIR_NAME}. Cannot create a directory!`, { error: e });
 			return false;
 		}	
 		
 		try {
 			if (!(await (await exportDir.entries()).next()).done) {
-				this._statechange('db_export_to_dir_error', `Error exporting database to: ${containerDirHandle.name}/${exportDir.name}. Directory must be empty!`);
+				this._statechange('db_export_to_dir_error', `Error exporting database to: ${containerDirHandle.name}/${EXPORT_DIR_NAME}. Directory must be empty!`);
 				return false;
 			}	
 		} catch (e) {
-			this._statechange('db_export_to_dir_error', `Error exporting database, cannot open directory ${containerDirHandle.name}/${exportDir.name} !`, { error: e });
+			this._statechange('db_export_to_dir_error', `Error exporting database, cannot open directory ${containerDirHandle.name}/${EXPORT_DIR_NAME} !`, { error: e });
 			return false;
 		}
 		
@@ -553,7 +554,7 @@ conn_internal.execute('''
 		let duckdbloader = await this.#iohandler.getduckdbloader();
 		
 		try {
-			
+			await this.coderunner.runSQLAsync(`CHECKPOINT;`); 
 			await this.coderunner.runSQLAsync(`EXPORT DATABASE '${EXPORT_DIR_NAME}' (FORMAT parquet, COMPRESSION zstd);`);
 			let qryres = await this.coderunner.runSQLAsync(`SELECT "file" FROM glob("${EXPORT_DIR_NAME}/*");`);
 			
@@ -576,14 +577,14 @@ conn_internal.execute('''
 			
 			
 		} catch (e) {
-			this._statechange('db_export_to_dir_error', `Error exporting database, cannot open directory ${containerDirHandle.name}/${exportDir.name} !`, { error: e });
+			this._statechange('db_export_to_dir_error', `Error exporting database, cannot open directory ${containerDirHandle.name}/${EXPORT_DIR_NAME} !`, { error: e });
 			return false;
 		}
 		
 		let lengthmilli = performance.now() - starttime;
 		let lengthseconds = lengthmilli / 1000;
 		// let executionTime = Math.round(res.lengthmilli)/1000;
-		this._statechange('db_export_to_dir_success', `Export to directory ${containerDirHandle.name}/${exportDir.name} complete.`,
+		this._statechange('db_export_to_dir_success', `Export to directory ${containerDirHandle.name}/${EXPORT_DIR_NAME} complete.`,
 						{
 							lengthmilli: lengthmilli,
 							lengthseconds: lengthseconds/1000,
