@@ -54,6 +54,13 @@ export class FileIOHandler {
 		console.log(addmessage, params);
 		this.eventbus.dispatch('iostatechange',this,{state:newstate, message:addmessage, lengthmilli:params?.lengthmilli||0, lengthseconds: params?.lengthseconds||0,  ...params } );
 	}
+	
+	// ------------------------------------------------------------------
+	
+	_ioerrormessage(error, addmessage='', params={} ) {
+		console.error(err, addmessage, params);
+		this.eventbus.dispatch('ioError', this, { source: "ioerrormessage", error: error, msg: addmessage, ...params });
+	}
 	// ------------------------------------------------------------------
 	async init() {
 		let pyodide = await this.#pyodidePromise;
@@ -800,6 +807,74 @@ export class FileIOHandler {
 		await this.createDuckdbFileHandle(filenamestr,filehandle,filesource, transactionid);
 		return true;
 	}
+	
+	// ----------------------------------------------
+	
+	async backupExistingFileInPlace(filepath) {
+		let res = false;
+		
+		let fh = await window.fileiohandler.findOrCreateFileHandleByFilePath(filepath);
+		if (!fh) {
+			this._ioerrormessage(null, `Error getting file handle for ${filepath}`, {} ); 
+			return res;
+		}
+		
+		let bkFileNameAddition = (new Date).toISOString().replaceAll('-','').replaceAll(':','').replaceAll('.','');
+		const nameparts = fh.name.split(".");
+		let newFileName = fh.name.replace(nameparts[0],nameparts[0]+bkFileNameAddition);  
+		let pathparts = filepath.split('/');
+		pathparts[pathparts.length-1]=newFileName;
+		let newFilePath = pathparts.join('/');
+		
+		let fhdest = await window.fileiohandler.findOrCreateFileHandleByFilePath(newFilePath);
+		if (!fhdest) {
+			this._ioerrormessage(null, `Error getting backup destination file handle: ${newFilePath}`, {} ); 
+			return res;
+		}
+		
+		try {
+			const buffer = await fh.getFile();
+			const writable = await fhdest.createWritable();
+			await writable.write(buffer);
+			await writable.close();	
+			res = true;		
+		} catch (err) {
+			this._ioerrormessage(err, `Error copying file from ${filepath} to ${newFilePath}`, {} ); 
+		}
+		
+		return res;
+	}
+	
+	
+	// ----------------------------------------------
+	async deleteFileFromFSandFileHandle(filepath) {
+		
+		let pyodide = await this.#pyodidePromise;
+		
+		let dirPath = filepath;
+		const spl = dirPath.split('/');
+		if (spl.length>0) {
+			dirPath = dirPath.substring(0,dirPath.length-spl[spl.length-1].length);
+		} 
+		if (dirPath.endsWith('/')) { dirPath = dirPath.substring(0,dirPath.length-1); }
+	
+		try {
+			let dirhandle = this.findOrCreateDirectoryHandleByFilePath(dirPath);
+			if (dirhandle) {
+				await dirhandle.removeEntry(spl[spl.length-1]);
+			} else {
+				this._ioerrormessage(err, `Error deleting file ${filepath} from file system, directory handle not found!`, {} ); 
+			}
+			await pyodide.FS.unlink(filepath);
+		} catch (err) {
+			this._ioerrormessage(err, `Error deleting file ${filepath}`, {} ); 
+			return false;
+		}
+		
+		return true;
+	
+	}
+	// ----------------------------------------------
 	
 }
 

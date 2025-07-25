@@ -510,24 +510,24 @@ conn_internal.execute('''
 		}
 		
 		const starttime = performance.now();   
-		this._statechange('db_export_to_dir_start', `Starting database export to directory: ${containerDirHandle.name}/${EXPORT_DIR_NAME}`);
+		this._statechange('ownformatoperation_start', `Starting database export to directory: ${containerDirHandle.name}/${EXPORT_DIR_NAME}`);
 
 		
 		try {
 			
 			if (containerDirHandle.kind!=='directory') {
-				this._statechange('db_export_to_dir_error', `${containerDirHandle.name} must be a directory. Cannot export database!`);
+				this._statechange('ownformatoperation_error', `${containerDirHandle.name} must be a directory. Cannot export database!`);
 				return false;
 			}
 			
 			const permission = await containerDirHandle.queryPermission({mode: 'readwrite'});
 			if (permission!=='granted') {
-				this._statechange('db_export_to_dir_error', `Write permission is not granted for directory ${containerDirHandle.name}. Cannot export database!`);
+				this._statechange('ownformatoperation_error', `Write permission is not granted for directory ${containerDirHandle.name}. Cannot export database!`);
 				return false;
 			}
 			
 		} catch (e) {
-			this._statechange('db_export_to_dir_error', `Error checking permission on directory: ${containerDirHandle.name}. Cannot write to a directory!`);
+			this._statechange('ownformatoperation_error', `Error checking permission on directory: ${containerDirHandle.name}. Cannot write to a directory!`);
 			return false;
 		}
 		
@@ -536,17 +536,17 @@ conn_internal.execute('''
 		try {
 			exportDir = await containerDirHandle.getDirectoryHandle(EXPORT_DIR_NAME, { create: true });
 		} catch (e) {
-			this._statechange('db_export_to_dir_error', `Error exporting database to: ${containerDirHandle.name}/${EXPORT_DIR_NAME}. Cannot create a directory!`, { error: e });
+			this._statechange('ownformatoperation_error', `Error exporting database to: ${containerDirHandle.name}/${EXPORT_DIR_NAME}. Cannot create a directory!`, { error: e });
 			return false;
 		}	
 		
 		try {
 			if (!(await (await exportDir.entries()).next()).done) {
-				this._statechange('db_export_to_dir_error', `Error exporting database to: ${containerDirHandle.name}/${EXPORT_DIR_NAME}. Directory must be empty!`);
+				this._statechange('ownformatoperation_error', `Error exporting database to: ${containerDirHandle.name}/${EXPORT_DIR_NAME}. Directory must be empty!`);
 				return false;
 			}	
 		} catch (e) {
-			this._statechange('db_export_to_dir_error', `Error exporting database, cannot open directory ${containerDirHandle.name}/${EXPORT_DIR_NAME} !`, { error: e });
+			this._statechange('ownformatoperation_error', `Error exporting database, cannot open directory ${containerDirHandle.name}/${EXPORT_DIR_NAME} !`, { error: e });
 			return false;
 		}
 		
@@ -559,11 +559,11 @@ conn_internal.execute('''
 			let qryres = await this.coderunner.runSQLAsync(`SELECT "file" FROM glob("${EXPORT_DIR_NAME}/*");`);
 			
 			if (qryres?.runResult) {
-				this._statechange('db_export_to_dir_status', `Database exported to memory, total files: ${qryres?.output?.numRows}`);
+				this._statechange('ownformatoperation_message', `Database exported to memory, total files: ${qryres?.output?.numRows}`);
 				for (let i=0;i<qryres?.output?.numRows;i++) {
 					const filename = qryres?.output?.get(i)['file']?.toString();
 					const filenameShort = filename.replaceAll(`${EXPORT_DIR_NAME}/`,'');
-					this._statechange('db_export_to_dir_status', `Database export, processing file: ${filename}`);
+					this._statechange('ownformatoperation_message', `Database export, processing file: ${filename}`);
 					const buffer = await duckdbloader.db.copyFileToBuffer(filename);
 					
 					const fileHandle = await exportDir.getFileHandle(filenameShort, { create: true });
@@ -577,14 +577,14 @@ conn_internal.execute('''
 			
 			
 		} catch (e) {
-			this._statechange('db_export_to_dir_error', `Error exporting database, cannot open directory ${containerDirHandle.name}/${EXPORT_DIR_NAME} !`, { error: e });
+			this._statechange('ownformatoperation_error', `Error exporting database, cannot open directory ${containerDirHandle.name}/${EXPORT_DIR_NAME} !`, { error: e });
 			return false;
 		}
 		
 		let lengthmilli = performance.now() - starttime;
 		let lengthseconds = lengthmilli / 1000;
 		// let executionTime = Math.round(res.lengthmilli)/1000;
-		this._statechange('db_export_to_dir_success', `Export to directory ${containerDirHandle.name}/${EXPORT_DIR_NAME} complete.`,
+		this._statechange('ownformatoperation_success', `Export to directory ${containerDirHandle.name}/${EXPORT_DIR_NAME} complete.`,
 						{
 							lengthmilli: lengthmilli,
 							lengthseconds: lengthseconds/1000,
@@ -596,6 +596,14 @@ conn_internal.execute('''
 	
 	// -------------------------------------------------------------------------------------------------------
 	
+	async importDuckbFromDirPath(dirPath) {
+		
+		let containerDirHandle = await this.#iohandler.findOrCreateDirectoryHandleByFilePath(dirPath);
+		await this.importDuckbFromDir(containerDirHandle);
+		
+	}
+	
+	// -------------------------------------------------------------------------------------------------------
 	async importDuckbFromDir(containerDirHandle) {
 		// container dir handle must be duckdb export directory
 		// await sd01.queryPermission({mode: 'read'})
