@@ -45,7 +45,8 @@ window.localFormatSaver = new OwnFormatHandler({
 		FileIOHandler: window.fileiohandler,
 		coderunner: window.coderunner,  
 		namespaceuuid: "globals",
-		dbFileName: "/app/opfs/default.adhocdb"
+		dbFileName: "/app/opfs/default.adhocdb",
+		duckdbloader: window.duckdb,
 });
 window.localFormatSaver.init();
 
@@ -132,7 +133,7 @@ filedialog.eventbus.subscribe('exportdatabasetodir', (obj,eventdata)=>{
 			} 
 			if (dirPath.endsWith('/')) { dirPath = dirPath.substring(0,dirPath.length-1); }
 		}
-		await window.localFormatSaver.exportDuckbToDirPath(dirPath);
+		await window.localFormatSaver.exportDuckDbToDirPath(dirPath);
 		
 	})(obj,eventdata);
 	
@@ -383,9 +384,14 @@ const OpenProjectFile = async () => {
 
 const exportDatabaseAction = async () => {   
 	const dirHandle = await window.fileiohandler.openDirectoryHandleFromDialog();
-	await window.localFormatSaver.exportDuckbToDir(dirHandle);
+	await window.localFormatSaver.exportDuckDbToDir(dirHandle);
 }
+// ================================================================== importdatabasemenuaction menu action
 
+const importDatabaseAction = async () => {   
+	const dirHandle = await window.fileiohandler.openDirectoryHandleFromDialog("read");
+	await window.localFormatSaver.importDuckDBFromDir(dirHandle);
+}
 // ====== tabNavMainMenuTab - main left menu actions in tabs events    
 
 mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{ 
@@ -405,7 +411,10 @@ mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{
 		} else if (eventdata?.menuItemId === "exportdatabasemenuaction") { 
 			//console.log("saveprojectfilemenuaction");
 			exportDatabaseAction(); 
-		}
+		} else if (eventdata?.menuItemId === "importdatabasemenuaction") { 
+			//console.log("saveprojectfilemenuaction");
+			importDatabaseAction(); 
+		} 
 		
 		
 		

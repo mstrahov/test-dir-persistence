@@ -12,6 +12,7 @@ export class OwnFormatHandler {
 	#pyodide;
 	#dbfilename;
 	#iohandler;
+	#duckdbloader;
 	
 	constructor(params) {
 		this.FORMAT_VERSION = "0.1";
@@ -20,6 +21,7 @@ export class OwnFormatHandler {
 		this.#pyodide = undefined;
 		this.#dbfilename = params.dbFileName;
 		this.#iohandler = params.FileIOHandler;
+		this.#duckdbloader = params.duckdbloader;
 		this.namespaceuuid = params.namespaceuuid;
 		this.coderunner = params.coderunner;
 		this.scriptsarr = [];
@@ -487,16 +489,16 @@ conn_internal.execute('''
 	}
 	// -------------------------------------------------------------------------------------------------------
 	
-	async exportDuckbToDirPath(dirPath) {
+	async exportDuckDbToDirPath(dirPath) {
 		
 		let containerDirHandle = await this.#iohandler.findOrCreateDirectoryHandleByFilePath(dirPath);
-		await this.exportDuckbToDir(containerDirHandle);
+		await this.exportDuckDbToDir(containerDirHandle);
 		
 	}
 	
 	// -------------------------------------------------------------------------------------------------------
 	
-	async exportDuckbToDir(containerDirHandle) {
+	async exportDuckDbToDir(containerDirHandle) {
 		//~ EXPORT DATABASE 'exportdb' (FORMAT parquet, COMPRESSION zstd);
 		//~ SELECT * FROM glob("*");
 		//~ const buffer = await window.duckdb.db.copyFileToBuffer('exportdb/tbl_df.parquet');   // Uint8Array
@@ -596,15 +598,21 @@ conn_internal.execute('''
 	
 	// -------------------------------------------------------------------------------------------------------
 	
-	async importDuckbFromDirPath(dirPath) {
+	async importDuckDbFromDirPath(dirPath) {
 		
 		let containerDirHandle = await this.#iohandler.findOrCreateDirectoryHandleByFilePath(dirPath);
-		await this.importDuckbFromDir(containerDirHandle);
+		
+		if (!containerDirHandle) {
+			this._statechange('ownformatoperation_error', `Error importing database, cannot open directory ${dirPath} !`, {});
+			return false;
+		}
+		
+		await this.importDuckDBFromDir(containerDirHandle);
 		
 	}
 	
 	// -------------------------------------------------------------------------------------------------------
-	async importDuckbFromDir(containerDirHandle) {
+	async importDuckDBFromDir(containerDirHandle) {
 		// container dir handle must be duckdb export directory
 		// await sd01.queryPermission({mode: 'read'})
 		// const fileName = file.name;
@@ -614,18 +622,164 @@ conn_internal.execute('''
 			//~ this._statechange('db_export_to_dir_error', `${containerDirHandle.name} must be a directory. Cannot export database!`);
 			//~ return false;
 		//~ }
+		if (!containerDirHandle) {
+			return false;
+		}	
+		// load.sql
+		// schema.sql
+		// **************
+		let dirsize = 0;
+		let nesteddircount = 0;
+		let loadsqlpresent = false;
+		let schemasqlpresent = false;
+		let filecount = 0;
+		let contents;
+		try {
+			contents = await containerDirHandle.entries();
+		} catch (err) {
+			this._statechange('ownformatoperation_error', `Import database error: Cannot open import directory !`, { error: e });
+			return false;
+		}
+		for await (const [key,entry] of contents) {
+			//console.log(entry);
+			filecount++;
+			if (entry.kind=='file') {
+				const file = await entry.getFile();   //  FileSystemFileHandle
+				dirsize += file.size;
+				//console.log(file.name,file.size,file.lastModifiedDate,file.type);
+				if (file.name==='load.sql') {loadsqlpresent = true;}
+				if (file.name==='schema.sql') {schemasqlpresent = true;}
+				
+			} else if (entry.kind=='directory') {
+				nesteddircount++;
+			}
+		}
+		if (!schemasqlpresent) {
+			this._statechange('ownformatoperation_error', `Import database error: schema.sql is not present, not created by EXPORT DATABASE?`, { });
+			return false;
+		}
+		// check for dir size?
+		// **************
+	
+		
+		
+		// detach db
+		
+		const conntype = this.#duckdbloader.dbconnectiontype;   //  ==='opfs'
+		let connpath = this.#duckdbloader.dbconnectionpath;   // 'opfs://mainapp.db';
+		connpath = connpath.replaceAll('opfs://','/app/opfs/');
+		
+		let connclosed = await this.#duckdbloader.closeDBConn();
+		if (!connclosed) {
+			this._statechange('ownformatoperation_error', `Import database error: cannot close existing database connection !`, { });
+			return false;
+		}
+		
+		// backup db file
+		if (conntype==='opfs') {
+			let res;
 			
+			//~ const newconn = await this.#duckdbloader.reopenDBconn('opfs://mainapp01.db');
+			//~ if (!newconn) {
+				//~ this._statechange('ownformatoperation_error', `Import database error: new :memory: database connection init error !`, { });
+				//~ return false;
+			//~ }
 			
+			//~ try {
+				//~ await this.#duckdbloader.db.dropFile(connpath);
+				//~ await this.#duckdbloader.db.dropFile(connpath+'.wal');
+			//~ } catch (err) {
+				//~ this._statechange('ownformatoperation_error', `Import database error: cannot free memory buffer for ${connpath} !`, { error: err });
+			//~ }
+			
+			res = await this.#iohandler.backupExistingFileInPlace(connpath);
+			if (!res) {
+				this._statechange('ownformatoperation_error', `Import database error: unable to backup existing database !`, { });
+				return false;
+			}
+			
+
+			res = await this.#iohandler.deleteFileFromFSandFileHandle(connpath);
+			if (!res) {
+				this._statechange('ownformatoperation_error', `Import database error: unable to delete existing database file !`, { });
+				return false;
+			}
+			res = await this.#iohandler.deleteFileFromFSandFileHandle(connpath+'.wal');
+			
+			//~ connclosed = await this.#duckdbloader.closeDBConn();
+			//~ if (!connclosed) {
+				//~ this._statechange('ownformatoperation_error', `Import database error: cannot close existing :memory: database connection !`, { });
+				//~ return false;
+			//~ }
+			
+		}	
+		// init new db
+		
+		const newconn = await this.#duckdbloader.reopenDBconn();
+		if (!newconn) {
+			this._statechange('ownformatoperation_error', `Import database error: new database connection init error !`, { });
+			return false;
+		}
+		
+		// copy all files to duckdb memory
+		let filelist = [];
+		const exportdirname = 'exportdb';
+		try {
+			contents = await containerDirHandle.entries();
+		} catch (err) {
+			this._statechange('ownformatoperation_error', `Import database error: Cannot open import directory !`, { error: err });
+			return false;
+		}
+		
+		for await (const [key,entry] of contents) {
+			if (entry.kind=='file') {
+				const fullfilename = exportdirname + '/' + entry.name;
+				filelist.push(fullfilename);
+				//~ await window.duckdb.db.registerFileBuffer('exportdb/tbl_df.parquet', buffer2);
+				//~ await db.registerFileHandle('local.parquet', pickedFile, DuckDBDataProtocol.BROWSER_FILEREADER, true);
+				//~ await db.registerFileBuffer('buffer.parquet', new Uint8Array(await res.arrayBuffer()));
+				try {
+					let fl = await entry.getFile()
+					let b1 = await fl.arrayBuffer()
+					let b2 = new Uint8Array(b1)
+					await window.duckdb.db.registerFileBuffer(fullfilename, b2);
+				} catch (err) {
+					this._statechange('ownformatoperation_error', `Import database error: cannot read file ${entry.name} !`, { error: err });
+					return false;
+				}
+			}
+		}
+		
+		
+		// import database
+		
+		let res = await this.coderunner.runSQLAsync(`IMPORT DATABASE 'exportdb';`); 
+		if (!res.runStatus) {
+			this._statechange('ownformatoperation_error', `Import database error: IMPORT DATABASE command error !`, { });
+			return false;	
+		}
+		res = await this.coderunner.runSQLAsync(`CHECKPOINT;`); 
+		
+		
+		// delete temp files from duckdb memory
+		for (let i=0; i<filelist.length; i++) { 
+			try {
+				await this.#duckdbloader.db.dropFile(filelist[i]);
+			} catch (err) {
+				this._statechange('ownformatoperation_error', `Import database error: cannot free temporary memory buffer for ${filelist[i]} !`, { error: err });
+			}
+		}
+		return true;
 	}
 	// -------------------------------------------------------------------------------------------------------
 	
-	async exportDuckbToOwnFormat() {
+	async exportDuckDbToOwnFormat() {
 		
 	}
 	
 	// -------------------------------------------------------------------------------------------------------
 	
-	async importDuckbFromOwnFormat() {
+	async importDuckDbFromOwnFormat() {
 		
 	}
 	

@@ -58,7 +58,7 @@ export class FileIOHandler {
 	// ------------------------------------------------------------------
 	
 	_ioerrormessage(error, addmessage='', params={} ) {
-		console.error(err, addmessage, params);
+		console.error(error, addmessage, params);
 		this.eventbus.dispatch('ioError', this, { source: "ioerrormessage", error: error, msg: addmessage, ...params });
 	}
 	// ------------------------------------------------------------------
@@ -618,11 +618,11 @@ export class FileIOHandler {
 		let filesource = '';
 		
 		if (flname.startsWith(this.APP_ROOT_DIR+'/')) {
-			if (flname.startsWith(this.OPFS_DIR+'/')) {
+			if (flname.startsWith(this.OPFS_DIR)) {
 				rootFH = this.opfsmountpoint.dirHandle;
 				flname = flname.replace(this.OPFS_DIR+'/','');
 				filesource = this.OPFS_DIR;
-			} else if (flname.startsWith(this.APP_ROOT_DIR+this.USER_DIR+'/') && this.dirmountpoints.length>0) {
+			} else if (flname.startsWith(this.APP_ROOT_DIR+this.USER_DIR) && this.dirmountpoints.length>0) {
 				rootFH = this.dirmountpoints[0].dirHandle;
 				flname = flname.replace(this.APP_ROOT_DIR+this.USER_DIR+'/','');
 				filesource = this.APP_ROOT_DIR+this.USER_DIR;
@@ -631,6 +631,11 @@ export class FileIOHandler {
 				flname = flname.replace(this.APP_ROOT_DIR+'/','');
 			}
 		}
+		
+		if (flname===this.OPFS_DIR || flname===(this.APP_ROOT_DIR+this.USER_DIR)) {
+			flname = '';
+		}
+		
 		res.rootFH = rootFH;
 		res.filesource = filesource;
 		res.relativefilename = flname;
@@ -704,27 +709,30 @@ export class FileIOHandler {
 			flname = flname.substring(0,flname.length-1);
 		}
 		
-		let filepath = flname.split('/');
-		for (let i=0;i<filepath.length;i++) {
-			if (filepath[i]?.length>0) {
-				if (i<(filepath.length-1)) {
-					try {
-						curdirhandle = await curdirhandle.getDirectoryHandle(filepath[i], { create: true });
-					} catch (err) {
-						console.error('Error getting dir handle for ', filepath[i], err);
-						break;
-					};
-				} else {
-					try {
-						filehandle = await curdirhandle.getDirectoryHandle(filepath[i], { create: true });
-						//window.testfilehandle = filehandle;
-					} catch (err) {
-						console.error('Error getting directory handle for ', filepath[i], err);
-					}
-				}		
+		if (flname==='') {
+			filehandle = curdirhandle;
+		} else {
+			let filepath = flname.split('/');
+			for (let i=0;i<filepath.length;i++) {
+				if (filepath[i]?.length>0) {
+					if (i<(filepath.length-1)) {
+						try {
+							curdirhandle = await curdirhandle.getDirectoryHandle(filepath[i], { create: true });
+						} catch (err) {
+							console.error('Error getting dir handle for ', filepath[i], err);
+							break;
+						};
+					} else {
+						try {
+							filehandle = await curdirhandle.getDirectoryHandle(filepath[i], { create: true });
+							//window.testfilehandle = filehandle;
+						} catch (err) {
+							console.error('Error getting directory handle for ', filepath[i], err);
+						}
+					}		
+				}
 			}
 		}
-	
 		return filehandle;
 	}
 	
@@ -859,13 +867,15 @@ export class FileIOHandler {
 		if (dirPath.endsWith('/')) { dirPath = dirPath.substring(0,dirPath.length-1); }
 	
 		try {
-			let dirhandle = this.findOrCreateDirectoryHandleByFilePath(dirPath);
+			let dirhandle = await this.findOrCreateDirectoryHandleByFilePath(dirPath);
 			if (dirhandle) {
 				await dirhandle.removeEntry(spl[spl.length-1]);
 			} else {
-				this._ioerrormessage(err, `Error deleting file ${filepath} from file system, directory handle not found!`, {} ); 
+				this._ioerrormessage(null, `Error deleting file ${filepath} from file system, directory handle not found!`, {} ); 
 			}
-			await pyodide.FS.unlink(filepath);
+			if (pyodide.FS.analyzePath(filepath)?.exists) {
+				await pyodide.FS.unlink(filepath);
+			}
 		} catch (err) {
 			this._ioerrormessage(err, `Error deleting file ${filepath}`, {} ); 
 			return false;

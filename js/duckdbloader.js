@@ -48,7 +48,13 @@ export class DuckDBLoader {
 			try {	
 				this._statechange('db_initializing', 'Duckdb loading ...');
 				const JSDELIVR_BUNDLES = await duckdb.getJsDelivrBundles();
+				//~ if (!this.JSDELIVR_BUNDLES) {
+					//~ this.JSDELIVR_BUNDLES = await duckdb.getJsDelivrBundles();
+				//~ }
 				let bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+				//~ if (!this.bundle) {
+					//~ this.bundle = await duckdb.selectBundle(this.JSDELIVR_BUNDLES);
+				//~ }
 				//console.log(bundle.mainWorker);
 				const worker_url = URL.createObjectURL(
 					new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
@@ -160,6 +166,44 @@ export class DuckDBLoader {
 		await this.#defer;
 		return this.conn;
 	}
+	
+	// --------------------------------------------
+	async closeDBConn() {
+		await this.#defer;
+		if (this.conn) {
+			try {
+				await this.conn.send('CHECKPOINT;');
+				await this.conn.close();
+				this.conn = null;
+				//***
+				await this.db.terminate();
+				this.db = null;
+				//***
+			} catch (e) {
+				console.error(e);
+				this._statechange('db_connection_closing_error', 'DB connection closing failed!', e);
+				throw e;
+			}
+		}
+		
+		this._statechange('db_connection_is_closed_error', 'DB connection is closed!', null);
+		return true;
+	}
+	
+	// --------------------------------------------
+	
+	async reopenDBconn(newdbconnectionpath) {
+		this.#defer = new Promise((res, rej) => {
+			this.#resolve = res;
+			this.#reject = rej;
+		});
+		if (newdbconnectionpath) {
+			this.dbconnectionpath = newdbconnectionpath;
+		}
+		return await this.init();
+	}
+	
+	// --------------------------------------------
 	
  }
 
