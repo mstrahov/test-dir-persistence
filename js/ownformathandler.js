@@ -811,7 +811,7 @@ conn_internal.execute('''
 		let res;
 		
 		const starttime = performance.now();   
-		this._statechange('ownformatoperation_start', `Starting exporting`);
+		this._statechange('ownformatoperation_start', `Starting project export...`);
 		
 		if (!this.#pyodide) { await this.init(); }
 		await this.#iohandler.FileIOinitialized();

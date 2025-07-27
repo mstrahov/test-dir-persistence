@@ -398,7 +398,7 @@ const importDatabaseAction = async () => {
 // ================================================================== importdatabasemenuaction menu action
 
 const exportDatabaseToProjectFileAction = async () => {   
-	SaveProjectFile();
+	await SaveProjectFile();
 	let path = await window.localFormatSaver.exportDuckDbToOwnFormat();
 	if (path) { 
 		let filesaveasdialog = new FileDownLoadDialog({fileSystemHandler: window.fileiohandler});
