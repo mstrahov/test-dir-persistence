@@ -19,6 +19,7 @@ import { TabulatorPicker } from "./tabupicker.js";
 import { modalDialogInput } from "./modaldialoginput.js";
 import { OwnFormatHandler } from "./ownformathandler.js";
 import { gridItemOwnFormat } from "./griditemownformat.js";
+import { FileUploadButton, FileDownLoadDialog } from "./filedialogs.js";
 
 //console.log("test main app");
 // ==============  page close warning
@@ -139,6 +140,7 @@ filedialog.eventbus.subscribe('exportdatabasetodir', (obj,eventdata)=>{
 	
 	
 });
+
 
 
 // ================================================================== newscriptmenuaction
@@ -392,6 +394,18 @@ const importDatabaseAction = async () => {
 	const dirHandle = await window.fileiohandler.openDirectoryHandleFromDialog("read");
 	await window.localFormatSaver.importDuckDBFromDir(dirHandle);
 }
+
+// ================================================================== importdatabasemenuaction menu action
+
+const exportDatabaseToProjectFileAction = async () => {   
+	SaveProjectFile();
+	let path = await window.localFormatSaver.exportDuckDbToOwnFormat();
+	if (path) { 
+		let filesaveasdialog = new FileDownLoadDialog({fileSystemHandler: window.fileiohandler});
+		await filesaveasdialog.downloadFromFSPath(path); 
+	}
+}
+
 // ====== tabNavMainMenuTab - main left menu actions in tabs events    
 
 mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{ 
@@ -414,9 +428,12 @@ mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{
 		} else if (eventdata?.menuItemId === "importdatabasemenuaction") { 
 			//console.log("saveprojectfilemenuaction");
 			importDatabaseAction(); 
+		} else if (eventdata?.menuItemId === "exportprojectfilewithdbmenuaction") { 
+			//console.log("saveprojectfilemenuaction");
+			exportDatabaseToProjectFileAction(); 
 		} 
 		
-		
+		   
 		
 	});
 

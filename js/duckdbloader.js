@@ -100,7 +100,7 @@ export class DuckDBLoader {
 				let opfsIsWritable = true;
 				try {
 					let res2 = await this.conn.query("CREATE OR REPLACE SCHEMA testwritemode01;CHECKPOINT;");
-					
+					res2 = await this.conn.query("DROP SCHEMA testwritemode01;CHECKPOINT;");
 				} catch (err) {
 					//console.log(err);
 					opfsIsWritable = false;					

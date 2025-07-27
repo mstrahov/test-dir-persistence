@@ -13,8 +13,20 @@ export class OwnFormatHandler {
 	#dbfilename;
 	#iohandler;
 	#duckdbloader;
+	#defer;
+	#resolve;
+	#reject;
+	#deferexpimp;
+	#resolveexpimp;
+	#rejectexpimp;
+
 	
 	constructor(params) {
+		this.#defer = new Promise((res, rej) => {
+			this.#resolve = res;
+			this.#reject = rej;
+		});
+		
 		this.FORMAT_VERSION = "0.1";
 		this.eventbus = new EventBus();
 		this.#pyodidePromise = params.pyodidePromise;
@@ -70,12 +82,23 @@ import sqlite3
 			console.error('Error initializing sqlite3',err);
 		}
 		//window.exectimer.timeit("done!");
+		this.#resolve();
 	}
 	
 	// -----------------------------------------------------------------------------------------------------
-	async openConn() {
+	async openConn(ownfilename='') {
+		
+		if (!this.#pyodide) { await this.init(); }
+		await this.#iohandler.FileIOinitialized();
+		
+		await this.#defer;
+		this.#defer = new Promise((res, rej) => {
+			this.#resolve = res;
+			this.#reject = rej;
+		});
+		let curdbfilename = ownfilename?ownfilename:this.#dbfilename;
 		const cmd = `
-conn_internal = sqlite3.connect("${this.#dbfilename}")
+conn_internal = sqlite3.connect("${curdbfilename}")
 conn_internal.execute('''
     CREATE TABLE IF NOT EXISTS tbl_objects (
         id INTEGER PRIMARY KEY,
@@ -91,20 +114,21 @@ conn_internal.execute('''
     CREATE UNIQUE INDEX IF NOT EXISTS uniqnametype ON tbl_objects (objuuid, objtype);
 ''')
 `;
-		if (!this.#pyodide) { await this.init(); }
-		await this.#iohandler.FileIOinitialized();
+		
 		try {
 			//~ let output = await this.#pyodide.runPythonAsync(cmd);
 			
 			let output = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
 			
 		} catch (err) {
-			console.error('Error opening internal file connection',this.#dbfilename,err);
+			
+			console.error('Error opening internal file connection', curdbfilename, err);
+			this.#reject();
 		}
 	}
 
 	// -----------------------------------------------------------------------------------------------------
-	async closeConn() {
+	async closeConn(supressSyncFS=false) {
 		const cmd = `
 conn_internal.commit()
 conn_internal.close()
@@ -115,10 +139,13 @@ conn_internal.close()
 			//~ let output = await this.#pyodide.runPythonAsync(cmd);
 			let output = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
 		} catch (err) {
-			console.error('Error closing internal file connection',this.#dbfilename,err);
+			console.error('Error closing internal file connection',err);
 		}
 		
-		await this.#iohandler.syncFS();
+		if (!supressSyncFS) {
+			await this.#iohandler.syncFS();
+		}
+		this.#resolve();
 	}
 	
 	// -----------------------------------------------------------------------------------------------------
@@ -157,14 +184,14 @@ conn_internal.execute('''
 			//~ let output = await this.#pyodide.runPythonAsync(cmd);
 			let output = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
 		} catch (err) {
-			console.error('Error writing object from string value',this.#dbfilename,name,objuuid,objtype,err);
+			console.error('Error writing object from string value to project file ',name,objuuid,objtype,err);
 		}
 		await this.closeConn();
 		//window.exectimer.timeit("done!");
 	}
 	
 	// -----------------------------------------------------------------------------------------------------
-	async writeObjectFromFile(name, objuuid, objtype, filename){
+	async writeObjectFromFile(name, objuuid, objtype, filename, ownfilename='', supressSyncFS=false){
 		//window.exectimer.timeit("writeObjectFromFile...");
 		const cmd = `
 with open('${filename}', 'rb') as f:
@@ -184,14 +211,14 @@ del filedata_01
 			return;
 		}
 		
-		await this.openConn();
+		await this.openConn(ownfilename);
 		try {
 			//~ let output = await this.#pyodide.runPythonAsync(cmd);
 			let output = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
 		} catch (err) {
-			console.error('Error writing object from file',this.#dbfilename,name,objuuid,objtype,err);
+			console.error('Error writing object from file to project file ',name,objuuid,objtype,err);
 		}
-		await this.closeConn();
+		await this.closeConn(supressSyncFS);
 		//window.exectimer.timeit("done!");
 	}
 	
@@ -216,11 +243,11 @@ conn_internal_data.decode()
 			if (res.runStatus) {
 				output = res.output;
 			} else {
-				console.error('Error reading object from file',this.#dbfilename, objuuid, objtype, res.error);
+				console.error('Error reading object from file to project file ', objuuid, objtype, res.error);
 			}
 			
 		} catch (err) {
-			console.error('Failed to read object from file',this.#dbfilename,objuuid,objtype,err);
+			console.error('Failed to read object from file to project file', objuuid,objtype,err);
 		}
 		await this.closeConn();
 		//window.exectimer.timeit("done!");
@@ -248,10 +275,10 @@ del conn_internal_data
 			if (res.runStatus) {
 				output = res.output;
 			} else {
-				console.error('Error reading object from file',this.#dbfilename, objuuid, objtype,filename, res.error);
+				console.error('Error reading object from file to project file', objuuid, objtype,filename, res.error);
 			}
 		} catch (err) {
-			console.error('Failed to read object from file',this.#dbfilename,objuuid,objtype,filename,err);
+			console.error('Failed to read object from file to project file',objuuid,objtype,filename,err);
 		}
 		await this.closeConn();
 		//window.exectimer.timeit("done!");
@@ -276,10 +303,10 @@ conn_internal_data
 			if (res.runStatus) {
 				output = res.output.toJs();
 			} else {
-				console.error('Error reading object types from file',this.#dbfilename, res.error);
+				console.error('Error reading object types from file to project file', res.error);
 			}
 		} catch (err) {
-			console.error('Failed to read object types from file',this.#dbfilename, err);
+			console.error('Failed to read object types from file to project file', err);
 		}
 		await this.closeConn();
 		return output;
@@ -314,10 +341,10 @@ conn_internal_data
 			if (res.runStatus) {
 				output = res.output.toJs();
 			} else {
-				console.error('Error reading object types from file',this.#dbfilename, res.error);
+				console.error('Error reading object types from file to project file', res.error);
 			}
 		} catch (err) {
-			console.error('Failed to read object types from file',this.#dbfilename, err);
+			console.error('Failed to read object types from file to project file', err);
 		}
 		await this.closeConn();
 		return output;
@@ -637,7 +664,7 @@ conn_internal.execute('''
 		try {
 			contents = await containerDirHandle.entries();
 		} catch (err) {
-			this._statechange('ownformatoperation_error', `Import database error: Cannot open import directory !`, { error: e });
+			this._statechange('ownformatoperation_error', `Import database error: Cannot open import directory !`, { error: err });
 			return false;
 		}
 		for await (const [key,entry] of contents) {
@@ -775,6 +802,107 @@ conn_internal.execute('''
 	
 	async exportDuckDbToOwnFormat() {
 		
+		// save scripts to own format first (assume current project state is saved
+		
+		// copy .adhocdb file to a temp location
+		const TEMP_EXPORT_OWNFILE_PATH = '/app/temp/default_export.adhocdb';
+		const EXPORT_TEMP_FILE_PATH = '/app/temp/export.temp';
+		const EXPORT_DIR_NAME = 'exportdb';
+		let res;
+		
+		const starttime = performance.now();   
+		this._statechange('ownformatoperation_start', `Starting exporting`);
+		
+		if (!this.#pyodide) { await this.init(); }
+		await this.#iohandler.FileIOinitialized();
+
+		await this.#deferexpimp;
+		this.#deferexpimp = new Promise((res, rej) => {
+			this.#resolveexpimp = res;
+			this.#rejectexpimp = rej;
+		}); 
+		
+		await this.#defer;
+		this.#defer = new Promise((res, rej) => {
+			this.#resolve = res;
+			this.#reject = rej;
+		}); 
+		
+		try { 
+			let ownfilecontents = this.#pyodide.FS.readFile(this.#dbfilename);
+			this.#pyodide.FS.writeFile(TEMP_EXPORT_OWNFILE_PATH, ownfilecontents);
+		} catch (err) {
+			this._statechange('ownformatoperation_error', `Export project file error: Cannot copy ${this.#dbfilename} !`, { error: err });
+			this.#reject();
+			this.#rejectexpimp();
+			return false;
+		}
+		
+		// release own file after copy
+		this.#resolve();
+		
+		// export db
+		this._statechange('ownformatoperation_message', `Starting database export...`);
+		
+
+	
+		try {
+			res = await this.coderunner.runSQLAsync(`CHECKPOINT;`); 
+			if (!res.runStatus) {
+				this._statechange('ownformatoperation_error', `Export database error: CHECKPOINT command error !`, { });
+				this.#rejectexpimp();
+				return false;	
+			}
+			res = await this.coderunner.runSQLAsync(`EXPORT DATABASE '${EXPORT_DIR_NAME}' (FORMAT parquet, COMPRESSION zstd);`);
+			if (!res.runStatus) {
+				this._statechange('ownformatoperation_error', `Export database error: EXPORT DATABASE sql command error !`, { });
+				this.#rejectexpimp();
+				return false;	
+			}
+			
+			let qryres = await this.coderunner.runSQLAsync(`SELECT "file" FROM glob("${EXPORT_DIR_NAME}/*");`);
+			
+			if (qryres?.runResult) {
+				this._statechange('ownformatoperation_message', `Database exported to memory, total files: ${qryres?.output?.numRows}`);
+				for (let i=0;i<qryres?.output?.numRows;i++) {
+					// save each exportdb object to a temp file, then to a temp .adhocdb record
+					const filename = qryres?.output?.get(i)['file']?.toString();
+					const filenameShort = filename.replaceAll(`${EXPORT_DIR_NAME}/`,'');
+					this._statechange('ownformatoperation_message', `Database export, processing file: ${filename}`);
+					const buffer = await this.#duckdbloader.db.copyFileToBuffer(filename);
+					await this.#pyodide.FS.writeFile(EXPORT_TEMP_FILE_PATH, buffer);
+					const objuuid = self.crypto.randomUUID();
+					await this.writeObjectFromFile(filenameShort, objuuid, 'exportdb', EXPORT_TEMP_FILE_PATH, TEMP_EXPORT_OWNFILE_PATH, true);			
+					await this.#duckdbloader.db.dropFile(filename);
+				}
+			} else {
+				this._statechange('ownformatoperation_error', `Export database error: nothing exported !`, { });
+				this.#rejectexpimp();
+				return false;	
+			}
+			
+			
+		} catch (err) {
+			this._statechange('ownformatoperation_error', `Error exporting database!`, { error: err });
+			this.#rejectexpimp();
+			return false;
+		}
+		
+		
+		// save as temp .adhocdb 
+		
+		// ******
+		let lengthmilli = performance.now() - starttime;
+		let lengthseconds = lengthmilli / 1000;
+		this._statechange('ownformatoperation_success', `Export complete!`,
+						{
+							lengthmilli: lengthmilli,
+							lengthseconds: lengthseconds/1000,
+						}
+					);
+					
+		this.#resolveexpimp();
+		return TEMP_EXPORT_OWNFILE_PATH;
 	}
 	
 	// -------------------------------------------------------------------------------------------------------
