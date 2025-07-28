@@ -148,8 +148,24 @@ export class StatusGridItemTextOutput extends GridItemTextOutput {
 	}
 	
 	ioMessageUpdate(eventdata) {
-		this.addToOutput(eventdata?.msg?.toString());
-		this.addToOutput(eventdata?.error?.toString());
+		
+		let length_add = '';
+		if (eventdata?.lengthseconds) {
+			length_add = ' ('+ Math.round(eventdata?.lengthseconds*1000)/1000 +' sec)';
+		}
+		if (eventdata?.msg) {
+			this.addToOutput(eventdata?.msg?.toString()+length_add);
+		}
+		if (eventdata?.message) {
+			this.addToOutput(eventdata?.message?.toString()+length_add);
+		}
+		if (eventdata?.error) {
+			this.addToOutput(eventdata?.error?.toString());
+		}
+		if (eventdata?.params && eventdata?.params.error) {
+			this.addToOutput(eventdata?.params.error.toString());
+		}
+
 	}
 	
 	

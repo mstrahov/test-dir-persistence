@@ -120,6 +120,10 @@ tabNavStatusTab.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{   sta
 
 sqleditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ tabNavStatusTab.runCmdFromGridItem('sql',obj,eventdata);  }, tabNavStatusTab.uuid);
 
+// ======= window.localFormatSaver = new OwnFormatHandler output events 
+// ownformatoperation_start  ownformatoperation_error  ownformatoperation_message  ownformatoperation_success
+window.localFormatSaver.eventbus.subscribe('statechange',(obj,eventdata)=>{   statusTabOutput.ioMessageUpdate(eventdata);  }, statusTabOutput.uuid);
+
 // =====  file dialog events
 
 filedialog.eventbus.subscribe('exportdatabasetodir', (obj,eventdata)=>{  

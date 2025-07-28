@@ -907,8 +907,74 @@ conn_internal.execute('''
 	
 	// -------------------------------------------------------------------------------------------------------
 	
-	async importDuckDbFromOwnFormat() {
+	async importDuckDbFromOwnFormat(importfilepath) {
 		
+		let res;
+		
+		const starttime = performance.now();   
+		this._statechange('ownformatoperation_start', `Starting project import from file...`);
+		
+		if (!this.#pyodide) { await this.init(); }
+		await this.#iohandler.FileIOinitialized();
+
+		await this.#deferexpimp;
+		this.#deferexpimp = new Promise((res, rej) => {
+			this.#resolveexpimp = res;
+			this.#rejectexpimp = rej;
+		}); 
+		
+		// backup current file
+		await this.#defer;
+		this.#defer = new Promise((res, rej) => {
+			this.#resolve = res;
+			this.#reject = rej;
+		}); 
+		
+		try { 
+			//~ let ownfilecontents = this.#pyodide.FS.readFile(this.#dbfilename);
+			//~ this.#pyodide.FS.writeFile(TEMP_EXPORT_OWNFILE_PATH, ownfilecontents);
+		} catch (err) {
+			this._statechange('ownformatoperation_error', `Import project file error: Cannot copy ${this.#dbfilename} !`, { error: err });
+			this.#reject();
+			this.#rejectexpimp();
+			return false;
+		}
+		
+		// release own file after backup copy
+		this.#resolve();
+		
+		// ************************************
+		// check that schema.sql object is present in the new file
+		
+		
+		// backup duckdb file if opfs
+		// reinitialize duckdb if opfs
+		
+		// copy exportdb objects from temp imported file to duckdb
+		
+		// import database
+		
+		// delete project file from opfs
+		
+		// copy all script objects from imported file to project file ?  or just copy the whole thing?  
+	
+		// close all open script windows
+		
+		// load local project file to open all scripts
+		
+		
+		// ************************************
+		let lengthmilli = performance.now() - starttime;
+		let lengthseconds = lengthmilli / 1000;
+		this._statechange('ownformatoperation_success', `Export complete!`,
+						{
+							lengthmilli: lengthmilli,
+							lengthseconds: lengthseconds/1000,
+						}
+					);
+					
+		this.#resolveexpimp();
+		return true;
 	}
 	
 	// -------------------------------------------------------------------------------------------------------
