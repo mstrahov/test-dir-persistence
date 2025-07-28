@@ -399,7 +399,7 @@ const importDatabaseAction = async () => {
 	await window.localFormatSaver.importDuckDBFromDir(dirHandle);
 }
 
-// ================================================================== importdatabasemenuaction menu action
+// ================================================================== exportDatabaseToProjectFileAction menu action
 
 const exportDatabaseToProjectFileAction = async () => {   
 	await SaveProjectFile();
@@ -408,6 +408,17 @@ const exportDatabaseToProjectFileAction = async () => {
 		let filesaveasdialog = new FileDownLoadDialog({fileSystemHandler: window.fileiohandler});
 		await filesaveasdialog.downloadFromFSPath(path); 
 	}
+}
+
+// ================================================================== importdatabasemenuaction menu action
+
+const ImportDatabaseFromProjectFileAction = async () => {   
+	await SaveProjectFile();
+	
+	let importfilepath = '/app/temp/importdb.adhocdb';
+	// open file dialog
+	await window.localFormatSaver.importDuckDbFromOwnFormat(importfilepath);
+
 }
 
 // ====== tabNavMainMenuTab - main left menu actions in tabs events    
@@ -435,9 +446,12 @@ mainMenuControl.eventbus.subscribe('menuitemclick',(obj,eventdata)=>{
 		} else if (eventdata?.menuItemId === "exportprojectfilewithdbmenuaction") { 
 			//console.log("saveprojectfilemenuaction");
 			exportDatabaseToProjectFileAction(); 
+		} else if (eventdata?.menuItemId === "importprojectfilewithdbmenuaction") { 
+			//console.log("saveprojectfilemenuaction");
+			ImportDatabaseFromProjectFileAction(); 
 		} 
 		
-		   
+		//   
 		
 	});
 

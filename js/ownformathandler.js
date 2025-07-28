@@ -923,7 +923,7 @@ conn_internal.execute('''
 			this.#rejectexpimp = rej;
 		}); 
 		
-		// backup current file
+		// backup current file ---------------------------------------------------
 		await this.#defer;
 		this.#defer = new Promise((res, rej) => {
 			this.#resolve = res;
@@ -948,6 +948,7 @@ conn_internal.execute('''
 		
 		
 		// backup duckdb file if opfs
+		
 		// reinitialize duckdb if opfs
 		
 		// copy exportdb objects from temp imported file to duckdb
