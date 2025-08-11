@@ -16,6 +16,9 @@ export class FileUploadButton {
 	#fsHandler; 
 	#internalContainer;
 	#uuid;
+	#defer;
+	#resolve;
+	#reject;
 	
 	constructor (params) {
 		this.#containertemplateid = params.containertemplateid;
@@ -36,15 +39,23 @@ export class FileUploadButton {
 		this.#internalContainer.querySelector('#uploadfilesbutton'+this.#uuid).addEventListener("click", this.uploadFilesButtonClick.bind(this));
 		this.#internalContainer.querySelector('#formFileMultiple'+this.#uuid).addEventListener("change", this.processFiles.bind(this));
 	}
-	
-	uploadFilesButtonClick() {
+	// -------------------------------------------------------------------
+	async uploadFilesButtonClick() {
+		this.#defer = new Promise((res, rej) => {
+			this.#resolve = res;
+			this.#reject = rej;
+		});
 		document.querySelector("#formFileMultiple"+this.#uuid).click();
+		return this.#defer;
 	}
-	
+	// -------------------------------------------------------------------
 	async processFiles(e) {
 		const files = e?.srcElement?.files;
 		console.log('Files chosen:',);
-		if (!files) { return; }
+		if (!files) { 
+			this.#reject();
+			return; 
+		}
 		const root = await navigator.storage.getDirectory();
 		
 		const ismountedflag = await this.#fsHandler.opfsIsMounted();
@@ -68,14 +79,14 @@ export class FileUploadButton {
 			console.log(`Copied file: ${fileName}`);
 		}
 		if (ismountedflag) { await this.#fsHandler.syncFS(); } 
-		
+		this.#resolve();
 	}
 	
 }
 	
 	
 //  SAVE A FILE AS  https://web.dev/patterns/files/save-a-file/
-
+// ********************************************************************************************************
 export class FileDownLoadDialog {
 	#fsHandler;
 	#uuid;

@@ -145,7 +145,9 @@ filedialog.eventbus.subscribe('exportdatabasetodir', (obj,eventdata)=>{
 	
 });
 
-
+// project file upload button
+let projfilefileuploaddialog = new FileUploadButton({containertemplateid: "#hiddenuploadbuttontemplate", containerid:"#projfileuploaddialogplaceholder",  fileSystemHandler: window.fileiohandler });
+ 
 
 // ================================================================== newscriptmenuaction
 let activetabs = [];
@@ -335,6 +337,7 @@ const SaveProjectFile = async () => {
 			await window.localFormatSaver.saveScriptByUuid(window.localFormatSaver.scriptsarr[i].objuuid);
 		}
 	}
+	console.log("Local Project File Saved.");
 		
 };
 
@@ -417,8 +420,11 @@ const ImportDatabaseFromProjectFileAction = async () => {
 	
 	let importfilepath = '/app/temp/importdb.adhocdb';
 	// open file dialog
+	//projfilefileuploaddialog
+	await projfilefileuploaddialog.uploadFilesButtonClick();
+	console.log("Calling importDuckDbFromOwnFormat");
 	await window.localFormatSaver.importDuckDbFromOwnFormat(importfilepath);
-
+	
 }
 
 // ====== tabNavMainMenuTab - main left menu actions in tabs events    

@@ -53,7 +53,7 @@ export class OwnFormatHandler {
 		if (params?.error) {
 			console.error(addmessage, params);
 		} else {
-			console.log(addmessage, params);
+			console.log(newstate,addmessage, params);
 		}
 		
 		this.eventbus.dispatch('statechange',this,{state:newstate, message:addmessage, lengthmilli:params?.lengthmilli||0, lengthseconds: params?.lengthseconds||0,  ...params } );
@@ -923,7 +923,11 @@ conn_internal.execute('''
 			this.#rejectexpimp = rej;
 		}); 
 		
-		// backup current file ---------------------------------------------------
+		
+		// check that schema.sql object is present in the new file
+		
+		
+		// backup current /app/opfs/default.adhocdb file ---------------------------------------------------
 		await this.#defer;
 		this.#defer = new Promise((res, rej) => {
 			this.#resolve = res;
@@ -944,10 +948,12 @@ conn_internal.execute('''
 		this.#resolve();
 		
 		// ************************************
-		// check that schema.sql object is present in the new file
+		
 		
 		
 		// backup duckdb file if opfs
+
+		
 		
 		// reinitialize duckdb if opfs
 		
@@ -967,7 +973,7 @@ conn_internal.execute('''
 		// ************************************
 		let lengthmilli = performance.now() - starttime;
 		let lengthseconds = lengthmilli / 1000;
-		this._statechange('ownformatoperation_success', `Export complete!`,
+		this._statechange('ownformatoperation_success', `File import complete!`,
 						{
 							lengthmilli: lengthmilli,
 							lengthseconds: lengthseconds/1000,
