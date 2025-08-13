@@ -19,6 +19,9 @@ export class FileUploadButton {
 	#defer;
 	#resolve;
 	#reject;
+	#uploadToFilePath;
+	#uploadToFileName;
+	//~ #doNotSyncFS;
 	
 	constructor (params) {
 		this.#containertemplateid = params.containertemplateid;
@@ -27,6 +30,10 @@ export class FileUploadButton {
 		this.#uuid = self.crypto.randomUUID();
 		
 		this.#internalContainer = document.querySelector(this.#containerid);
+		
+		this.#uploadToFilePath = params.uploadToFilePath||'';
+		this.#uploadToFileName = params.uploadToFileName||'';
+		//~ this.#doNotSyncFS = params.doNotSyncFS||false;
 		
 		//~ const template = document.querySelector(this.#containertemplateid);
 		//~ const clone = template.content.cloneNode(true);
@@ -51,37 +58,59 @@ export class FileUploadButton {
 	// -------------------------------------------------------------------
 	async processFiles(e) {
 		const files = e?.srcElement?.files;
-		console.log('Files chosen:',);
+		//~ console.log('Files chosen:',);
 		if (!files) { 
-			this.#reject();
+			this.#reject({runStatus:false, runResult:"no selection", error: null});
 			return; 
 		}
-		const root = await navigator.storage.getDirectory();
 		
+		const root = await navigator.storage.getDirectory();
 		const ismountedflag = await this.#fsHandler.opfsIsMounted();
-		for (let i = 0; i < files.length; i++) {
-			const file = files[i];
-			const fileName = file.name;
-			const fileData = new Uint8Array(await file.arrayBuffer());
+		
+		if (!this.#uploadToFilePath) {
+			// default - upload to opfs root
+			
+			for (let i = 0; i < files.length; i++) {
+				const file = files[i];
+				const fileName = file.name;
+				const fileData = new Uint8Array(await file.arrayBuffer());
 
-			if (ismountedflag) {
-				// copy to OPFS root
-				let res = await this.#fsHandler.writeFileToOPFSroot(fileName,fileData);
-				console.log(`Written via FS, file: ${fileName}, ${res}`);
-				
-			} else {
-				// Create a new file in the OPFS root directory
-				const fileHandle = await root.getFileHandle(fileName, { create: true });
-				const writable = await fileHandle.createWritable();
-				await writable.write(fileData);
-				await writable.close();
+				if (ismountedflag) {
+					// copy to OPFS root
+					let res = await this.#fsHandler.writeFileToOPFSroot(fileName,fileData);
+					console.log(`Written via FS, file: ${fileName}, ${res}`);
+					
+				} else {
+					// Create a new file in the OPFS root directory
+					const fileHandle = await root.getFileHandle(fileName, { create: true });
+					const writable = await fileHandle.createWritable();
+					await writable.write(fileData);
+					await writable.close();
+				}
+				console.log(`Copied file: ${fileName}`);
 			}
-			console.log(`Copied file: ${fileName}`);
+			if (ismountedflag) { await this.#fsHandler.syncFS(); } 
+		} else {
+			// upload to this.#uploadToFilePath
+			// *****************
+			for (let i = 0; i < files.length; i++) {
+				const file = files[i];
+				let fileName = file.name;
+				const fileData = new Uint8Array(await file.arrayBuffer());
+
+				if (this.#uploadToFileName) { fileName = this.#uploadToFileName; }
+				let res = await this.#fsHandler.writeFileToPath(this.#uploadToFilePath,fileName,fileData);
+				
+				console.log(`Copied file: ${file.name} as ${fileName} to ${this.#uploadToFilePath}`);
+			}
+			
+			
+			// ******************
+			
 		}
-		if (ismountedflag) { await this.#fsHandler.syncFS(); } 
-		this.#resolve();
+		this.#resolve({runStatus:true, runResult:"success", error: null});
 	}
-	
+	// -------------------------------------------------------------------
 }
 	
 	

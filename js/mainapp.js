@@ -146,7 +146,16 @@ filedialog.eventbus.subscribe('exportdatabasetodir', (obj,eventdata)=>{
 });
 
 // project file upload button
-let projfilefileuploaddialog = new FileUploadButton({containertemplateid: "#hiddenuploadbuttontemplate", containerid:"#projfileuploaddialogplaceholder",  fileSystemHandler: window.fileiohandler });
+const PROJ_FILE_TEMP_PATH = "/app/temp";
+const PROJ_FILE_TEMP_NAME = "importdbtemp.adhocdb";
+
+let projfilefileuploaddialog = new FileUploadButton({  
+		containertemplateid: "#hiddenuploadbuttontemplate", 
+		containerid:"#projfileuploaddialogplaceholder",  
+		fileSystemHandler: window.fileiohandler,
+		uploadToFilePath: PROJ_FILE_TEMP_PATH,
+		uploadToFileName: PROJ_FILE_TEMP_NAME,
+	});
  
 
 // ================================================================== newscriptmenuaction
@@ -416,14 +425,20 @@ const exportDatabaseToProjectFileAction = async () => {
 // ================================================================== importdatabasemenuaction menu action
 
 const ImportDatabaseFromProjectFileAction = async () => {   
-	await SaveProjectFile();
-	
-	let importfilepath = '/app/temp/importdb.adhocdb';
+
+	await SaveProjectFile();	
+	let importfilepath = `${PROJ_FILE_TEMP_PATH}/${PROJ_FILE_TEMP_NAME}`;
 	// open file dialog
-	//projfilefileuploaddialog
-	await projfilefileuploaddialog.uploadFilesButtonClick();
-	console.log("Calling importDuckDbFromOwnFormat");
-	await window.localFormatSaver.importDuckDbFromOwnFormat(importfilepath);
+	// window.fileiohandler
+	try {
+		await window.fileiohandler.deleteFileFromFS(importfilepath);
+		let uploadres = await projfilefileuploaddialog.uploadFilesButtonClick();
+	//console.log("upload res = ", uploadres);
+	//~ console.log("Calling importDuckDbFromOwnFormat");
+		await window.localFormatSaver.importDuckDbFromOwnFormat(importfilepath);
+	} catch (err) {
+		console.log("Error importing a project file: ",err);
+	}
 	
 }
 

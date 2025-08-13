@@ -287,6 +287,22 @@ export class FileIOHandler {
 		return res;
 	}
 	// ------------------------------------------------------------------
+	async writeFileToPath(filepath,filename,arraybuf) {
+		let res = true;
+		let pyodide = await this.#pyodidePromise;
+		await this.#defer;
+		
+		filepath = filepath.trim();
+		if (filepath.endsWith('/')) { filepath = filepath.slice(0,-1); }
+		if (!this.pathExists(filepath)) {
+			throw(new Error('File path does not exist!'));
+			return false;
+		}
+		await pyodide.FS.writeFile(filepath+"/"+filename,arraybuf);
+		
+		return res;
+	}
+	// ------------------------------------------------------------------
 	async readFile(path) {
 		// returns a new Uint8Array buffer (encoding is binary)
 		// https://emscripten.org/docs/api_reference/Filesystem-API.html#FS.readFile
@@ -878,6 +894,30 @@ export class FileIOHandler {
 			}
 		} catch (err) {
 			this._ioerrormessage(err, `Error deleting file ${filepath}`, {} ); 
+			return false;
+		}
+		
+		return true;
+	
+	}
+	// ----------------------------------------------
+	async deleteFileFromFS(filepath) {
+		
+		let pyodide = await this.#pyodidePromise;
+		
+		let dirPath = filepath;
+		const spl = dirPath.split('/');
+		if (spl.length>0) {
+			dirPath = dirPath.substring(0,dirPath.length-spl[spl.length-1].length);
+		} 
+		if (dirPath.endsWith('/')) { dirPath = dirPath.substring(0,dirPath.length-1); }
+	
+		try {
+			if (pyodide.FS.analyzePath(filepath)?.exists) {
+				await pyodide.FS.unlink(filepath);
+			}
+		} catch (err) {
+			this._ioerrormessage(err, `Error deleting file from FS ${filepath}`, {} ); 
 			return false;
 		}
 		
