@@ -435,7 +435,13 @@ const ImportDatabaseFromProjectFileAction = async () => {
 		let uploadres = await projfilefileuploaddialog.uploadFilesButtonClick();
 	//console.log("upload res = ", uploadres);
 	//~ console.log("Calling importDuckDbFromOwnFormat");
-		await window.localFormatSaver.importDuckDbFromOwnFormat(importfilepath);
+		let importres = await window.localFormatSaver.importDuckDbFromOwnFormat(importfilepath);
+		
+		// close all open script windows if importres
+
+		// load local project file to open all scripts
+    
+    
 	} catch (err) {
 		console.log("Error importing a project file: ",err);
 	}

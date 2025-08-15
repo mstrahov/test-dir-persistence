@@ -271,7 +271,7 @@ del filedata_01
 
   // -----------------------------------------------------------------------------------------------------
 
-  async readObjectToString(objuuid, objtype) {
+  async readObjectToString(objuuid, objtype, ownfilename = "", supressSyncFS = true) {
     //window.exectimer.timeit("readObjectToString...");
     const cmd = `
 conn_curs = conn_internal.execute('''
@@ -283,7 +283,7 @@ conn_internal_data.decode()
 `;
 
     let output = undefined;
-    await this.openConn();
+    await this.openConn(ownfilename);
     try {
       //~ output = await this.#pyodide.runPythonAsync(cmd);
       let res = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
@@ -305,14 +305,14 @@ conn_internal_data.decode()
         err,
       );
     }
-    await this.closeConn();
+    await this.closeConn(supressSyncFS);
     //window.exectimer.timeit("done!");
     return output;
   }
 
   // -----------------------------------------------------------------------------------------------------
 
-  async readObjectToFile(objuuid, objtype, filename) {
+  async readObjectToFile(objuuid, objtype, filename, ownfilename = "", supressSyncFS = true) {
     //window.exectimer.timeit("readObjectToFile...");
     const cmd = `
 conn_internal_data = conn_internal.execute('''
@@ -323,7 +323,7 @@ with open('${filename}', 'wb') as file:
 del conn_internal_data
 `;
     let output = undefined;
-    await this.openConn();
+    await this.openConn(ownfilename);
     try {
       //~ output = await this.#pyodide.runPythonAsync(cmd);
       let res = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
@@ -347,7 +347,7 @@ del conn_internal_data
         err,
       );
     }
-    await this.closeConn();
+    await this.closeConn(supressSyncFS);
     //window.exectimer.timeit("done!");
     return output;
   }
@@ -386,7 +386,7 @@ conn_internal_data
 
   // -----------------------------------------------------------------------------------------------------
 
-  async getAllObjectsOfType(objtype) {
+  async getAllObjectsOfType(objtype, ownfilename = "", supressSyncFS = true) {
     //~ const cmd = `
     //~ conn_internal_data = conn_internal.execute('''
     //~ SELECT name, objuuid, data FROM tbl_objects
@@ -406,7 +406,7 @@ conn_internal_data = conn_internal.execute('''
 conn_internal_data
 `;
     let output = undefined;
-    await this.openConn();
+    await this.openConn(ownfilename);
     try {
       let res = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
       if (res.runStatus) {
@@ -423,10 +423,62 @@ conn_internal_data
         err,
       );
     }
-    await this.closeConn();
+    await this.closeConn(supressSyncFS);
     return output;
   }
+// -----------------------------------------------------------------------------------------------------
 
+  async getAllObjectsOfTypeMetaData(objtype, ownfilename = "", supressSyncFS = true) {
+    //~ const cmd = `
+    //~ conn_internal_data = conn_internal.execute('''
+    //~ SELECT name, objuuid, data FROM tbl_objects
+    //~ WHERE objtype='${objtype}';
+    //~ ''').fetchall()
+    //~ data_output = []
+    //~ for item in conn_internal_data:
+    //~ data_output.append([item[0],item[1],item[2].decode()])
+    //~ del conn_internal_data
+    //~ data_output
+    //~ `;
+    const cmd = `
+conn_internal_data = conn_internal.execute('''
+	SELECT name, objuuid, objtype, datahash, modtimestamp FROM tbl_objects
+    WHERE objtype='${objtype}';
+''').fetchall()
+conn_internal_data
+`;
+    let output = undefined;
+    await this.openConn(ownfilename);
+    try {
+      let res = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
+      if (res.runStatus) {
+        const resoutput = res.output.toJs();
+        output = [];
+		for (let i=0;i<resoutput.length;i++) {
+			output.push({
+				name: resoutput[i][0],
+				objuuid: resoutput[i][1],
+				objtype: resoutput[i][2],
+				datahash: resoutput[i][3],
+				modtimestamp: resoutput[i][4],
+			});
+			
+		}
+      } else {
+        console.error(
+          "Error reading object types from file to project file",
+          res.error,
+        );
+      }
+    } catch (err) {
+      console.error(
+        "Failed to read object types from file to project file",
+        err,
+      );
+    }
+    await this.closeConn(supressSyncFS);
+    return output;
+  }
   // -----------------------------------------------------------------------------------------------------
 
   async deleteObjectByUuid(objuuid, objtype) {
@@ -764,9 +816,9 @@ conn_internal.execute('''
 
     if (!containerDirHandle) {
       this._statechange(
-        "ownformatoperation_error",
-        `Error importing database, cannot open directory ${dirPath} !`,
-        {},
+		"ownformatoperation_error",
+		`Error importing database, cannot open directory ${dirPath} !`,
+		{},
       );
       return false;
     }
@@ -1136,7 +1188,7 @@ conn_internal.execute('''
       this.#rejectexpimp = rej;
     });
 
-    // check that file importfilepath exists
+    // check that file importfilepath exists ****************************************************************************************************************
     if (!(await this.#iohandler.pathExists(importfilepath))) {
       this._statechange(
         "ownformatoperation_error",
@@ -1147,7 +1199,7 @@ conn_internal.execute('''
       return false;
     }
 
-    // check that format version string is present in the new file, and at least one of scripts/database objects is present
+    // check that format version string is present in the new file, and at least one of scripts/database objects is present ****************************
     
     const typeStats = await this.getObjTypeStats(importfilepath);
 	console.log("file contents: ", typeStats);
@@ -1156,6 +1208,10 @@ conn_internal.execute('''
 		formatVersionCount: 0,
 		exportDBCount: 0,
 		scriptCount:0,
+		ownFormatVersionString:'',
+		dbObjectsList: [],
+		schemaIndex: -1,
+		
 	};
 	if (typeStats && Array.isArray(typeStats)) {
 		for (let i=0;i<typeStats.length;i++) {
@@ -1184,11 +1240,45 @@ conn_internal.execute('''
 		this.#resolveexpimp();
 		return false;
 	}
-	// check import file format number (?)
-	
-    // check that schema.sql object is present in the new file (?)
-	
 
+	// check import file format number ****************************************************************************************
+	
+	fileProperties.ownFormatVersionString = await this.readObjectToString("format_version", "format_version", importfilepath);
+	console.log("File version: ", fileProperties.ownFormatVersionString);
+	
+	if (!fileProperties.ownFormatVersionString) {
+		errormessage = "Import file format version is not provided or incompatible.";
+		this._statechange(
+			"ownformatoperation_error",
+			errormessage,
+			{ error: null },
+		);
+		this.#resolveexpimp();
+		return false;
+		
+	}
+	
+    // get all exportdb files and check that schema.sql object is present in the new file ********************************************************
+	if (fileProperties.exportDBCount>0) {
+		fileProperties.dbObjectsList = await this.getAllObjectsOfTypeMetaData("exportdb",importfilepath);
+		console.log("DB Objects:",fileProperties.dbObjectsList);
+		
+		fileProperties.schemaIndex = fileProperties.dbObjectsList.findIndex(v=>v.name==='schema.sql');
+		console.log("SCHEMA INDEX = ", fileProperties.schemaIndex);
+		if (fileProperties.schemaIndex===-1) {
+			errormessage = "Import file does not contain schema.sql!";
+			this._statechange(
+				"ownformatoperation_error",
+				errormessage,
+				{ error: null },
+			);
+			this.#resolveexpimp();
+			return false;
+			
+		}
+				
+	}
+	
 
     // backup current /app/opfs/default.adhocdb file ---------------------------------------------------
     await this.#defer;
@@ -1216,21 +1306,24 @@ conn_internal.execute('''
 
     // ************************************
 
-    // backup duckdb file if opfs
+	//  
 
-    // reinitialize duckdb if opfs
 
-    // copy exportdb objects from temp imported file to duckdb
+    // backup duckdb file if opfs and if fileProperties.exportDBCount>0
 
-    // import database
+    // reinitialize duckdb if opfs and if fileProperties.exportDBCount>0
 
-    // delete project file from opfs
+    // copy exportdb objects from temp imported file to duckdb if fileProperties.exportDBCount>0
 
-    // copy all script objects from imported file to project file ?  or just copy the whole thing?
+    // import database if fileProperties.exportDBCount>0
 
-    // close all open script windows
+    // delete project file from opfs (?)
 
-    // load local project file to open all scripts
+    // copy all script objects from imported file to project file ?  or just copy the whole thing? if fileProperties.scriptCount>0
+
+    // #close all open script windows 
+
+    // #load local project file to open all scripts
 
     // ************************************
     let lengthmilli = performance.now() - starttime;
