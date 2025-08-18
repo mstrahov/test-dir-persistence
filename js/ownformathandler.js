@@ -1171,6 +1171,11 @@ conn_internal.execute('''
   async importDuckDbFromOwnFormat(importfilepath) {
     let res;
 	let errormessage = null;
+
+    const IMPORT_DB_TEMP_DIR = "/app/opfs/tempimport";
+    
+	
+	
     const starttime = performance.now();
     this._statechange(
       "ownformatoperation_start",
@@ -1288,17 +1293,28 @@ conn_internal.execute('''
     });
 
     try {
-      //~ let ownfilecontents = this.#pyodide.FS.readFile(this.#dbfilename);
-      //~ this.#pyodide.FS.writeFile(TEMP_EXPORT_OWNFILE_PATH, ownfilecontents);
+		const res = await this.#iohandler.backupExistingFileInPlace(this.#dbfilename);
+		if (!res) {
+			errormessage = `Cannot backup ${this.#dbfilename}, aborting import!`;
+			this._statechange(
+				"ownformatoperation_error",
+				errormessage,
+				{ error: null },
+			);
+			this.#resolve();
+			this.#resolveexpimp();
+			return false;
+		}
     } catch (err) {
-      this._statechange(
-        "ownformatoperation_error",
-        `Import project file error: Cannot copy ${this.#dbfilename} !`,
-        { error: err },
-      );
-      this.#resolve();
-      this.#resolveexpimp();
-      return false;
+		errormessage = `Error during ${this.#dbfilename} backup, aborting import!`;
+		this._statechange(
+			"ownformatoperation_error",
+			errormessage,
+			{ error: null },
+		);
+		this.#resolve();
+		this.#resolveexpimp();
+		return false;
     }
 
     // release own file after backup copy
@@ -1306,20 +1322,35 @@ conn_internal.execute('''
 
     // ************************************
 
-	//  
-
-
-    // backup duckdb file if opfs and if fileProperties.exportDBCount>0
-
-    // reinitialize duckdb if opfs and if fileProperties.exportDBCount>0
-
-    // copy exportdb objects from temp imported file to duckdb if fileProperties.exportDBCount>0
-
-    // import database if fileProperties.exportDBCount>0
+    // copy exportdb objects from temp imported file to duckdb if fileProperties.exportDBCount>0 and import database
+	if (fileProperties.exportDBCount>0) {
+		//  IMPORT_DB_TEMP_DIR
+		let containerDirHandle = await this.#iohandler.findOrCreateDirectoryHandleByFilePath(IMPORT_DB_TEMP_DIR);
+		await this.#iohandler.syncFS();
+		let existingfiles = await this.#iohandler.genFileTreePyFS(IMPORT_DB_TEMP_DIR); 
+		for (let i=0;i<existingfiles.length;i++) {
+			if (existingfiles[i].type==='file') {
+				res = await this.#iohandler.deleteFileFromFSandFileHandle(existingfiles[i].fullpath);	
+			}
+		}
+		
+		for (let i=0;i<fileProperties.dbObjectsList.length;i++) {
+			res = await this.readObjectToFile(fileProperties.dbObjectsList[i].objuuid, fileProperties.dbObjectsList[i].objtype, 
+												IMPORT_DB_TEMP_DIR+"/"+fileProperties.dbObjectsList[i].name, importfilepath, false); 			
+		}
+		
+		res = await this.importDuckDBFromDir(containerDirHandle);
+		
+	}
 
     // delete project file from opfs (?)
-
     // copy all script objects from imported file to project file ?  or just copy the whole thing? if fileProperties.scriptCount>0
+    if (fileProperties.scriptCount>0) {
+		
+		
+	}
+    
+    
 
     // #close all open script windows 
 
