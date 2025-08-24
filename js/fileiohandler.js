@@ -558,10 +558,14 @@ export class FileIOHandler {
 				let buffer;
 				if (fileinfo.exists===true) {
 					buffer = await pyodide.FS.readFile(filenamestr);	
+					await this.#duckdbloader.db.registerFileBuffer(filenamestr, buffer);	
 				} else {
-					buffer = new Uint8Array();				
+					buffer = new Uint8Array();		
+					if (!this.#duckdbloader.duckdb.isFirefox()) {
+						await this.#duckdbloader.db.registerFileBuffer(filenamestr, buffer);
+					}		
 				}
-				await this.#duckdbloader.db.registerFileBuffer(filenamestr, buffer);	
+				//await this.#duckdbloader.db.registerFileBuffer(filenamestr, buffer);	
 				this.duckdbfilehandles.push({filename: filenamestr, transactionid:transactionid, buffer: buffer});
 				
 				

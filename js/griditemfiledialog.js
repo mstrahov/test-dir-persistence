@@ -141,7 +141,7 @@ export class gridItemFileDialog extends GridItemWithMenu {
 					}
 				},
 				{
-					label:"Delete file.",
+					label:"Delete file",
 					action:function(e, row){
 						//console.log(row.getData());
 						that.eventbus.dispatch('deletefilecmd', that, { fullpath: row.getData().fullpath, type: row.getData().type});	  //rowdata.type === 'directory'
