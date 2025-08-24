@@ -145,6 +145,23 @@ filedialog.eventbus.subscribe('exportdatabasetodir', (obj,eventdata)=>{
 	
 });
 
+filedialog.eventbus.subscribe('deletefilecmd', (obj,eventdata)=>{  
+	// { fullpath: row.getData().fullpath, type: row.getData().type}   //rowdata.type === 'directory'
+	
+	(async (obj,eventdata)=>{
+		let dirPath = eventdata?.fullpath;
+		if (dirPath && eventdata?.type!=='directory') {
+			let res = await window.fileiohandler.deleteFileFromFSandFileHandle(dirPath);
+			if (res) {
+				console.log(`"Deleted ${dirPath}`);
+			}
+		}
+
+	})(obj,eventdata);
+	
+	
+});
+
 // project file upload button
 const PROJ_FILE_TEMP_PATH = "/app/temp";
 const PROJ_FILE_TEMP_NAME = "importdbtemp.adhocdb";
@@ -316,7 +333,6 @@ ownformatdialog.eventbus.subscribe('deletescriptcommand',
 , tabNavStatusTab.uuid);
 
 
-
 // ================================================================== save project menu action
 
 const SaveProjectFile = async () => {   
@@ -350,9 +366,11 @@ const SaveProjectFile = async () => {
 		
 };
 
-// ================================================================== open project menu action
 
-const OpenProjectFile = async () => {   
+
+// =========================================  open all scripts from window.localFormatSaver.scriptsarr
+
+const OpenAndReRunAllLocalScripts = async () => {   
 	// name, objuuid, objtype, stringval
 	//await window.localFormatSaver.writeObjectFromString("format_version", "format_version", "format_version", window.localFormatSaver.FORMAT_VERSION );
 	//await window.localFormatSaver.writeObjectFromString("test1", "test2", "test3", "test4");
@@ -360,14 +378,14 @@ const OpenProjectFile = async () => {
 		activetabs = []
 	
 	*/
-	let file_format_ver = await window.localFormatSaver.readObjectToString("format_version", "format_version");
-	console.log(`Open project file ${window.localFormatSaver.dbfilename} format ver ${file_format_ver}`);
-	let file_stats = await window.localFormatSaver.getObjTypeStats();
-	console.log('File stats: ', file_stats);
+	//~ let file_format_ver = await window.localFormatSaver.readObjectToString("format_version", "format_version");
+	//~ console.log(`Open project file ${window.localFormatSaver.dbfilename} format ver ${file_format_ver}`);
+	//~ let file_stats = await window.localFormatSaver.getObjTypeStats();
+	//~ console.log('File stats: ', file_stats);
 	
-	window.localFormatSaver.scriptsarr = await window.localFormatSaver.getScriptsArrayFromOwnFormatFile();
-	console.log('Scripts: ', window.localFormatSaver.scriptsarr);
-	window.localFormatSaver.scriptsarr.sort((a, b)=>a.runorder-b.runorder);
+	//~ window.localFormatSaver.scriptsarr = await window.localFormatSaver.getScriptsArrayFromOwnFormatFile();
+	//~ console.log('Scripts: ', window.localFormatSaver.scriptsarr);
+	//~ window.localFormatSaver.scriptsarr.sort((a, b)=>a.runorder-b.runorder);
 	
 	for (let i=0;i<window.localFormatSaver.scriptsarr.length;i++) {
 		const ind = activetabs.findIndex((v)=>v.uuid===window.localFormatSaver.scriptsarr[i].objuuid);
@@ -391,10 +409,60 @@ const OpenProjectFile = async () => {
 		}
 	}
 	
-	updateOwnFormatDialogData();
+	//~ updateOwnFormatDialogData();
 	if (activetabs.length>0) {
 		activetabs[0].contenttab.show();
 	}
+	
+};
+
+// ================================================================== open project menu action
+
+
+const OpenProjectFile = async () => {   
+	// name, objuuid, objtype, stringval
+	//await window.localFormatSaver.writeObjectFromString("format_version", "format_version", "format_version", window.localFormatSaver.FORMAT_VERSION );
+	//await window.localFormatSaver.writeObjectFromString("test1", "test2", "test3", "test4");
+	/* saving objects:
+		activetabs = []
+	
+	*/
+	let file_format_ver = await window.localFormatSaver.readObjectToString("format_version", "format_version");
+	console.log(`Open project file ${window.localFormatSaver.dbfilename} format ver ${file_format_ver}`);
+	let file_stats = await window.localFormatSaver.getObjTypeStats();
+	console.log('File stats: ', file_stats);
+	
+	window.localFormatSaver.scriptsarr = await window.localFormatSaver.getScriptsArrayFromOwnFormatFile();
+	console.log('Scripts: ', window.localFormatSaver.scriptsarr);
+	window.localFormatSaver.scriptsarr.sort((a, b)=>a.runorder-b.runorder);
+	
+	//~ for (let i=0;i<window.localFormatSaver.scriptsarr.length;i++) {
+		//~ const ind = activetabs.findIndex((v)=>v.uuid===window.localFormatSaver.scriptsarr[i].objuuid);
+		//~ if (ind===-1) { 
+			//~ if (window.localFormatSaver.scriptsarr[i].autorun && window.localFormatSaver.scriptsarr[i].scriptObject?.transformSteps?.length>0) {
+				//~ let res = await window.coderunner.runScriptStepsAndUpdateInPlace(
+												//~ window.localFormatSaver.scriptsarr[i].scriptObject?.transformSteps, 
+												//~ window.localFormatSaver.scriptsarr[i].objuuid
+										//~ );
+				
+				//~ window.localFormatSaver.scriptsarr[i].scriptObject.lastRunStatus = res?.runStatus;
+				//~ if (res?.runStatus) {
+					//~ window.localFormatSaver.scriptsarr[i].scriptObject.lastRunResult = res.runResult;
+				//~ } 					
+			//~ } else {
+				//~ window.localFormatSaver.scriptsarr[i].scriptObject.lastRunStatus = null;
+			//~ }
+			//~ if (window.localFormatSaver.scriptsarr[i].isopen) {
+				//~ OpenNewScriptTab(window.localFormatSaver.scriptsarr[i]);
+			//~ } 
+		//~ }
+	//~ }
+	
+	await OpenAndReRunAllLocalScripts();
+	updateOwnFormatDialogData();
+	//~ if (activetabs.length>0) {
+		//~ activetabs[0].contenttab.show();
+	//~ }
 	
 };
 
@@ -437,10 +505,19 @@ const ImportDatabaseFromProjectFileAction = async () => {
 	//~ console.log("Calling importDuckDbFromOwnFormat");
 		let importres = await window.localFormatSaver.importDuckDbFromOwnFormat(importfilepath);
 		
-		// close all open script windows if importres
-
-		// load local project file to open all scripts
-    
+		if (importres) {
+			// close all open script windows if importres
+			
+			// load local project file to open all scripts
+			tabNavStatusTab.contenttab.show();
+			while (activetabs.length>0) {
+				activetabs[0].destroy();
+				activetabs.splice(0,1);
+			}
+			await OpenAndReRunAllLocalScripts();
+			updateOwnFormatDialogData();
+		}
+		
     
 	} catch (err) {
 		console.log("Error importing a project file: ",err);

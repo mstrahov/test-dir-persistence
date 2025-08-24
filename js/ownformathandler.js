@@ -400,7 +400,7 @@ conn_internal_data
     //~ `;
     const cmd = `
 conn_internal_data = conn_internal.execute('''
-	SELECT name, objuuid, data FROM tbl_objects
+	SELECT name, objuuid, data, objtype, datahash, modtimestamp FROM tbl_objects
     WHERE objtype='${objtype}';
 ''').fetchall()
 conn_internal_data
@@ -410,7 +410,21 @@ conn_internal_data
     try {
       let res = await this.coderunner.runPythonAsync(cmd, this.namespaceuuid);
       if (res.runStatus) {
-        output = res.output.toJs();
+        //output = res.output.toJs();
+        // ****
+        const resoutput = res.output.toJs();
+        output = [];
+		for (let i=0;i<resoutput.length;i++) {
+			output.push({
+				name: resoutput[i][0],
+				objuuid: resoutput[i][1],
+				data: resoutput[i][2],
+				objtype: resoutput[i][3],
+				datahash: resoutput[i][4],
+				modtimestamp: resoutput[i][5],
+			});
+        }
+        // ****
       } else {
         console.error(
           "Error reading object types from file to project file",
@@ -527,17 +541,17 @@ conn_internal.execute('''
 
   // -----------------------------------------------------------------------------------------------------
 
-  async getScriptsArrayFromOwnFormatFile() {
+  async getScriptsArrayFromOwnFormatFile(ownfilename = "", supressSyncFS = true) {
     let res = [];
 
-    let scriptlist = await this.getAllObjectsOfType("script");
+    let scriptlist = await this.getAllObjectsOfType("script", ownfilename, supressSyncFS);
     if (!scriptlist) {
       console.error("Script list is not received from file!");
       return res;
     }
     for (let i = 0; i < scriptlist.length; i++) {
       try {
-        let scriptobj = JSON.parse(new TextDecoder().decode(scriptlist[i][2]));
+        let scriptobj = JSON.parse(new TextDecoder().decode(scriptlist[i].data));
         res.push(scriptobj);
       } catch (err) {
         console.error("Script parsing from json error:", scriptlist[i], err);
@@ -1318,6 +1332,10 @@ conn_internal.execute('''
     }
 
     // release own file after backup copy
+    
+     // delete project file from opfs (?)
+
+    res = await this.#iohandler.deleteFileFromFSandFileHandle(this.#dbfilename);
     this.#resolve();
 
     // ************************************
@@ -1343,15 +1361,22 @@ conn_internal.execute('''
 		
 	}
 
-    // delete project file from opfs (?)
+   
+    
     // copy all script objects from imported file to project file ?  or just copy the whole thing? if fileProperties.scriptCount>0
     if (fileProperties.scriptCount>0) {
+		// get a list of scripts
+		// this.#dbfilename
+		this.scriptsarr = await this.getScriptsArrayFromOwnFormatFile(importfilepath);
+		console.log('Imported scripts: ', this.scriptsarr);
+		this.scriptsarr.sort((a, b)=>a.runorder-b.runorder);
 		
-		
+		// save scripts to default.adhocdb
+		for (let i=0;i<this.scriptsarr.length;i++) {
+			res = await window.localFormatSaver.saveScriptByUuid(this.scriptsarr[i].objuuid);
+		}
 	}
     
-    
-
     // #close all open script windows 
 
     // #load local project file to open all scripts

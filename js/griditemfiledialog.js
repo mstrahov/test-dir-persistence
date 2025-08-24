@@ -140,6 +140,13 @@ export class gridItemFileDialog extends GridItemWithMenu {
 						that.eventbus.dispatch('exportdatabasetodir', that, { fullpath: row.getData().fullpath, type: row.getData().type});	  //rowdata.type === 'directory'
 					}
 				},
+				{
+					label:"Delete file.",
+					action:function(e, row){
+						//console.log(row.getData());
+						that.eventbus.dispatch('deletefilecmd', that, { fullpath: row.getData().fullpath, type: row.getData().type});	  //rowdata.type === 'directory'
+					}
+				},
 			],
 			
 		};
