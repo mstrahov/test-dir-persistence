@@ -1337,6 +1337,8 @@ conn_internal.execute('''
 
     res = await this.#iohandler.deleteFileFromFSandFileHandle(this.#dbfilename);
     this.#resolve();
+    
+    await this.writeObjectFromString("format_version", "format_version", "format_version", this.FORMAT_VERSION );
 
     // ************************************
 
