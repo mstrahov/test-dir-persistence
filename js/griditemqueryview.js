@@ -80,16 +80,28 @@ export class gridItemQueryView extends GridItemWithMenu {
 		}
 		
 		
-		
+		this.coderunner.eventbus.subscribe('InteractiveVariableChange',this.refreshOnVariableChange.bind(this), this.uuid);
 		
 	}
 	
 	// -------------------------------------------------------------------------
 	
 	async init() {
-		
 		//~ this.pyodide = await this.pyodidePromise;
 		await this.refreshData();
+		
+		
+		
+	}
+	// -------------------------------------------------------------------------
+	
+	async refreshOnVariableChange(obj, eventdata) {
+		// this,{ varname:obj.id, newvalue:obj.value } 
+		if (eventdata?.varname && this.sqlcommand.toLowerCase().includes(`getvariable('${eventdata.varname.toLowerCase()}')`)) {
+			await this.refreshData();
+		}
+		
+		
 	}
 	
 	// -------------------------------------------------------------------------
@@ -509,6 +521,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 				this.tabulatorobj.destroy();
 			} catch (err) { console.error(err); }
 		}
+		this.coderunner.eventbus.unsubscribeUUID(this.uuid); 
 		super.destroy();
 	}
 	// ------------------------------------

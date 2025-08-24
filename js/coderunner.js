@@ -941,7 +941,11 @@ plotly.io.to_html(fig,config={'scrollZoom': True, 'responsive': True, 'toImageBu
 	}
 	// --------------------------------------------------------------------------------------------
 	async onVarChange(obj) {
-		await this.setVar(obj.id, obj.value);
+		let res = await this.setVar(obj.id, obj.value);
+		if (res) { 
+			console.log("Variable changed:",obj.id, obj.value);
+			this.eventbus.dispatch('InteractiveVariableChange',this,{ varname:obj.id, newvalue:obj.value } );
+		};
 	}
 	
 	// --------------------------------------------------------------------------------------------
