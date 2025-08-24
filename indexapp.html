@@ -147,17 +147,46 @@ Main app
 <!-- =====  ========= mainmenuTabNavItemTemplate==================================== -->
 <template id="mainmenuTabNavItemTemplate">
   <li class="nav-item dropdown" id="navitem" role="presentation">
-		<a class="nav-link dropdown-toggle" id="tabnavlink" data-bs-auto-close=true data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+		<a class="nav-link dropdown-toggle" id="tabnavlink" data-bs-auto-close="outside" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
 				<span id="tabnavtitle">Open...</span>
 		</a>
 		<ul class="dropdown-menu" id="mainmenu">
+			<li><hr class="dropdown-divider"></li>
+				<li class="dropdown dropend">
+							<a class="dropdown-item dropdown-toggle" href="#"
+							data-bs-auto-close="outside"
+							data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">New Tab</a>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="#" id="newscriptmenuaction">New Script (Python)</a></li>	
+								<li><a class="dropdown-item" href="#" id="newscriptsqlmenuaction">New Script (SQL)</a></li>	
+								
+							</ul>
+				</li>
 			<li><a class="dropdown-item" href="#" id="openmntdir">Attach Local Directory...</a></li>
-			<li><a class="dropdown-item" href="#" id="openprojectfile">Open Local Project File</a></li>	
-			<li><a class="dropdown-item" href="#" id="newscriptmenuaction">New Script (Python)</a></li>	
-			<li><a class="dropdown-item" href="#" id="newscriptsqlmenuaction">New Script (SQL)</a></li>	
-			<li><a class="dropdown-item" href="#" id="saveprojectfilemenuaction">Save Local Project</a></li>
-			<li><a class="dropdown-item" href="#" id="exportdatabasemenuaction">Export Database To Directory...</a></li>
-			<li><a class="dropdown-item" href="#" id="importdatabasemenuaction">Import Database From Directory...</a></li>
+			<li><hr class="dropdown-divider"></li>
+				<li class="dropdown dropend">
+							<a class="dropdown-item dropdown-toggle" href="#"
+							data-bs-auto-close="outside"
+							data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Local Project File</a>
+							<ul class="dropdown-menu">
+									<li><a class="dropdown-item" href="#" id="openprojectfile">Open Local Project File</a></li>	
+									<li><a class="dropdown-item" href="#" id="saveprojectfilemenuaction">Save Local Project</a></li>
+								
+							</ul>
+				</li>
+			
+			<li><hr class="dropdown-divider"></li>
+				<li class="dropdown dropend">
+							<a class="dropdown-item dropdown-toggle" href="#"
+							data-bs-auto-close="outside"
+							data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">DuckDB Database</a>
+							<ul class="dropdown-menu">
+								<li><a class="dropdown-item" href="#" id="exportdatabasemenuaction">Export Database To Directory...</a></li>
+								<li><a class="dropdown-item" href="#" id="importdatabasemenuaction">Import Database From Directory...</a></li>
+								
+							</ul>
+				</li>
+			<li><hr class="dropdown-divider"></li>
 			<li><a class="dropdown-item" href="#" id="exportprojectfilewithdbmenuaction">Export Project File As...</a></li>	
 			<li><a class="dropdown-item" href="#" id="importprojectfilewithdbmenuaction">Import Project From File...</a></li>					
 		</ul>
