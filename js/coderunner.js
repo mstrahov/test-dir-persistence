@@ -13,8 +13,16 @@ export class CodeRunner {
 	#duckdbloader;
 	#pyodideloader;
 	#fileiohandler;
+	#defersql;
+	#resolvesql;
+	#rejectsql;
 	
 	constructor (params) {
+		
+		this.#defersql = new Promise((res, rej) => {
+		  this.#resolvesql = res;
+		  this.#rejectsql = rej;
+		});
 		this.eventbus = new EventBus(this);
 		//this.#pyodidePromise = params.pyodidePromise;
 		//this.#dbconnPromise = params.dbconnPromise;
@@ -30,6 +38,7 @@ export class CodeRunner {
 		this.recordpystdout = false;
 		this.pystdout = { strOutput: '', };
 		
+		this.#resolvesql();
 	}
 	
 	// --------------------------------------------------------------------------
@@ -239,7 +248,14 @@ export class CodeRunner {
 	// --------------------------------------------------------------------------
 	
 	async runSQLAsync(cmd, appuuid="app", namespace="") {
+		
+		await this.#defersql;
+		this.#defersql = new Promise((res, rej) => {
+		  this.#resolvesql = res;
+		  this.#rejectsql = rej;
+		});
 		let conn = await this.#duckdbloader.getdbconn();
+		console.log("Running command: ",cmd);
 		const starttime = performance.now();   
 		this._dbstatechange('duckdb_running', 'Running duckdb query...');
 		let res = {
@@ -306,7 +322,8 @@ export class CodeRunner {
 							lengthseconds: res.lengthseconds/1000,
 						}
 					);
-					
+		this.#resolvesql();		
+		console.log("Completed command: ",cmd,res);	
 		return res;
 	}
 	

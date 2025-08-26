@@ -291,6 +291,8 @@ export class gridItemQueryView extends GridItemWithMenu {
 		
 		this.tabulatorobj = new Tabulator(this.#internalContainer, {
 						...this.tabulatorProperties,
+						rowHeight: 32,
+						maxHeight: 1000,
 						index: "_row_index",
 						selectableRange:true,
 						//selectableRangeRows:true,
