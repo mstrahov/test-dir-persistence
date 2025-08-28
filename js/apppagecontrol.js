@@ -110,7 +110,7 @@ export class AppPageControl {
 		return newgriditem;
 	}
 	// ------------------------------------------------------------------------------------------
-	destroyGridItem(gridItemObj) {
+	async destroyGridItem(gridItemObj) {
 		const gridItemIndex = this.gridItems.findIndex((v)=>v===gridItemObj);
 		if (gridItemIndex>-1) {
 			let gridItemUUID = gridItemObj.uuid;
@@ -122,7 +122,7 @@ export class AppPageControl {
 			if (gridItemObj.eventbus && gridItemObj.eventbus?.events) {
 				gridItemObj.eventbus.events = {};
 			}
-			gridItemObj.destroy();
+			await gridItemObj.destroy();
 			this.gridItems.splice(gridItemIndex, 1);
 		}
 	}
@@ -139,7 +139,7 @@ export class AppPageControl {
 		
 	}
 	// ------------------------------------------------------------------------------------------
-	destroy() {
+	async destroy() {
 		//  dropdownMenuControl - clear eventbus
 		//  dropdownmenutab  - destroy
 		// grid - removeAll(removeDOM = true)
@@ -149,7 +149,7 @@ export class AppPageControl {
 		//  bootstrap.Dropdown.getInstance(element)   -- then dispose()   https://getbootstrap.com/docs/5.0/components/dropdowns/#methods
 		//  
 		while (this.gridItems.length>0) {
-			this.destroyGridItem(this.gridItems[0]);
+			await this.destroyGridItem(this.gridItems[0]);
 		}
 		if (this.grid) {
 			this.grid.destroy(true);
@@ -178,7 +178,7 @@ export class AppPageControl {
 		let res = null;
 		try {
 			res = await this.runAsync(targetEnv, cmdparams.cmd);
-			console.log("Command run res: ", res);
+			//console.log("Command run res: ", res);
 			if (res?.runStatus) {
 				this.eventbus.dispatch('CmdExecutionSuccess', this, { targetEnv: targetEnv, cmd: cmdparams.cmd, result: res });
 				cmdparams.successcallback();

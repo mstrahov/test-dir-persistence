@@ -326,14 +326,36 @@ export class gridItemFileDialog extends GridItemWithMenu {
 		
 	}
 	// -------------------------------------------------------------------------
-	
-	destroy() {
-		if (this.tabulatorObj) {
-			try {
-				this.tabulatorObj.destroy();
-			} catch (err) { console.error(err); }
-		}
-		super.destroy();
+	async destroytabulatorobj() {		
+		let that = this;
+		return new Promise((resolve, reject) => {
+			if (this.tabulatorObj) {
+				try {
+					that.tabulatorObj.on("tableDestroyed", ()=>{
+						that.tabulatorObj = null;
+						resolve();
+					});
+					that.tabulatorObj.clearData();
+					that.tabulatorObj.setData([]).then(()=>{ that.tabulatorObj.destroy();});
+				} catch (err) { 
+					console.error(err);
+					reject(err); 
+				}
+			} else {
+				resolve();
+			}
+		})
+	}
+		
+	// ---------------------------------------------------------------------------
+	async destroy() {
+		//~ if (this.tabulatorObj) {
+			//~ try {
+				//~ this.tabulatorObj.destroy();
+			//~ } catch (err) { console.error(err); }
+		//~ }
+		await this.destroytabulatorobj();
+		await super.destroy();
 	}
 	
 	// -------------------------------------------------------------------------

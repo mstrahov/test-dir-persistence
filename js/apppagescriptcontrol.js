@@ -18,6 +18,7 @@ import { GridItemHTMLOutput } from "./griditemhtmloutput.js";
 import { gridItemQueryView } from  "./griditemqueryview.js";
 import { gridItemTableProps } from  "./griditemtableprops.js";
 import { gridItemStaticQueryView } from  "./griditemstaticqueryview.js";
+import { gridItemStaticQueryTreeView } from  "./griditemstaticquerytreeview.js";
 
 
 export class AppPageScriptControl extends AppPageControl {
@@ -375,7 +376,7 @@ export class AppPageScriptControl extends AppPageControl {
 			// console.log("Close request from "+this.visualwidgets[widgetIndex].widgetObject.widgetName + " id: " + this.visualwidgets[widgetIndex].widgetObject.uuid );
 			let widgetuuid = this.visualwidgets[widgetIndex].widgetObject.uuid;
 			this.fileIOHandler.eventbus.unsubscribeUUID(widgetuuid);
-			this.destroyGridItem(this.visualwidgets[widgetIndex].widgetObject);
+			await this.destroyGridItem(this.visualwidgets[widgetIndex].widgetObject);
 			delete this.visualwidgets[widgetIndex].widgetObject;
 			this.visualwidgets.splice(widgetIndex, 1);
 			
@@ -398,7 +399,7 @@ export class AppPageScriptControl extends AppPageControl {
 			// console.log("Close request from "+this.visualwidgets[widgetIndex].widgetObject.widgetName + " id: " + this.visualwidgets[widgetIndex].widgetObject.uuid );
 			let widgetuuid = this.staticqueryviews[widgetIndex].widgetObject.uuid;
 			this.fileIOHandler.eventbus.unsubscribeUUID(widgetuuid);
-			this.destroyGridItem(this.staticqueryviews[widgetIndex].widgetObject);
+			await this.destroyGridItem(this.staticqueryviews[widgetIndex].widgetObject);
 			delete this.staticqueryviews[widgetIndex].widgetObject;
 			this.staticqueryviews.splice(widgetIndex, 1);
 			
@@ -407,7 +408,7 @@ export class AppPageScriptControl extends AppPageControl {
 		}
 	}
 	// --------------------------------------------------------------------------------	
-	deleteMainWidget(obj, eventdata) {
+	async deleteMainWidget(obj, eventdata) {
 		const mainWidgetName = obj.widgetName;
 		let widgetuuid = obj.uuid;
 		console.log("Removing object ", mainWidgetName, widgetuuid);
@@ -427,7 +428,7 @@ export class AppPageScriptControl extends AppPageControl {
 		}
 		
 		this.fileIOHandler.eventbus.unsubscribeUUID(widgetuuid);
-		this.destroyGridItem(obj);
+		await this.destroyGridItem(obj);
 		
 		// *********************-------------------------------
 		if (mainWidgetName==="gridItemScript") {
@@ -495,7 +496,7 @@ export class AppPageScriptControl extends AppPageControl {
 				);
 				this.scriptControl.eventbus.subscribe('runonecodestepaction',(obj,eventdata)=>{  that.runScriptOneStep(eventdata); }, this.uuid);
 				this.scriptControl.eventbus.subscribe('runallcodestepsaction',(obj,eventdata)=>{  that.runScriptAllSteps(eventdata); }, this.uuid);
-				this.scriptControl.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
+				this.scriptControl.eventbus.subscribe('closegriditem', async (obj,eventdata)=>{  await that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 				// *************************
 				if (this.scriptControl) {
 					if (this.pyeditor) {
@@ -544,7 +545,7 @@ export class AppPageScriptControl extends AppPageControl {
 								editorhistory: widgetSettings.cmdhistory,
 							});
 				this.pyeditor.eventbus.subscribe('runeditorcode',(obj,eventdata)=>{ that.runCmdFromGridItem('py',obj,eventdata);  }, this.uuid);
-				this.pyeditor.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
+				this.pyeditor.eventbus.subscribe('closegriditem', async (obj,eventdata)=>{  await that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 				//*****************
 				if (this.scriptControl) {
 					if (this.pyeditor) {
@@ -582,7 +583,7 @@ export class AppPageScriptControl extends AppPageControl {
 							parentuuid: this.uuid,
 						});
 				this.dfview.eventbus.subscribe('requestDataFrameChange',this.dfViewDataFrameChange.bind(this), this.uuid);
-				this.dfview.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata);  }, this.uuid);
+				this.dfview.eventbus.subscribe('closegriditem', async (obj,eventdata)=>{ await that.deleteMainWidget(obj, eventdata);  }, this.uuid);
 				this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 				this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
 				this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.dfview.showdf();  }, this.dfview.uuid);
@@ -620,7 +621,7 @@ export class AppPageScriptControl extends AppPageControl {
 							headertext: widgetSettings.griditemheader, 
 							griditemoptions: gridlayoutoptions,
 						});
-				this.statusTabOutput.eventbus.subscribe('closegriditem', (obj,eventdata)=>{  that.deleteMainWidget(obj, eventdata );  }, this.uuid);
+				this.statusTabOutput.eventbus.subscribe('closegriditem', async (obj,eventdata)=>{  await that.deleteMainWidget(obj, eventdata );  }, this.uuid);
 				this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
 				this.eventbus.subscribe('CmdExecutionError',(obj,eventdata)=>{ that.statusTabOutput.runExecutionUpdate(eventdata);  }, this.statusTabOutput.uuid);
 				this.eventbus.subscribe('CmdExecutionFailed',(obj,eventdata)=>{ that.statusTabOutput.runExecutionFailure(eventdata);  }, this.statusTabOutput.uuid);
@@ -1089,7 +1090,7 @@ export class AppPageScriptControl extends AppPageControl {
 		let res;
 		try {
 			res = await this.runAsync(scriptsteps[steptorun].targetEnv, scriptsteps[steptorun].scriptCode);
-			console.log("Command run res: ", res);
+			//console.log("Command run res: ", res);
 			if (res?.runStatus) {
 				scriptsteps[steptorun].lastRunStatus = true;
 				scriptsteps[steptorun].lastRunResult = res.runResult;
@@ -1140,7 +1141,7 @@ export class AppPageScriptControl extends AppPageControl {
 		let res;
 		try {
 			res = await this.coderunner.runAsyncBatch(scriptsteps, this.appuuid); 
-			console.log("Command run res: ", res);
+			//console.log("Command run res: ", res);
 			if (res?.runStatus) {
 				this.eventbus.dispatch('CmdExecutionSuccess', this, { targetEnv: res.targetEnv, cmd: '', result: res });
 			} else {
@@ -1304,8 +1305,8 @@ sheetinfo
 	}
 	// --------------------------------------------------------------------------------
 	
-	destroy() {
-		super.destroy();
+	async destroy() {
+		await super.destroy();
 	}
 	
 	// --------------------------------------------------------------------------------

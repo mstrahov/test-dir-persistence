@@ -255,7 +255,7 @@ export class CodeRunner {
 		  this.#rejectsql = rej;
 		});
 		let conn = await this.#duckdbloader.getdbconn();
-		console.log("Running command: ",cmd);
+		//console.log("Running command: ",cmd);
 		const starttime = performance.now();   
 		this._dbstatechange('duckdb_running', 'Running duckdb query...');
 		let res = {
@@ -323,7 +323,7 @@ export class CodeRunner {
 						}
 					);
 		this.#resolvesql();		
-		console.log("Completed command: ",cmd,res);	
+		//console.log("Completed command: ",cmd,res);	
 		return res;
 	}
 	

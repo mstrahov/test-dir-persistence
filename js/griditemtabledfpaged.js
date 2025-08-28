@@ -79,7 +79,8 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 		try {
 			if (this.tabulatorobj) {
 				this.lastcolumnlayout = this.tabulatorobj.getColumnLayout();
-				this.tabulatorobj.destroy();
+				await this.destroytabulatorobj();
+				//this.tabulatorobj.destroy();
 			}
 		} catch (err) { console.error(err); }
 		//  get data from a df
@@ -296,12 +297,36 @@ export class griditemTableDFPaged extends GridItemWithMenu {
 	}
 	// -------------------------------------------------------------------------
 	
-	destroy() {
-		if (this.tabulatorobj) {
-			try {
-				this.tabulatorobj.destroy();
-			} catch (err) { console.error(err); }
-		}
+	async destroytabulatorobj() {		
+		let that = this;
+		return new Promise((resolve, reject) => {
+			if (this.tabulatorobj) {
+				try {
+					that.tabulatorobj.on("tableDestroyed", ()=>{
+						that.tabulatorobj = null;
+						resolve();
+					});
+					that.tabulatorobj.clearData();
+					that.tabulatorobj.setData([]).then(()=>{ that.tabulatorobj.destroy();});
+				} catch (err) { 
+					console.error(err);
+					reject(err); 
+				}
+			} else {
+				resolve();
+			}
+		})
+	}
+		
+	// ---------------------------------------------------------------------------
+	
+	async destroy() {
+		//~ if (this.tabulatorobj) {
+			//~ try {
+				//~ this.tabulatorobj.destroy();
+			//~ } catch (err) { console.error(err); }
+		//~ }
+		await this.destroytabulatorobj();
 		super.destroy();
 	}
 	// ------------------------------------

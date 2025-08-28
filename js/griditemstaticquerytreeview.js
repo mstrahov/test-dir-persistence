@@ -1,5 +1,5 @@
 /**********************************
- * gridItemQueryView
+ * gridItemStaticQueryTreeView
  * depends: Tabulator.js
  * 
  * 
@@ -8,8 +8,9 @@
 
 import { GridItemWithMenu } from "./griditemwithmenu.js";
 import { ExecTimer } from "./exectimer.js"; 
+import { arrowDataTypesToTabulatorCols } from "./griditemqueryview.js";
 
-export class gridItemQueryView extends GridItemWithMenu {
+export class gridItemStaticQueryTreeView extends GridItemWithMenu {
 	#internalContainer;
 	#defer;
 	#resolve;
@@ -722,61 +723,3 @@ export class gridItemQueryView extends GridItemWithMenu {
 	
 }
 
-export function arrowDataTypesToTabulatorCols() {
-	let res = {};
-	res[0]= {typeName:"NONE", typeId:0,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[1]= {typeName:"Null", typeId:1,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[2]= {typeName:"Int", typeId:2,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[3]= {typeName:"Float", typeId:3,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[4]= {typeName:"Binary", typeId:4,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[5]= {typeName:"Utf8", typeId:5,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[6]= {typeName:"Bool", typeId:6,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[7]= {typeName:"Decimal", typeId:7,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[8]= {typeName:"Date", typeId:8,formatter:"plaintext",sorter:"date",hozAlign:"left"};
-	res[9]= {typeName:"Time", typeId:9,formatter:"plaintext",sorter:"time",hozAlign:"left"};
-	res[10]= {typeName:"Timestamp", typeId:10,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[11]= {typeName:"Interval", typeId:11,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[12]= {typeName:"List", typeId:12,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[13]= {typeName:"Struct", typeId:13,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[14]= {typeName:"Union", typeId:14,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[15]= {typeName:"FixedSizeBinary", typeId:15,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[16]= {typeName:"FixedSizeList", typeId:16,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[17]= {typeName:"Map", typeId:17,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[18]= {typeName:"Duration", typeId:18,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[19]= {typeName:"LargeBinary", typeId:19,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[20]= {typeName:"LargeUtf8", typeId:20,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[-1]= {typeName:"Dictionary", typeId:-1,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[-2]= {typeName:"Int8", typeId:-2,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-3]= {typeName:"Int16", typeId:-3,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-4]= {typeName:"Int32", typeId:-4,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-5]= {typeName:"Int64", typeId:-5,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-6]= {typeName:"Uint8", typeId:-6,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-7]= {typeName:"Uint16", typeId:-7,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-8]= {typeName:"Uint32", typeId:-8,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-9]= {typeName:"Uint64", typeId:-9,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-10]= {typeName:"Float16", typeId:-10,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-11]= {typeName:"Float32", typeId:-11,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-12]= {typeName:"Float64", typeId:-12,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-13]= {typeName:"DateDay", typeId:-13,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-14]= {typeName:"DateMillisecond", typeId:-14,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-15]= {typeName:"TimestampSecond", typeId:-15,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-16]= {typeName:"TimestampMillisecond", typeId:-16,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-17]= {typeName:"TimestampMicrosecond", typeId:-17,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-18]= {typeName:"TimestampNanosecond", typeId:-18,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-19]= {typeName:"TimeSecond", typeId:-19,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-20]= {typeName:"TimeMillisecond", typeId:-20,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-21]= {typeName:"TimeMicrosecond", typeId:-21,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-22]= {typeName:"TimeNanosecond", typeId:-22,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-23]= {typeName:"DenseUnion", typeId:-23,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[-24]= {typeName:"SparseUnion", typeId:-24,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[-25]= {typeName:"IntervalDayTime", typeId:-25,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[-26]= {typeName:"IntervalYearMonth", typeId:-26,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[-27]= {typeName:"DurationSecond", typeId:-27,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	res[-28]= {typeName:"DurationMillisecond", typeId:-28,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-29]= {typeName:"DurationMicrosecond", typeId:-29,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-30]= {typeName:"DurationNanosecond", typeId:-30,formatter:"plaintext",sorter:"number",hozAlign:"right"};
-	res[-31]= {typeName:"IntervalMonthDayNano", typeId:-31,formatter:"plaintext",sorter:"string",hozAlign:"left"};
-	return res;
-	
-	
-}

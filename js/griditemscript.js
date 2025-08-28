@@ -358,14 +358,38 @@ export class gridItemScript extends GridItemWithMenu {
 	
 	// -----------------------------------------------------------------------------------------------------------
 	
+	async destroytabulatorobj() {		
+		let that = this;
+		return new Promise((resolve, reject) => {
+			if (this.#tabulatorObj) {
+				try {
+					that.#tabulatorObj.on("tableDestroyed", ()=>{
+						that.#tabulatorObj = null;
+						resolve();
+					});
+					that.#tabulatorObj.clearData();
+					that.#tabulatorObj.setData([]).then(()=>{ that.#tabulatorObj.destroy();});
+				} catch (err) { 
+					console.error(err);
+					reject(err); 
+				}
+			} else {
+				resolve();
+			}
+		})
+	}
+	// -------------------------------------------------------------------------
 	
-	destroy() {
-		if (this.#tabulatorObj) {
-			try {
-				this.#tabulatorObj.destroy();
-			} catch (err) { console.error(err); }
-		}
-		super.destroy();
+	async destroy() {
+		//~ if (this.#tabulatorObj) {
+			//~ try {
+				//~ this.#tabulatorObj.destroy();
+			//~ } catch (err) { console.error(err); }
+		//~ }
+		//~ super.destroy();
+		
+		await this.destroytabulatorobj();
+		await super.destroy();
 	}
 	
 	// -------------------------------------------------------------------------
