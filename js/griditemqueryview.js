@@ -41,7 +41,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 		this._PROGRESSIVELOAD = 1;
 		this._PAGINATED = 2;
 		this._DATATREE = 3;
-		
+		this._dataTreeElementColumn = "name";
 		
 		this.headerContextMenuGeneratorFunction = undefined; 
 		this.cellContextMenuGeneratorFunction = undefined; 
@@ -131,7 +131,11 @@ export class gridItemQueryView extends GridItemWithMenu {
 			}
 		} else if (eventdata?.menuItemId === "clonethistablegriditem") {
 			if (this.tabulatorobj) {
-				this.eventbus.dispatch('clonethistablegriditem', this, { } );	
+				this.eventbus.dispatch('clonethistablegriditem', this, {  } );	
+			}	
+		} else if (eventdata?.menuItemId === "clonethistabletotreeviewgriditem") {
+			if (this.tabulatorobj) {
+				this.eventbus.dispatch('clonethistabletotreeviewgriditem', this, { } );	
 			}	
 		} else if (eventdata?.menuItemId === "edittablelayoutgriditem") {
 			this.eventbus.dispatch('edittablelayoutgriditem', this, { });		
@@ -257,26 +261,60 @@ export class gridItemQueryView extends GridItemWithMenu {
 		
 		this.exectimer.timeit(`OLD table deleted`);
 		
-		//~ if (this.displaymode===this._PLAINTABLE) {
-			//~ this.tabulatorProperties = {
-					//~ ...this.tabulatorProperties,
-					//~ data: this.generateTableData(arrowdata),   
-			//~ };
-		//~ } else if (this.displaymode===this._PAGINATED) {
-			//~ this.tabulatorProperties = {
-					//~ ...this.tabulatorProperties,
-					//~ // --------------------------------------
-					//~ data: "",    // this has to set to "" in order for ajaxRequestFunc to work
-					//~ pagination:true,
-					//~ paginationMode:"remote",
-					//~ paginationCounter:"rows",
-					//~ paginationSize:50,
-					//~ ajaxURL:"x",
-					//~ ajaxRequestFunc: this.internalDataFeed.bind(this),
-			//~ };
-		//~ }
 		
-		this.exectimer.timeit(`NEW DATA for table generated`);
+		// ===  common table properties
+		
+		this.tabulatorProperties = {
+			...this.tabulatorProperties,
+			rowHeight: 32,
+			maxHeight: 1000,
+			index: "_row_index",
+			//selectableRange:true,
+			//selectableRangeRows:true,
+			clipboardCopyRowRange:"range",
+			// --------------------------------------
+			columnDefaults:{
+				tooltip:function(e, cell, onRendered){
+					var el = document.createElement("div");
+					el.innerText = cell.getValue(); 
+					return el; 
+				},
+			}	
+		};
+		
+		// === properties by table type
+		
+		if (this.displaymode===this._PLAINTABLE) {
+			this.tabulatorProperties = {
+					...this.tabulatorProperties,
+					//~ data: this.generateTableData(arrowdata),   
+			};
+		} else if (this.displaymode===this._PAGINATED) {
+			this.tabulatorProperties = {
+					...this.tabulatorProperties,
+					// --------------------------------------
+					data: "",    // this has to set to "" in order for ajaxRequestFunc to work
+					pagination:true,
+					paginationMode:"remote",
+					paginationCounter:"rows",
+					paginationSize:50,
+					ajaxURL:"x",
+					ajaxRequestFunc: this.internalDataFeed.bind(this),
+			};
+		} else if (this.displaymode===this._DATATREE) {
+			this.tabulatorProperties = {
+					...this.tabulatorProperties,
+					dataTree:true,
+					dataTreeFilter:true,
+					dataTreeStartExpanded:true,
+					dataTreeChildIndent:27,
+					dataTreeElementColumn: this._dataTreeElementColumn, 
+			};
+			
+		}
+		
+		// === properties based on data size  (tabulator too slow on bigger datasets)
+		
 		
 		if (arrowdata.numRows<10000) {
 			this.tabulatorProperties['clipboard'] = 'copy';
@@ -295,60 +333,93 @@ export class gridItemQueryView extends GridItemWithMenu {
 		} else {
 			this.tabulatorProperties.columns = this.generateColumnDefinitions(arrowdata);	
 		}
-		if (this.displaymode===this._PLAINTABLE) {
+		
+		/*if (this.displaymode===this._PLAINTABLE) {
 			
 			this.tabulatorobj = new Tabulator(this.#internalContainer, {
 							...this.tabulatorProperties,
-							rowHeight: 32,
-							maxHeight: 1000,
-							index: "_row_index",
-							//selectableRange:true,
-							//selectableRangeRows:true,
-							clipboardCopyRowRange:"range",
+							//~ rowHeight: 32,
+							//~ maxHeight: 1000,
+							//~ index: "_row_index",
+							//~ //selectableRange:true,
+							//~ //selectableRangeRows:true,
+							//~ clipboardCopyRowRange:"range",
 							 
 							//~ columns: this.generateColumnDefinitions(arrowdata),
 							
 							data: this.generateTableData(arrowdata), 
 							// --------------------------------------
-							columnDefaults:{
-								tooltip:function(e, cell, onRendered){
-									var el = document.createElement("div");
-									el.innerText = cell.getValue(); 
-									return el; 
-								},
-							}	
+							//~ columnDefaults:{
+								//~ tooltip:function(e, cell, onRendered){
+									//~ var el = document.createElement("div");
+									//~ el.innerText = cell.getValue(); 
+									//~ return el; 
+								//~ },
+							//~ }	
 						});
-		}  else if (this.displaymode===this._PAGINATED) { 
+		}  else */
+		
+		if (this.displaymode===this._PAGINATED) { 
 			this.tabulatorobj = new Tabulator(this.#internalContainer, {
 							...this.tabulatorProperties,
-							rowHeight: 32,
-							maxHeight: 1000,
-							index: "_row_index",
-							//selectableRange:true,
-							//selectableRangeRows:true,
-							clipboardCopyRowRange:"range",
+							//~ rowHeight: 32,
+							//~ maxHeight: 1000,
+							//~ index: "_row_index",
+							//~ //selectableRange:true,
+							//~ //selectableRangeRows:true,
+							//~ clipboardCopyRowRange:"range",
 							 
 							//~ columns: this.generateColumnDefinitions(arrowdata),
 							
 							//~ data: this.generateTableData(arrowdata), 
-							data: "",    // this has to set to "" in order for ajaxRequestFunc to work
-							pagination:true,
-							paginationMode:"remote",
-							paginationCounter:"rows",
-							paginationSize:50,
-							ajaxURL:"x",
-							ajaxRequestFunc: this.internalDataFeed.bind(this),
+							//~ data: "",    // this has to set to "" in order for ajaxRequestFunc to work
+							//~ pagination:true,
+							//~ paginationMode:"remote",
+							//~ paginationCounter:"rows",
+							//~ paginationSize:50,
+							//~ ajaxURL:"x",
+							//~ ajaxRequestFunc: this.internalDataFeed.bind(this),
 							// --------------------------------------
-							columnDefaults:{
-								tooltip:function(e, cell, onRendered){
-									var el = document.createElement("div");
-									el.innerText = cell.getValue(); 
-									return el; 
-								},
-							}	
+							//~ columnDefaults:{
+								//~ tooltip:function(e, cell, onRendered){
+									//~ var el = document.createElement("div");
+									//~ el.innerText = cell.getValue(); 
+									//~ return el; 
+								//~ },
+							//~ }	
+						});
+		} else /*if (this.displaymode===this._DATATREE) */ {
+			
+			this.tabulatorobj = new Tabulator(this.#internalContainer, {
+							...this.tabulatorProperties,
+							//~ rowHeight: 32,
+							//~ maxHeight: 1000,
+							//~ index: "_row_index",
+							//~ //selectableRange:true,
+							//~ //selectableRangeRows:true,
+							//~ clipboardCopyRowRange:"range",
+							 
+							//~ columns: this.generateColumnDefinitions(arrowdata),
+							
+							data: this.generateTableData(arrowdata), 
+							
+							//~ dataTree:true,
+							//~ dataTreeFilter:true,
+							//~ dataTreeStartExpanded:true,
+							//~ dataTreeChildIndent:27,
+							//~ dataTreeElementColumn:this._dataTreeElementColumn, 
+							// --------------------------------------
+							//~ columnDefaults:{
+								//~ tooltip:function(e, cell, onRendered){
+									//~ var el = document.createElement("div");
+									//~ el.innerText = cell.getValue(); 
+									//~ return el; 
+								//~ },
+							//~ }	
 						});
 		}
 		
+		this.exectimer.timeit(`NEW DATA for table generated`);
 		//~ this.columnsarray = [...dfarray.columns];
 		this.tabulatorobj.on("tableBuilt", this.eventTableBuilt.bind(this));
 
@@ -640,48 +711,77 @@ export class gridItemQueryView extends GridItemWithMenu {
 			}
 		} catch (err) { console.error(err); }
 		
-		if (this.displaymode===this._PLAINTABLE) {
-			this.tabulatorProperties = {
-					...this.tabulatorProperties,
-					data: currentData,   
+		//~ if (this.displaymode===this._PLAINTABLE) {
+			//~ this.tabulatorProperties = {
+					//~ ...this.tabulatorProperties,
+					//~ data: currentData,   
+			//~ };
+		//~ } else if (this.displaymode===this._PAGINATED) {
+			//~ this.tabulatorProperties = {
+					//~ ...this.tabulatorProperties,
+					//~ // --------------------------------------
+					//~ data: "",    // this has to set to "" in order for ajaxRequestFunc to work
+					//~ pagination:true,
+					//~ paginationMode:"remote",
+					//~ paginationCounter:"rows",
+					//~ paginationSize:50,
+					//~ ajaxURL:"x",
+					//~ ajaxRequestFunc: this.internalDataFeed.bind(this),
+			//~ };
+		//~ }
+		
+		this.tabulatorProperties = {
+				...this.tabulatorProperties,
+				columns: newColumnLayout,   
 			};
-		} else if (this.displaymode===this._PAGINATED) {
-			this.tabulatorProperties = {
-					...this.tabulatorProperties,
-					// --------------------------------------
-					data: "",    // this has to set to "" in order for ajaxRequestFunc to work
-					pagination:true,
-					paginationMode:"remote",
-					paginationCounter:"rows",
-					paginationSize:50,
-					ajaxURL:"x",
-					ajaxRequestFunc: this.internalDataFeed.bind(this),
-			};
+			
+		//~ if (currentData.length<10000) {
+			//~ this.tabulatorProperties['clipboard'] = 'copy';
+		//~ } 
+		
+		if (this.displaymode===this._PAGINATED) {
+			this.tabulatorobj = new Tabulator(this.#internalContainer, {
+				...this.tabulatorProperties,
+				//~ data: currentData,
+				//~ index: "_row_index",
+				//~ selectableRange:true,
+				//~ //selectableRangeRows:true,
+				//~ clipboardCopyRowRange:"range",
+				
+				//~ columns: newColumnLayout,
+				
+				// --------------------------------------
+				//~ columnDefaults:{
+					//~ tooltip:function(e, cell, onRendered){
+						//~ var el = document.createElement("div");
+						//~ el.innerText = cell.getValue(); 
+						//~ return el; 
+					//~ },
+				//~ }	
+			}); 
+		} else {
+			// -------------------   tabulator with regular columns
+			this.tabulatorobj = new Tabulator(this.#internalContainer, {
+				...this.tabulatorProperties,
+				data: currentData,
+				//~ index: "_row_index",
+				//~ selectableRange:true,
+				//~ //selectableRangeRows:true,
+				//~ clipboardCopyRowRange:"range",
+				
+				//~ columns: newColumnLayout,
+				
+				// --------------------------------------
+				//~ columnDefaults:{
+					//~ tooltip:function(e, cell, onRendered){
+						//~ var el = document.createElement("div");
+						//~ el.innerText = cell.getValue(); 
+						//~ return el; 
+					//~ },
+				//~ }	
+			});
+						
 		}
-		
-		if (currentData.length<10000) {
-			this.tabulatorProperties['clipboard'] = 'copy';
-		} 
-		
-		// -------------------   tabulator with regular columns
-		this.tabulatorobj = new Tabulator(this.#internalContainer, {
-						...this.tabulatorProperties,
-						index: "_row_index",
-						selectableRange:true,
-						//selectableRangeRows:true,
-						clipboardCopyRowRange:"range",
-						
-						columns: newColumnLayout,
-						
-						// --------------------------------------
-						columnDefaults:{
-							tooltip:function(e, cell, onRendered){
-								var el = document.createElement("div");
-								el.innerText = cell.getValue(); 
-								return el; 
-							},
-						}	
-					});
 		
 		//~ this.columnsarray = [...dfarray.columns];
 		this.tabulatorobj.on("tableBuilt", this.eventTableBuilt.bind(this));

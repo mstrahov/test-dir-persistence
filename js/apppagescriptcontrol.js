@@ -297,6 +297,30 @@ export class AppPageScriptControl extends AppPageControl {
 					} else {
 						console.error("Cannot add static query view widget: ", this.initscriptobj.gridwidgets[i]);
 					}
+				}  else if (this.initscriptobj.gridwidgets[i].griditemname==="gridItemStaticQueryTreeView") {
+					const id2 = this.initscriptobj.staticqueryviews.findIndex((v)=>v.widgetObj.uuid===this.initscriptobj.gridwidgets[i].uuid);
+					if (id2>-1) {
+						const newWidgetObject = this.addGridItem( gridItemStaticQueryTreeView, 
+								{	templateid:"#gridItemSQLStaticQueryTreeView", 
+									headertext: this.initscriptobj.staticqueryviews[id2].headertext, 
+									griditemoptions: gridlayoutoptions,
+									columnlayout:  this.initscriptobj.staticqueryviews[id2].widgetObj.columnlayout?JSON.parse(JSON.stringify(this.initscriptobj.staticqueryviews[id2].widgetObj.columnlayout)):undefined,  
+									usercolumnlayout: this.initscriptobj.staticqueryviews[id2].widgetObj.usercolumnlayout?JSON.parse(JSON.stringify(this.initscriptobj.staticqueryviews[id2].widgetObj.usercolumnlayout)):undefined,
+									preferuserlayout: this.initscriptobj.staticqueryviews[id2].widgetObj.preferuserlayout,
+									sqlcommand: this.initscriptobj.staticqueryviews[id2].widgetObj.sqlcommand,  
+									coderunner: this.coderunner,
+									parentuuid: this.uuid,
+								});
+						newWidgetObject.eventbus.subscribe('closegriditem', this.deleteStaticQueryViewWidget.bind(this), this.uuid);
+						newWidgetObject.eventbus.subscribe('edittablelayoutgriditem', this.editLayoutStaticQueryViewWidget.bind(this), this.uuid);
+						this.staticqueryviews.push({
+							...this.initscriptobj.staticqueryviews[id2],
+							widgetObject : newWidgetObject,
+						});
+						
+					} else {
+						console.error("Cannot add static query view widget: ", this.initscriptobj.gridwidgets[i]);
+					}
 				} else /* if (this.initscriptobj.gridwidgets[i].griditemname==="gridItemQueryView" ) */ {
 					//GridItemSQLEditor
 					this.addMainWidget(this.initscriptobj.gridwidgets[i].griditemname, this.initscriptobj.gridwidgets[i], gridlayoutoptions);	
@@ -710,6 +734,7 @@ export class AppPageScriptControl extends AppPageControl {
 				// 
 				this.sqlqueryview.eventbus.subscribe('editcolumnsgriditem', this.editTabulatorColumns.bind(this), this.uuid);
 				this.sqlqueryview.eventbus.subscribe('clonethistablegriditem', this.cloneQueryView.bind(this), this.uuid);
+				this.sqlqueryview.eventbus.subscribe('clonethistabletotreeviewgriditem', this.cloneQueryTreeView.bind(this), this.uuid);
 				
 				this.eventbus.subscribe('CmdExecutionSuccess',(obj,eventdata)=>{ that.sqlqueryview.processCodeRunnerResult(obj,eventdata);  }, this.sqlqueryview.uuid);
 				// clonethistablegriditem
@@ -903,8 +928,13 @@ export class AppPageScriptControl extends AppPageControl {
 	}
 	
 	// --------------------------------------------------------------------------------
+	async cloneQueryTreeView(obj, eventdata) {
+		await this.cloneQueryView(obj, eventdata, 'DATATREE');
+		
+	} 
+	// --------------------------------------------------------------------------------
 	
-	async cloneQueryView() {
+	async cloneQueryView(obj, eventdata, queryType='PLAINTABLE') {
 		let tableheader = "";
 		
 		if (!this.sqlqueryview) {
@@ -932,8 +962,18 @@ export class AppPageScriptControl extends AppPageControl {
 			usercolumnlayout = this.sqlqueryview.getTabulatorColumnLayout();
 		}
 		
-		const newWidgetObject = this.addGridItem( gridItemStaticQueryView, 
-				{	templateid:"#gridItemSQLStaticQueryView", 
+		let gridItemType;
+		let gridItemTemplate;
+		if (queryType==='DATATREE') {
+			gridItemType = gridItemStaticQueryTreeView;
+			gridItemTemplate = "#gridItemSQLStaticQueryTreeView";
+		} else {
+			gridItemType = gridItemStaticQueryView;
+			gridItemTemplate = "#gridItemSQLStaticQueryView";
+		}
+		
+		const newWidgetObject = this.addGridItem( gridItemType, 
+				{	templateid: gridItemTemplate, 
 					headertext: tableheader, 
 					griditemoptions: {w:6,h:5,}, 
 					columnlayout:  this.sqlqueryview.getTabulatorColumnLayout(),  
