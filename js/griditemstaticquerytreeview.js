@@ -83,7 +83,8 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 		*/
 		let s1 = this.sqlNormalized;
 		// grouping_id() function should have 'as name' alias in query
-		this.groupingIDFieldName = s1.substr(s1.indexOf('AS',s1.indexOf('GROUPING('))+3,s1.indexOf(',',s1.indexOf('AS',s1.indexOf('GROUPING(')))-s1.indexOf('AS',s1.indexOf('GROUPING('))-3);
+		//this.groupingIDFieldName = s1.substr(s1.indexOf('AS',s1.indexOf('GROUPING('))+3,s1.indexOf(',',s1.indexOf('AS',s1.indexOf('GROUPING(')))-s1.indexOf('AS',s1.indexOf('GROUPING('))-3);
+		this.groupingIDFieldName = s1.substr(s1.indexOf('AS',s1.indexOf('GROUPING('))+3,s1.indexOf(' ',s1.indexOf('AS',s1.indexOf('GROUPING('))+3)-s1.indexOf('AS',s1.indexOf('GROUPING('))-3).replace(',','');
 		s1 = s1.substr(s1,s1.indexOf('GROUPING('))+ 'GROUPING(' + strAllFields + s1.substr(s1.indexOf(') ',s1.indexOf('GROUPING(')));
 		s1 = s1.substr(0,s1.lastIndexOf('GROUP BY')) + 'GROUP BY GROUPING SETS (';
 		for (let i=0;i<this.groupFieldsList.length;i++) {
@@ -121,7 +122,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			width: 250,
 			hozAlign: "left",
 			sorter: "string",
-			//headerSortTristate:true,
+			headerSortTristate:true,
 			formatter: "plaintext",
 			frozen:true, 
 			contextMenu: this.defaultCellContextMenu,
@@ -192,6 +193,12 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			}
 		}
 		
+		// [a,b,c,d], len=4
+		// (1<<3)-1 = grouping_id()=7
+		// from grouping id: Math.log2(7+1)+1 = 4
+		//groupsarr : '[0:{"level":3, namefieldindex:"d"}, 1: {"level":2, namefieldindex:"c"},null, 3: {"level":1, namefieldindex:"b"},null,null,null,7:{"level":0, namefieldindex:"a"}]'
+		
+		
 		const groupingIDIndex=arrowdata.schema.fields.findIndex(v=>v.fldname===this.groupingIDFieldName);
 		let groupsArr = [];
 		let maxLevel = this.groupFieldsList.length-1;
@@ -202,10 +209,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 		}
 		
 		console.log('GROUPS ARRAY: ', groupsArr);
-		// [a,b,c,d], len=4
-		// (1<<3)-1 = grouping_id()=7
-		// from grouping id: Math.log2(7+1)+1 = 4
-		//groupsarr : '[0:{"level":3, namefieldindex:"d"}, 1: {"level":2, namefieldindex:"c"},null, 3: {"level":1, namefieldindex:"b"},null,null,null,7:{"level":0, namefieldindex:"a"}]'
+
 		// **********
 		
 		let that = this;
