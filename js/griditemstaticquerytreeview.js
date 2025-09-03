@@ -51,7 +51,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			}
 		}
 		
-		this.addTreeColumnToUserColumnLayout();
+		
 		
 		if (!this.sqlNormalized) {
 			//  select json_deserialize_sql(json_serialize_sql(`${escapedSqlCmd}`)) as f1;
@@ -92,6 +92,8 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 		s1 = s1 + ')  ORDER BY ' + strAllFields + ', ' + this.groupingIDFieldName + ';';
 		
 		console.log("Modified sql: ",s1);
+		
+		this.addTreeColumnToUserColumnLayout();
 		
 		const res = await this.coderunner.runSQLAsync(s1);
 		if (res?.runStatus) {
@@ -140,7 +142,12 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			}
 		}
 		
-		const layoutInd = this.usercolumnlayout.findIndex(v=>v.field==="_row_index");
+		let layoutInd = this.usercolumnlayout.findIndex(v=>v.field==="_row_index");
+		if (layoutInd>-1) {
+			this.usercolumnlayout[layoutInd].visible = false;
+		}
+		
+		layoutInd = this.usercolumnlayout.findIndex(v=>v.field===this.groupingIDFieldName);
 		if (layoutInd>-1) {
 			this.usercolumnlayout[layoutInd].visible = false;
 		}
@@ -193,13 +200,15 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			const nameIndex = arrowdata.schema.fields.findIndex(v=>v.fldname===this.groupFieldsList[i]);			
 			groupsArr[groupingIndex] = { level:i, namefieldindex: nameIndex };
 		}
+		
+		console.log('GROUPS ARRAY: ', groupsArr);
 		// [a,b,c,d], len=4
 		// (1<<3)-1 = grouping_id()=7
 		// from grouping id: Math.log2(7+1)+1 = 4
 		//groupsarr : '[0:{"level":3, namefieldindex:"d"}, 1: {"level":2, namefieldindex:"c"},null, 3: {"level":1, namefieldindex:"b"},null,null,null,7:{"level":0, namefieldindex:"a"}]'
 		// **********
 		
-		
+		let that = this;
 		function processDataRow(rowNum,myLevel,curRowValues) {
 			let res = {
 				rowsArr: [],
@@ -208,7 +217,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			};
 			let vals = curRowValues;
 			let curRowNum = rowNum;
-			let curRowLevel = groupsarr[vals[groupingIDIndex][1]].level;
+			let curRowLevel = groupsArr[vals[groupingIDIndex][1]].level;
 			
 			while (curRowNum<arrowdata.numRows && curRowLevel>=myLevel) {
 				let newrow = { _level: myLevel, };
@@ -220,7 +229,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 				}
 				
 				if (curRowNum<arrowdata.numRows) {
-					newrow[this._dataTreeElementColumnName] = vals[groupsarr[vals[groupingIDIndex][1]].namefieldindex][1];
+					newrow[that._dataTreeElementColumnName] = vals[groupsArr[vals[groupingIDIndex][1]].namefieldindex][1];
 					for (let j=0;j<arrowdata.schema.fields.length;j++) {
 						newrow[arrowdata.schema.fields[j].fldname] = vals[j][1]; 
 					}
@@ -231,7 +240,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 				curRowNum++;
 				if (curRowNum<arrowdata.numRows) {
 					vals = [...arrowdata.get(curRowNum)];
-					curRowLevel = groupsarr[vals[groupingIDIndex][1]].level;
+					curRowLevel = groupsArr[vals[groupingIDIndex][1]].level;
 				} 
 			}
 			
@@ -245,7 +254,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			let vals = [...arrowdata.get(curRowNum)];
 			let newrow = { _level: 0, };
 			let groupingid = vals[groupingIDIndex][1];
-			if (groupsarr[groupingid].level>0) {
+			if (groupsArr[groupingid].level>0) {
 				let processResult = processDataRow(curRowNum,1,vals);
 				newrow['_children'] = processResult.rowsArr;
 				curRowNum = processResult.curRowNum;
@@ -253,7 +262,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			} 
 			
 			if (curRowNum<arrowdata.numRows) {
-				newrow[this._dataTreeElementColumnName] = vals[groupsarr[0].namefieldindex][1];
+				newrow[this._dataTreeElementColumnName] = vals[groupsArr[vals[groupingIDIndex][1]].namefieldindex][1];
 				for (let j=0;j<arrowdata.schema.fields.length;j++) {
 					newrow[arrowdata.schema.fields[j].fldname] = vals[j][1]; 
 				}

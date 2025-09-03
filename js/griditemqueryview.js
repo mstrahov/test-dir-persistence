@@ -306,7 +306,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 					...this.tabulatorProperties,
 					dataTree:true,
 					dataTreeFilter:true,
-					dataTreeStartExpanded:true,
+					dataTreeStartExpanded:false,
 					dataTreeChildIndent:27,
 					dataTreeElementColumn: this._dataTreeElementColumnName, 
 			};
