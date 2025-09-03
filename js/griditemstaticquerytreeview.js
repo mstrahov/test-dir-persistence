@@ -226,6 +226,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 					}
 				}
 				
+				newrow['_row_index'] = curRowNum;
 				res.rowsArr.push(newrow);
 				curRowNum++;
 				if (curRowNum<arrowdata.numRows) {
@@ -238,11 +239,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			res.curRowValues = vals;
 			return res;
 		}
-		
-		//    _children: scripttree,
-		//    _level: 0,
-		
-		//processDataRow(0,0,[...arrowdata.get(0)]);
+		// **********
 		let curRowNum = 0;
 		while (curRowNum<arrowdata.numRows) {
 			let vals = [...arrowdata.get(curRowNum)];
