@@ -31,7 +31,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 		}
 		
 		let escapedSqlCmd = this.sqlcommand.replaceAll("'","''");
-		// need to find this._dataTreeElementColumn ?
+		// need to find this._dataTreeElementColumnName ?
 		if (!this.groupFieldsList || this.groupFieldsList.length==0) {
 			
 			let analyzeSqlCmd = `select json_serialize_sql('${escapedSqlCmd}')->'$.statements[*].*.group_expressions[*].column_names[*]' as f1;`;
@@ -50,6 +50,8 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 				return false;
 			}
 		}
+		
+		this.addTreeColumnToUserColumnLayout();
 		
 		if (!this.sqlNormalized) {
 			//  select json_deserialize_sql(json_serialize_sql(`${escapedSqlCmd}`)) as f1;
@@ -103,18 +105,64 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 	}
 
 	// -------------------------------------------------------------------------
-	//~ generateColumnDefinitions(arrowdata) {
+	addTreeColumnToUserColumnLayout() {
+		// add this._dataTreeElementColumnName to this.usercolumnlayout
 		
-	//~ }
+		if (!this.usercolumnlayout) { return false; }
+		
+		const treeColPresent = this.usercolumnlayout.findIndex(v=>v.field===this._dataTreeElementColumnName)>-1;
+		if (treeColPresent) { return true; }
+		
+		let newcolumn = {
+			title: "",
+			field: this._dataTreeElementColumnName,
+			width: 250,
+			hozAlign: "left",
+			sorter: "string",
+			//headerSortTristate:true,
+			formatter: "plaintext",
+			frozen:true, 
+			contextMenu: this.defaultCellContextMenu,
+			visible: true,
+		};
+			
+		if (this.headerContextMenuGeneratorFunction) {
+			newcolumn.headerContextMenu = this.headerContextMenuGeneratorFunction;
+		}
+		if (this.cellContextMenuGeneratorFunction) {
+			newcolumn.contextMenu = this.cellContextMenuGeneratorFunction;
+		}
+		
+		for (let i=0;i<this.groupFieldsList.length;i++) {
+			const layoutInd = this.usercolumnlayout.findIndex(v=>v.field===this.groupFieldsList[i]);
+			if (layoutInd>-1) {
+				this.usercolumnlayout[layoutInd].visible = false;
+			}
+		}
+		
+		const layoutInd = this.usercolumnlayout.findIndex(v=>v.field==="_row_index");
+		if (layoutInd>-1) {
+			this.usercolumnlayout[layoutInd].visible = false;
+		}
+		
+		this.usercolumnlayout.unshift(newcolumn);
+		
+		return true;
+	}
+	
 	// -------------------------------------------------------------------------
 	generateTableData(arrowdata) {
 		let resArray = [];
-		// **********
 		
-		// [a,b,c,d], len=4
-		// (1<<3)-1 = grouping_id()=7
-		// from grouping id: Math.log2(7+1)+1 = 4
-		 
+		if (arrowdata.numRows===0) {
+			return resArray;
+		} 
+		
+		if (!this.groupFieldsList || this.groupFieldsList.length===0) {
+			return super.generateTableData(arrowdata);
+		}
+		
+		// **********	 
 		if (!arrowdata.schema.fields[0].fldname) {
 			let fldcount = {};
 			for (let i=0;i<arrowdata.numCols;i++) {
@@ -137,20 +185,40 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			}
 		}
 		
-		// **********
-		for (let i=0;i<arrowdata.numRows;i++) {
-			let newrow = { "_row_index": i };
-			// [...arrowdata.get(i)]   --->  [Array(2), Array(2)] 
-			const vals = [...arrowdata.get(i)];
-			for (let j=0;j<arrowdata.schema.fields.length;j++) {
-				newrow[arrowdata.schema.fields[j].fldname] = vals[j][1]; 
-			}
-			//~ arrowdata.schema.fields.forEach((f)=>{
-				
-				//~ newrow[f.name]=''+arrowdata.get(i)[f.name];
-			//~ });
-			resArray.push(newrow);
+		const groupingIDIndex=arrowdata.schema.fields.findIndex(v=>v.fldname===this.groupingIDFieldName);
+		let groupsArr = [];
+		let maxLevel = this.groupFieldsList.length-1;
+		for (let i=0;i<this.groupFieldsList.length;i++) {
+			const groupingIndex = (1<<(this.groupFieldsList.length-i-1))-1;
+			const nameIndex = arrowdata.schema.fields.findIndex(v=>v.fldname===this.groupFieldsList[i]);			
+			groupsArr[groupingIndex] = { level:i, namefieldindex: nameIndex };
 		}
+		// [a,b,c,d], len=4
+		// (1<<3)-1 = grouping_id()=7
+		// from grouping id: Math.log2(7+1)+1 = 4
+		//groupsarr : '[0:{"level":3, namefieldindex:"d"}, 1: {"level":2, namefieldindex:"c"},null, 3: {"level":1, namefieldindex:"b"},null,null,null,7:{"level":0, namefieldindex:"a"}]'
+		// **********
+		
+		
+		function processDataRow(rowNum,myLevel,rowValues) {
+			
+			
+			
+		}
+		
+		processDataRow(0,0,[...arrowdata.get(0)]);
+		
+		// **********
+		//~ for (let i=0;i<arrowdata.numRows;i++) {
+			//~ let newrow = { "_row_index": i };
+			//~ // [...arrowdata.get(i)]   --->  [Array(2), Array(2)] 
+			//~ const vals = [...arrowdata.get(i)];
+			//~ for (let j=0;j<arrowdata.schema.fields.length;j++) {
+				//~ newrow[arrowdata.schema.fields[j].fldname] = vals[j][1]; 
+			//~ }
+			
+			//~ resArray.push(newrow);
+		//~ }
 		// **********
 		return resArray;
 	}

@@ -41,7 +41,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 		this._PROGRESSIVELOAD = 1;
 		this._PAGINATED = 2;
 		this._DATATREE = 3;
-		this._dataTreeElementColumn = "name";
+		this._dataTreeElementColumnName = "_tree_Column";
 		
 		this.headerContextMenuGeneratorFunction = undefined; 
 		this.cellContextMenuGeneratorFunction = undefined; 
@@ -308,7 +308,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 					dataTreeFilter:true,
 					dataTreeStartExpanded:true,
 					dataTreeChildIndent:27,
-					dataTreeElementColumn: this._dataTreeElementColumn, 
+					dataTreeElementColumn: this._dataTreeElementColumnName, 
 			};
 			
 		}
@@ -407,7 +407,7 @@ export class gridItemQueryView extends GridItemWithMenu {
 							//~ dataTreeFilter:true,
 							//~ dataTreeStartExpanded:true,
 							//~ dataTreeChildIndent:27,
-							//~ dataTreeElementColumn:this._dataTreeElementColumn, 
+							//~ dataTreeElementColumn:this._dataTreeElementColumnName, 
 							// --------------------------------------
 							//~ columnDefaults:{
 								//~ tooltip:function(e, cell, onRendered){
