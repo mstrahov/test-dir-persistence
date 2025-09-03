@@ -200,13 +200,74 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 		// **********
 		
 		
-		function processDataRow(rowNum,myLevel,rowValues) {
+		function processDataRow(rowNum,myLevel,curRowValues) {
+			let res = {
+				rowsArr: [],
+				curRowNum: 0,
+				curRowValues: []
+			};
+			let vals = curRowValues;
+			let curRowNum = rowNum;
+			let curRowLevel = groupsarr[vals[groupingIDIndex][1]].level;
 			
+			while (curRowNum<arrowdata.numRows && curRowLevel>=myLevel) {
+				let newrow = { _level: myLevel, };
+				if (curRowLevel>myLevel) {
+					let processResult = processDataRow(curRowNum,myLevel+1,vals);
+					newrow['_children'] = processResult.rowsArr;
+					curRowNum = processResult.curRowNum;
+					vals = processResult.curRowValues;
+				}
+				
+				if (curRowNum<arrowdata.numRows) {
+					newrow[this._dataTreeElementColumnName] = vals[groupsarr[vals[groupingIDIndex][1]].namefieldindex][1];
+					for (let j=0;j<arrowdata.schema.fields.length;j++) {
+						newrow[arrowdata.schema.fields[j].fldname] = vals[j][1]; 
+					}
+				}
+				
+				res.rowsArr.push(newrow);
+				curRowNum++;
+				if (curRowNum<arrowdata.numRows) {
+					vals = [...arrowdata.get(curRowNum)];
+					curRowLevel = groupsarr[vals[groupingIDIndex][1]].level;
+				} 
+			}
 			
-			
+			res.curRowNum = curRowNum;
+			res.curRowValues = vals;
+			return res;
 		}
 		
-		processDataRow(0,0,[...arrowdata.get(0)]);
+		//    _children: scripttree,
+		//    _level: 0,
+		
+		//processDataRow(0,0,[...arrowdata.get(0)]);
+		let curRowNum = 0;
+		while (curRowNum<arrowdata.numRows) {
+			let vals = [...arrowdata.get(curRowNum)];
+			let newrow = { _level: 0, };
+			let groupingid = vals[groupingIDIndex][1];
+			if (groupsarr[groupingid].level>0) {
+				let processResult = processDataRow(curRowNum,1,vals);
+				newrow['_children'] = processResult.rowsArr;
+				curRowNum = processResult.curRowNum;
+				vals = processResult.curRowValues;
+			} 
+			
+			if (curRowNum<arrowdata.numRows) {
+				newrow[this._dataTreeElementColumnName] = vals[groupsarr[0].namefieldindex][1];
+				for (let j=0;j<arrowdata.schema.fields.length;j++) {
+					newrow[arrowdata.schema.fields[j].fldname] = vals[j][1]; 
+				}
+			}
+			
+			newrow['_row_index'] = curRowNum;
+			resArray.push(newrow);
+			curRowNum++;
+		}
+		
+		
 		
 		// **********
 		//~ for (let i=0;i<arrowdata.numRows;i++) {
