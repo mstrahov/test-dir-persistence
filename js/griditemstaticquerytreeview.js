@@ -9,6 +9,8 @@
 // https://github.com/Shopify/draggable
 //  /home/misha/work/dev/analysis_project2/v_demo4/js/monitorlib.js 
 
+import Swappable from 'https://cdn.jsdelivr.net/npm/@shopify/draggable@1.1.4/build/esm/Swappable/Swappable.mjs';
+
 import { GridItemWithMenu } from "./griditemwithmenu.js";
 import { ExecTimer } from "./exectimer.js"; 
 import { gridItemQueryView, arrowDataTypesToTabulatorCols } from "./griditemqueryview.js";
@@ -19,8 +21,11 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 		super(params);	
 		this.displaymode = this._DATATREE;  
 		this.groupFieldsList = [];
+		this.groupFieldPosMap = new Map();
+		this.swappable = null;
 		this.sqlNormalized = null;
 		this.groupingIDFieldName = '';
+		this.eventbus.subscribe('_internal_refresh_action',this.refreshData.bind(this));
 	}
 	
 
@@ -51,7 +56,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			}
 		}
 		
-		
+		if (!this.swappable) this.updateGroupFieldsControl();
 		
 		if (!this.sqlNormalized) {
 			//  select json_deserialize_sql(json_serialize_sql(`${escapedSqlCmd}`)) as f1;
@@ -106,7 +111,88 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 		}
 		
 	}
+	
+	
+	// -------------------------------------------------------------------------
+	
+	updateGroupFieldsControl() {
+		
+		if (!this.groupFieldsList) return false;
+		
+		let fieldsContainerElement = this.headerelement.querySelector('#groupfieldscontainer'+this.uuid);
+		if (!fieldsContainerElement) {
+			console.error('#groupfieldscontainer element not found, cannot build a field list control');
+			return false;
+		}
+		if (this.swappable) {this.swappable.destroy();}
+		while(fieldsContainerElement.firstChild) fieldsContainerElement.removeChild(fieldsContainerElement.firstChild);
+		for (let i=0;i<this.groupFieldsList.length;i++) {
+			// <button type="button" class="btn btn-outline-info">Left</button>
+			const layoutInd = this.usercolumnlayout.findIndex(v=>v.field===this.groupFieldsList[i]);
+			let buttonID = 'groupField_' + this.groupFieldsList[i] + this.uuid;
+			let buttonText = this.groupFieldsList[i];
+			if (layoutInd>-1 && this.usercolumnlayout[layoutInd].title) {
+				buttonText = this.usercolumnlayout[layoutInd].title;
+			}
+			let el = document.createElement("button");
+			let classNames = "btn btn-outline-info".split(" ");
+			classNames.forEach((className) => {
+				el.classList.add(className);
+			});
+			el.id = buttonID;
+			el.setAttribute("type", "button");
+			el.setAttribute("data-bs-toggle", "tooltip");
+			el.setAttribute("data-bs-placement", "top");
+			el.setAttribute("title", "Move to change grouping order");
+			//el.style.fontWeight = "bolder";
+			el.innerText = buttonText;
+			fieldsContainerElement.appendChild(el);
+			this.groupFieldPosMap.set(buttonID,{position: i, title: buttonText, field: this.groupFieldsList[i]});
+		}
+		
+		
+		this.swappable = new Swappable(fieldsContainerElement, {  draggable: 'button' });
+		this.swappable.on('swappable:stop', this.swappablestopevent.bind(this));
 
+	}
+	// -------------------------------------------------------------------------
+	swappablestopevent(e) {
+		//console.log('swappable:stop');
+		//console.log(e);
+		//console.log("Internal cont = ",this);
+		let fieldsContainerElement = this.headerelement.querySelector('#groupfieldscontainer'+this.uuid);
+		if (!fieldsContainerElement) {
+			console.error('#groupfieldscontainer element not found, cannot build a field list control');
+			return false;
+		}
+		let newpath = [];
+		let nochanges = true;
+		let j=0;
+		for (let i=0;i<fieldsContainerElement.children.length;i++) {
+			if (fieldsContainerElement.children.item(i).style.display!=='none'&&fieldsContainerElement.children.item(i).style.position!=='fixed') {
+				let fieldid = fieldsContainerElement.children.item(i).id;
+				//console.log(fieldid);
+				//console.log(this.groupFieldPosMap.get(fieldid),j);
+				
+				let groupField = this.groupFieldPosMap.get(fieldid);
+				nochanges = nochanges && (groupField.position===j);
+				newpath.push(groupField.field);
+				if (groupField.position!==j) {
+					groupField.position = j;
+					this.groupFieldPosMap.set(fieldid, groupField);
+				}
+				j++;
+			}
+		}
+		if (!nochanges) {
+			console.log('Grouping order changed!!!', newpath);
+			this.groupFieldsList = [...newpath];
+			this.eventbus.dispatch('_internal_refresh_action', this, { });
+		}
+		
+		
+	}
+	
 	// -------------------------------------------------------------------------
 	addTreeColumnToUserColumnLayout() {
 		// add this._dataTreeElementColumnName to this.usercolumnlayout
