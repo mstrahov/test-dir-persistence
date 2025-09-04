@@ -58,7 +58,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 		
 		if (!this.groupFieldsList || this.groupFieldsList.length===0) {
 			console.error("Tree query view error: no GROUP BY in SQL Statement");
-			this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: 'sql', '', result: null });
+			this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: 'sql', msg: '', result: null });
 			return false;
 		}
 		
@@ -91,7 +91,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 		
 		if (!this.sqlNormalized.includes('GROUPING(')) {
 			console.error("Tree query view error: GROUPING_ID() field in SQL Statement");
-			this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: 'sql', '', result: null });
+			this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: 'sql', msg: '', result: null });
 			return false;
 		}
 		
