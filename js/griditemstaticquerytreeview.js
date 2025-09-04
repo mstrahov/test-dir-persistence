@@ -56,6 +56,8 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			}
 		}
 		
+		this.groupFieldsList.forEach(el => el='"'+el+'"');
+		console.log("Group fields list:",this.groupFieldsList);
 		if (!this.swappable) this.updateGroupFieldsControl();
 		
 		if (!this.sqlNormalized) {
@@ -76,7 +78,8 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 				return false;
 			}
 		}
-				
+		
+		console.log("Normalized SQL:",this.sqlNormalized);	
 		let strAllFields = this.groupFieldsList.join();
 		// if no GROUPING_ID ?? - guess have to have it or attempt to insert after the last select??
 		// find the last group by.  s1.substr(0,s1.lastIndexOf('GROUP BY')) + 'GROUP BY ' + ....
@@ -98,6 +101,8 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 		s1 = s1 + ')  ORDER BY ' + strAllFields + ', ' + this.groupingIDFieldName + ';';
 		
 		console.log("Modified sql: ",s1);
+		this.groupFieldsList.forEach(el => el=el.replaceAll('"',''));
+		console.log("Group fields list:",this.groupFieldsList);
 		
 		this.addTreeColumnToUserColumnLayout();
 		
