@@ -56,9 +56,17 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 			}
 		}
 		
-		this.groupFieldsList.forEach(el => el='"'+el+'"');
-		console.log("Group fields list:",this.groupFieldsList);
+		if (!this.groupFieldsList || this.groupFieldsList.length===0) {
+			console.error("Tree query view error: no GROUP BY in SQL Statement");
+			this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: 'sql', '', result: null });
+			return false;
+		}
+		
 		if (!this.swappable) this.updateGroupFieldsControl();
+		
+		for (let i=0;i<this.groupFieldsList.length;i++) { this.groupFieldsList[i] = '"'+ this.groupFieldsList[i] +'"'}
+		console.log("Group fields list:",this.groupFieldsList);
+		
 		
 		if (!this.sqlNormalized) {
 			//  select json_deserialize_sql(json_serialize_sql(`${escapedSqlCmd}`)) as f1;
@@ -80,6 +88,13 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 		}
 		
 		console.log("Normalized SQL:",this.sqlNormalized);	
+		
+		if (!this.sqlNormalized.includes('GROUPING(')) {
+			console.error("Tree query view error: GROUPING_ID() field in SQL Statement");
+			this.eventbus.dispatch('CmdExecutionError', this, { targetEnv: 'sql', '', result: null });
+			return false;
+		}
+		
 		let strAllFields = this.groupFieldsList.join();
 		// if no GROUPING_ID ?? - guess have to have it or attempt to insert after the last select??
 		// find the last group by.  s1.substr(0,s1.lastIndexOf('GROUP BY')) + 'GROUP BY ' + ....
@@ -101,7 +116,7 @@ export class gridItemStaticQueryTreeView extends gridItemQueryView {
 		s1 = s1 + ')  ORDER BY ' + strAllFields + ', ' + this.groupingIDFieldName + ';';
 		
 		console.log("Modified sql: ",s1);
-		this.groupFieldsList.forEach(el => el=el.replaceAll('"',''));
+		for (let i=0;i<this.groupFieldsList.length;i++) { this.groupFieldsList[i] = this.groupFieldsList[i].replaceAll('"','') }
 		console.log("Group fields list:",this.groupFieldsList);
 		
 		this.addTreeColumnToUserColumnLayout();
