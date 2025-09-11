@@ -19,7 +19,7 @@ import { gridItemQueryView } from  "./griditemqueryview.js";
 import { gridItemTableProps } from  "./griditemtableprops.js";
 import { gridItemStaticQueryView } from  "./griditemstaticqueryview.js";
 import { gridItemStaticQueryTreeView } from  "./griditemstaticquerytreeview.js";
-
+import { gridItemDBView } from './griditemdbview.js';
 
 export class AppPageScriptControl extends AppPageControl {
 	#tablePickerDialog;
