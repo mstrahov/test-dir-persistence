@@ -43,6 +43,7 @@ export class AppPageScriptControl extends AppPageControl {
 		this.sqleditor = undefined;
 		this.sqlqueryview = undefined;
 		this.tablepropseditor = undefined;
+		this.griditemdbview = undefined;
 		
 		this.dropdownMenuControl.eventbus.subscribe('menuitemclick',this.topDropDownMenuEventHandler.bind(this));
 		
@@ -471,6 +472,8 @@ export class AppPageScriptControl extends AppPageControl {
 			this.sqlqueryview = null;		
 		} else if (mainWidgetName==="gridItemTableProps") {
 			this.tablepropseditor = null;		
+		} else if (mainWidgetName==="gridItemDBView") {
+			this.griditemdbview = null;		
 		} 
 		
 		
@@ -777,6 +780,28 @@ export class AppPageScriptControl extends AppPageControl {
 				//~ }
 
 			}
+		} else if (mainWidgetName==="gridItemDBView") {
+	
+			if (!this.griditemdbview) {
+				if (!widgetSettings) {
+					widgetSettings = {};
+					widgetSettings.griditemheader = "Database objects";
+					widgetSettings.columnlayout = undefined;
+					
+				}
+				this.griditemdbview  = this.addGridItem( gridItemDBView, 
+						{
+							templateid:"#gridItemDBView", 
+							headertext: widgetSettings.griditemheader, 
+							griditemoptions: gridlayoutoptions,
+							columnlayout:  widgetSettings.columnlayout,  
+							sqlcommand: widgetSettings.sqlcommand,  
+							coderunner: this.coderunner,
+							parentuuid: this.uuid,
+						});
+				this.griditemdbview.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
+
+			}
 		}
 		
 		
@@ -820,11 +845,13 @@ export class AppPageScriptControl extends AppPageControl {
 			this.addMainWidget("gridItemQueryView");
 		} else if (eventdata?.menuItemId === 'addscriptstepswidget') { 
 			this.addMainWidget("gridItemScript"); 
+		} else if (eventdata?.menuItemId === 'adddatabaseviewwidget') { 
+			this.addMainWidget("gridItemDBView"); 
 		} else if (eventdata?.menuItemId === 'closebuttonaction') { 
 			this.eventbus.dispatch('closebuttonaction', this, {} );
-		}
+		} 
 		
-		// 
+		//  
 		//	this.grid.compact();   
 		//} else if (eventdata?.menuItemId === 'savelayout') {   
 		//	console.log(this.layoutToJSON());

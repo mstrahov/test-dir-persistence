@@ -64,7 +64,8 @@ export class gridItemDBView extends GridItemWithMenu {
 			this.fileIOHandler.mountDirectory();
 			
 		} else if (eventdata?.menuItemId === "refreshgriditem" || eventdata?.menuItemId ===  "refreshaction") {
-			this.awaitingrefresh = true;
+			// this.awaitingrefresh = true;
+			this.refreshData();
 			//~ this.fileIOHandler.syncFS();
 		//~ } else if (eventdata?.menuItemId === "uploadfiletoopfsitem") {
 			//~ this.awaitingrefresh = true;
@@ -89,18 +90,21 @@ export class gridItemDBView extends GridItemWithMenu {
 			movableRows:false,
 			reactiveData:false, 
 			columns:[
-				{title:"Name", field:"leftcolumn", editor:false, headerSort:true, headerFilter:"input", headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),width:250, },
-				{title:"Alias", field:"namealias", editor:true, headerSort:true, headerFilter:"input", headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),width:150, },
-				{title:"Column Index", field:"column_index", editor:false, headerSort:true,width:70, },
-				{title:"Data type", field:"data_type", editor:false, headerSort:true,width:120, },
-				{title:"Column default", field:"column_default", editor:false, headerSort:true,width:120, },
+				{title:"Name", field:"leftcolumn", editor:false, headerSort:true, headerFilter:"input", headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),width:250, sorter:"string", headerSortTristate:true,},
+				{title:"Alias", field:"namealias", editor:true, headerSort:true, headerFilter:"input", headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),width:150, sorter:"string",  headerSortTristate:true,},
+				
+				{title:"Data type", field:"data_type", editor:false, headerSort:true,width:120, sorter:"string", headerSortTristate:true, },
+				{title:"Column default", field:"column_default", editor:false, headerSort:true,width:120, sorter:"string", headerSortTristate:true, },
+				
+				{title:"Column Index", field:"column_index", editor:false, headerSort:true,width:90, sorter:"number", headerSortTristate:true, },
 			],
 			data:dbdatatree,
 			dataTree:true,
 			dataTreeFilter:true,
-			dataTreeStartExpanded:false,
+			//dataTreeStartExpanded:false,
+			dataTreeStartExpanded:[true, false, false, false],
 			dataTreeChildIndent:27,
-			dataTreeElementColumn:"name", 
+			dataTreeElementColumn:"leftcolumn", 
 			selectableRows:1,
 			selectableRowsPersistence:false,
 			rowContextMenu:[
@@ -158,7 +162,7 @@ export class gridItemDBView extends GridItemWithMenu {
 	// -------------------------------------------------------------------------
 	dbDescriptionSQLCmd() {
 		
-		res = `SELECT CONCAT(dbschema,' - ',tabletype) as dbschematabletype, dbschema,database_name,schema_name,
+		const res = `SELECT CONCAT(dbschema,' - ',tabletype) as dbschematabletype, dbschema,database_name,schema_name,
 tabletype,tabletypesorter,table_name,tableobjecttype,column_name,column_index,data_type,column_default,is_nullable,
 data_type_id,character_maximum_length,'' as namealias
 FROM (
@@ -294,7 +298,7 @@ FROM duckdb_prepared_statements()
 				// [...sqlres.output.get(i)]   --->  [Array(2), Array(2)] 
 				const vals = [...sqlres.output.get(i)];
 				for (let j=0;j<sqlres.output.schema.fields.length;j++) {
-					newrow[sqlres.output.schema.fields[j].fldname] = vals[j][1]; 
+					newrow[sqlres.output.schema.fields[j].name] = vals[j][1]; 
 				}
 				resArray.push(newrow);
 			}
