@@ -57,7 +57,7 @@ export class AppPageScriptControl extends AppPageControl {
 		if (this.initiallayout===1) {
 			initialwidgetslist = ["gridItemScript", "GridItemPyEditor", "StatusGridItemTextOutput", "griditemTableDFPagedTransform", "gridItemSelectFileDialog"];
 		} else if (this.initiallayout===2) {
-			initialwidgetslist = ["GridItemSQLEditor", "StatusGridItemTextOutput", "gridItemQueryView"];
+			initialwidgetslist = ["gridItemDBView","GridItemSQLEditor", "StatusGridItemTextOutput", "gridItemQueryView"];
 		}
 		
 		if (!this.initscriptobj) {
@@ -785,7 +785,7 @@ export class AppPageScriptControl extends AppPageControl {
 			if (!this.griditemdbview) {
 				if (!widgetSettings) {
 					widgetSettings = {};
-					widgetSettings.griditemheader = "Database objects";
+					widgetSettings.griditemheader = "DB objects";
 					widgetSettings.columnlayout = undefined;
 					
 				}

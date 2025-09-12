@@ -51,7 +51,7 @@ export class gridItemDBView extends GridItemWithMenu {
 			}
 		}
 		
-		
+		this.buildTemplatesFilter();
 		//~ this.coderunner.eventbus.subscribe('InteractiveVariableChange',this.refreshOnVariableChange.bind(this), this.uuid);
 		
 	}
@@ -88,7 +88,7 @@ export class gridItemDBView extends GridItemWithMenu {
 		this.tabulatorProperties = {
 			//height:"311px", 
 			movableRows:false,
-			reactiveData:false, 
+			reactiveData:true, 
 			columns:[
 				{title:"Name", field:"leftcolumn", editor:false, headerSort:true, headerFilter:"input", headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),width:250, sorter:"string", headerSortTristate:true,},
 				{title:"Alias", field:"namealias", editor:true, headerSort:true, headerFilter:"input", headerFilterFunc:this.customHeaderIncludesStringFunction.bind(this),width:150, sorter:"string",  headerSortTristate:true,},
@@ -331,7 +331,7 @@ FROM duckdb_prepared_statements()
 		try {
 			if (rowData._children) { return true; }
 			if(rowValue){
-				res = rowValue.includes(headerValue);
+				res = rowValue.toLowerCase().includes(headerValue.toLowerCase());
 				//console.log("header filter res",res,rowValue,rowData);
 			} 
 		} catch (e) {
@@ -341,6 +341,54 @@ FROM duckdb_prepared_statements()
 		return res;
 	}	
 	// --------------------------------------------------------------------------	
+	
+	buildTemplatesFilter() {
+		
+		const templatesArr = [',field as alias','field as alias,',',field','field,'];
+		
+		let fieldsContainerElement = this.headerelement.querySelector('#copytemplatesgroup'+this.uuid);
+		if (!fieldsContainerElement) {
+			console.error('#copytemplatesgroup element not found, cannot build a copy template control');
+			return false;
+		}
+		
+		while(fieldsContainerElement.firstChild) fieldsContainerElement.removeChild(fieldsContainerElement.firstChild);
+		
+		for (let i=0;i<templatesArr.length;i++) {
+			//~ <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+			//~ <label class="btn btn-outline-primary" for="btnradio1">,field as alias</label>
+			let buttonID = 'btnradio_' + i + "_" + this.uuid;
+			let buttonText = templatesArr[i];
+			
+			let el = document.createElement("input");
+			el.setAttribute("type", "radio");
+			let classNames = "btn-check".split(" ");
+			classNames.forEach((className) => {
+				el.classList.add(className);
+			});
+			el.id = buttonID;
+			
+			el.setAttribute("name", "btnradio");
+			el.setAttribute("autocomplete", "off");
+			if (i===0) {
+				el.setAttribute("checked", "checked");
+			}
+			fieldsContainerElement.appendChild(el);
+			
+			el = document.createElement("label");
+			classNames = "btn btn-outline-primary".split(" ");
+			classNames.forEach((className) => {
+				el.classList.add(className);
+			});
+			el.innerText = buttonText;
+			el.setAttribute("for", buttonID);
+			fieldsContainerElement.appendChild(el);
+		}
+		
+		
+	}
+	
+	
 	// -------------------------------------------------------------------------
 	async destroytabulatorobj() {		
 		let that = this;
