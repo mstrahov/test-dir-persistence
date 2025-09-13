@@ -52,7 +52,7 @@ export class gridItemDBView extends GridItemWithMenu {
 			}
 		}
 		
-		this.copyTemplatesArr = [',{{field}} as {{alias}}','{{field}} as {{alias}},',',{{field}}','{{field}},'];
+		this.copyTemplatesArr = [',{{field}} as {{alias}}','{{field}} as {{alias}},',',{{field}}','{{field}},','{{field}}'];
 		this.buildTemplatesFilter();
 		//~ this.coderunner.eventbus.subscribe('InteractiveVariableChange',this.refreshOnVariableChange.bind(this), this.uuid);
 		
