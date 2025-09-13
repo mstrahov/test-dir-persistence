@@ -527,9 +527,9 @@ export class gridItemQueryView extends GridItemWithMenu {
 		let resArray = [];
 		// **********
 		
-		if (!arrowdata.schema.fields[0].fldname) {
+		if (!arrowdata?.schema?.fields[0]?.fldname) {
 			let fldcount = {};
-			for (let i=0;i<arrowdata.numCols;i++) {
+			for (let i=0;i<arrowdata?.numCols;i++) {
 				// ****  check if field name is repeated, add number at the end to make field names unique
 				fldcount[arrowdata.schema.fields[i].name] = (fldcount[arrowdata.schema.fields[i].name] || 0) + 1;
 				if (fldcount[arrowdata.schema.fields[i].name]>1) {
