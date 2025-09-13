@@ -402,7 +402,7 @@ FROM duckdb_prepared_statements()
 			});
 			el.id = buttonID;
 			
-			el.setAttribute("name", "btnradio");
+			el.setAttribute("name", "btnradio"+this.uuid);
 			el.setAttribute("autocomplete", "off");
 			if (i===0) {
 				el.setAttribute("checked", "checked");
@@ -431,7 +431,7 @@ FROM duckdb_prepared_statements()
 			console.error('#copytemplatesgroup element not found, cannot find an active template!');
 			return false;
 		}
-		const elemId = fieldsContainerElement.querySelector("input[type='radio'][name='btnradio']:checked").id; 
+		const elemId = fieldsContainerElement.querySelector("input[type='radio'][name='btnradio"+this.uuid+"']:checked").id; 
 		const templateNumber = elemId.replaceAll(this.uuid,'').replaceAll('btnradio','').replaceAll('_','');
 		//~ console.log("CHECKED:",elemId, templateNumber);
 		res = this.copyTemplatesArr[parseInt(templateNumber)];
