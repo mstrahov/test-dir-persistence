@@ -13,7 +13,7 @@ export function makeCloneFromTemplate(templateid,uuid) {
 // *******************************************************
 
 //  creates a nested tree dataset out of flat rowsarr, nested tree is generated from sortfields field names, with rollupfields and recalccallback function - used to correct rollup values
-export const getTreeDataRows = (rowsarr, sortfields, rollupfields, recalccallback, filterarr=[], childrenrowscallback, alreadysorted=false) => {
+export const getTreeDataRows = (rowsarr, sortfields, rollupfields, recalccallback, filterarr=[], childrenrowscallback, alreadysorted=false, parentrowcallback) => {
 	let res=[];
 	let rowcounter = 2;
 	//  assert sortfields.length > 0
@@ -163,7 +163,18 @@ export const getTreeDataRows = (rowsarr, sortfields, rollupfields, recalccallbac
 			curvector = recalcvector(curvector,rowlevel);
 			//  push a new row with children
 			
-			res.pushrow = {...rowsarr[i]};
+			if (parentrowcallback) {
+				res.pushrow = {...parentrowcallback({
+											'id' : rowcounter,
+											'rowlevel' : rowlevel,
+											'rowlevelpath' : sortfields,
+											'idpath' : idpathtolevel,
+											'pushrow': {...rowsarr[i]},
+												})
+								};
+			} else {
+				res.pushrow = {...rowsarr[i]};
+			}
 			res.pushrow['id'] = rowcounter;
 			res.pushrow['rowlevel'] = rowlevel;
 			res.pushrow['rowlevelpath'] = sortfields;

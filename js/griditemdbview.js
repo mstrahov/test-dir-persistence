@@ -32,6 +32,7 @@ export class gridItemDBView extends GridItemWithMenu {
 		this.#internalContainer = this.bodyelement;
 		
 		this.tabulatorObj = undefined;
+		this.tabulatorData = undefined;
 		
 		this.defaultCellContextMenu = [
 			{
@@ -51,6 +52,7 @@ export class gridItemDBView extends GridItemWithMenu {
 			}
 		}
 		
+		this.copyTemplatesArr = [',{{field}} as {{alias}}','{{field}} as {{alias}},',',{{field}}','{{field}},'];
 		this.buildTemplatesFilter();
 		//~ this.coderunner.eventbus.subscribe('InteractiveVariableChange',this.refreshOnVariableChange.bind(this), this.uuid);
 		
@@ -83,8 +85,9 @@ export class gridItemDBView extends GridItemWithMenu {
 	// --------------------------------------------------------------------------
 	
 	async init() {
-		let dbdatatree = await this.getDBTree();
+		
 		let that = this;
+		this.tabulatorData = await this.getDBTree();
 		this.tabulatorProperties = {
 			//height:"311px", 
 			movableRows:false,
@@ -98,7 +101,7 @@ export class gridItemDBView extends GridItemWithMenu {
 				
 				{title:"Column Index", field:"column_index", editor:false, headerSort:true,width:90, sorter:"number", headerSortTristate:true, },
 			],
-			data:dbdatatree,
+			data:this.tabulatorData,
 			dataTree:true,
 			dataTreeFilter:true,
 			//dataTreeStartExpanded:false,
@@ -135,27 +138,40 @@ export class gridItemDBView extends GridItemWithMenu {
 				
 		this.tabulatorObj = new Tabulator(this.bodyelement, this.tabulatorProperties);
 				
-		this.tabulatorObj.on("rowDblClick", function(e, row){
-			//e - the click event object
-			//row - row component
-			console.log(row.getData()); 
-			(async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().leftcolumn);
-		});
-		this.tabulatorObj.on("rowDblTap", function(e, row){
-			//e - the click event object
-			//row - row component
-			console.log(row.getData()); 
-			(async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().leftcolumn);
-		});
+		//~ this.tabulatorObj.on("rowDblClick", function(e, row){
+			//~ //e - the click event object
+			//~ //row - row component
+			//~ console.log(row.getData()); 
+			//~ (async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().leftcolumn);
+		//~ });
+		//~ this.tabulatorObj.on("rowDblTap", function(e, row){
+			//~ //e - the click event object
+			//~ //row - row component
+			//~ console.log(row.getData()); 
+			//~ (async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().leftcolumn);
+		//~ });
+		this.tabulatorObj.on("rowDblClick", this.rowDoubleClickEvent.bind(this));
+		this.tabulatorObj.on("rowDblTap", this.rowDoubleClickEvent.bind(this));
 		
+	}
+	
+	// ------------------------------------------------------------------------
+	
+	async rowDoubleClickEvent(e,row) {
+		
+		let generatedTemplate = this.copyValueToTemplate(row.getData());
+		if (!generatedTemplate) generatedTemplate = row.getData().leftcolumn;
+		console.log(row.getData()); 
+		await navigator.clipboard.writeText(generatedTemplate);
+		this.eventbus.dispatch('generatedTemplateEvent', this, { textToSend: generatedTemplate });
 		
 	}
 	
 	// -------------------------------------------------------------------------
 	async refreshData(eventdata) {
 		if  (this.tabulatorObj) {
-			let dbdatatree = await this.getDBTree();
-			this.tabulatorObj.setData(dbdatatree);
+			this.tabulatorData = await this.getDBTree();
+			this.tabulatorObj.setData(this.tabulatorData);
 		}
 		
 	}	
@@ -286,6 +302,24 @@ FROM duckdb_prepared_statements()
 	
 	// -------------------------------------------------------------------------
 	
+	filterParentRows(rowobj) {
+	
+						//~ parentrowcallback({
+											//~ 'id' : rowcounter,
+											//~ 'rowlevel' : rowlevel,
+											//~ 'rowlevelpath' : sortfields,
+											//~ 'idpath' : idpathtolevel,
+											//~ 'pushrow': {...rowsarr[i]},
+												//~ })
+												
+		if (rowobj?.rowlevel<3 && rowobj?.pushrow) {
+			rowobj.pushrow.data_type = '';
+			rowobj.pushrow.column_default = '';
+			rowobj.pushrow.column_index = '';
+		}
+		return rowobj.pushrow;
+	}
+	
 	async getDBTree() {
 		let res = [];
 		
@@ -304,7 +338,7 @@ FROM duckdb_prepared_statements()
 			}
 			// *****
 			// getTreeDataRows(rowsarr, sortfields, rollupfields, recalccallback, filterarr=[], childrenrowscallback, alreadysorted=false) 
-			res = getTreeDataRows(resArray,["dbschematabletype","table_name","tableobjecttype","column_name"],[],undefined,[],undefined,true);
+			res = getTreeDataRows(resArray,["dbschematabletype","table_name","tableobjecttype","column_name"],[],undefined,[],undefined,true,this.filterParentRows.bind(this));
 			
 		} else {
 			console.error("DB Tree query error:", sqlres.error);
@@ -344,7 +378,7 @@ FROM duckdb_prepared_statements()
 	
 	buildTemplatesFilter() {
 		
-		const templatesArr = [',field as alias','field as alias,',',field','field,'];
+		const templatesArr = [...this.copyTemplatesArr];
 		
 		let fieldsContainerElement = this.headerelement.querySelector('#copytemplatesgroup'+this.uuid);
 		if (!fieldsContainerElement) {
@@ -358,7 +392,7 @@ FROM duckdb_prepared_statements()
 			//~ <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
 			//~ <label class="btn btn-outline-primary" for="btnradio1">,field as alias</label>
 			let buttonID = 'btnradio_' + i + "_" + this.uuid;
-			let buttonText = templatesArr[i];
+			let buttonText = templatesArr[i].replaceAll('{{','').replaceAll('}}','');
 			
 			let el = document.createElement("input");
 			el.setAttribute("type", "radio");
@@ -386,6 +420,109 @@ FROM duckdb_prepared_statements()
 		}
 		
 		
+	}
+	
+	// -------------------------------------------------------------------------
+	
+	getActiveTemplate() {
+		let res = '';
+		let fieldsContainerElement = this.headerelement.querySelector('#copytemplatesgroup'+this.uuid);
+		if (!fieldsContainerElement) {
+			console.error('#copytemplatesgroup element not found, cannot find an active template!');
+			return false;
+		}
+		const elemId = fieldsContainerElement.querySelector("input[type='radio'][name='btnradio']:checked").id; 
+		const templateNumber = elemId.replaceAll(this.uuid,'').replaceAll('btnradio','').replaceAll('_','');
+		//~ console.log("CHECKED:",elemId, templateNumber);
+		res = this.copyTemplatesArr[parseInt(templateNumber)];
+		console.log("Template:",res);
+		return res;
+	}
+	
+	// ------------------------------------------------------------------------
+	
+	findTabulatorDataRowByIDPath(idpath=[]) {
+		// this.tabulatorData
+		let res = null;
+		let curLevel = this.tabulatorData;
+		let levelIndex;
+		for (let i=0;i<idpath.length;i++) {
+			levelIndex = curLevel.findIndex((v)=>v.id===idpath[i]);
+			if (levelIndex===-1) { break; }
+			res = curLevel[levelIndex];
+			if (curLevel[levelIndex]['_children']) curLevel = curLevel[levelIndex]['_children'];
+			
+		}
+		
+		return res;
+	}
+	
+	// ------------------------------------------------------------------------
+	copyValueToTemplate(currow) {
+		// this.copyTemplatesArr = [',{{field}} as {{alias}}','{{field}} as {{alias}},',',{{field}}','{{field}},'];
+		let res = '';
+		const curTemplate = this.getActiveTemplate();
+		
+		if (currow?.rowlevel===3 && currow?.tableobjecttype==="Columns") {
+			// column_name 
+			// namealias
+			const tableNameRow = this.findTabulatorDataRowByIDPath(currow?.idpath?.slice(0,2)); 
+			console.log("Found table: ",tableNameRow);
+			let tablePrefix = '';
+			tablePrefix = tableNameRow?.namealias?.trim();
+			if (!tablePrefix) tablePrefix = tableNameRow?.table_name;
+			if (tablePrefix) {
+				if (tablePrefix.includes(' ')) tablePrefix = '"' + tablePrefix + '"';
+				tablePrefix = tablePrefix + ".";
+			}
+			let fieldname = currow?.column_name;
+			if (fieldname.includes(' ')) fieldname = '"' + fieldname + '"';
+			let fieldalias = currow?.namealias?.trim();
+			if (!fieldalias) {
+				fieldalias=fieldname;
+			} else {
+				if (fieldalias.includes(' ')) fieldalias = '"' + fieldalias + '"';
+			}
+			fieldname = tablePrefix + fieldname;
+			res = curTemplate?.replaceAll('{{field}}',fieldname).replaceAll('{{alias}}',fieldalias);
+		} else if (currow?.rowlevel===1 && (currow?.tabletype==="Tables" ||currow?.tabletype==="Views")) {
+			let fieldname = currow?.table_name;
+			if (fieldname.includes(' ')) fieldname = '"' + fieldname + '"';
+			let fieldalias = currow?.namealias?.trim();
+			if (!fieldalias) {
+				fieldalias=fieldname;
+			} else {
+				if (fieldalias.includes(' ')) fieldalias = '"' + fieldalias + '"';
+			}
+			res = curTemplate?.replaceAll('{{field}}',fieldname).replaceAll('{{alias}}',fieldalias).replaceAll(',','');
+		} else if (currow?.rowlevel===2 && currow?.leftcolumn==="Columns") {
+			const tableNameRow = this.findTabulatorDataRowByIDPath(currow?.idpath?.slice(0,2)); 
+			console.log("Found table: ",tableNameRow);
+			let tablePrefix = '';
+			tablePrefix = tableNameRow?.namealias?.trim();
+			if (!tablePrefix) tablePrefix = tableNameRow?.table_name;
+			if (tablePrefix) {
+				if (tablePrefix.includes(' ')) tablePrefix = '"' + tablePrefix + '"';
+				tablePrefix = tablePrefix + ".";
+			}
+			
+			for (let i=0;i<currow['_children']?.length;i++) {
+				let fieldname = currow['_children'][i].column_name;
+				if (fieldname.includes(' ')) fieldname = '"' + fieldname + '"';
+				let fieldalias = currow['_children'][i].namealias?.trim();
+				if (!fieldalias) {
+					fieldalias=fieldname;
+				} else {
+					if (fieldalias.includes(' ')) fieldalias = '"' + fieldalias + '"';
+				}
+				fieldname = tablePrefix + fieldname;
+				res = res + curTemplate?.replaceAll('{{field}}',fieldname).replaceAll('{{alias}}',fieldalias) + "\n";
+			}
+			
+		
+		}
+		console.log("TO COPY: ",res);
+		return res;
 	}
 	
 	

@@ -712,6 +712,9 @@ export class AppPageScriptControl extends AppPageControl {
 				if (this.sqlqueryview) {
 					this.sqlqueryview.eventbus.subscribe('editSQLcommandgriditem',(obj,eventdata)=>{  that.sqleditor.setValue(eventdata?.sqlcommand); }, this.sqleditor.uuid);
 				}
+				
+				this.eventbus.subscribe('sendTextToSQLEditor',(obj,eventdata)=>{  that.sqleditor.insertStringAtCursor(eventdata?.textToSend); }, this.sqleditor.uuid);
+				
 			}	
 		} else if (mainWidgetName==="gridItemQueryView") {
 			if (!this.sqlqueryview) {
@@ -800,13 +803,9 @@ export class AppPageScriptControl extends AppPageControl {
 							parentuuid: this.uuid,
 						});
 				this.griditemdbview.eventbus.subscribe('closegriditem', this.deleteMainWidget.bind(this), this.uuid);
-
+				this.griditemdbview.eventbus.subscribe('generatedTemplateEvent', this.sendTextToSQLEditor.bind(this), this.uuid);
 			}
 		}
-		
-		
-		
-		
 		
 	}
 	
@@ -1371,6 +1370,14 @@ sheetinfo
 		}
 	}
 	// --------------------------------------------------------------------------------
+	
+	sendTextToSQLEditor(obj,eventdata) {
+		
+		this.eventbus.dispatch('sendTextToSQLEditor', obj, eventdata);
+		
+	}
+	
+	
 	
 	async destroy() {
 		await super.destroy();

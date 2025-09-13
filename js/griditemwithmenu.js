@@ -188,6 +188,7 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 	// ------------------------------------------------------------------------------
 	insertStringAtCursor(valstr) {
 		this.codeEditorObj.replaceRange(valstr, this.codeEditorObj.getCursor());
+		this.codeEditorObj.focus();
 	}
 	
 	
