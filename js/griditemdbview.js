@@ -111,6 +111,11 @@ export class gridItemDBView extends GridItemWithMenu {
 			selectableRows:1,
 			selectableRowsPersistence:false,
 			rowContextMenu:[
+				
+				{
+					label:"Copy as template",
+					action:this.rowDoubleClickEvent.bind(this),
+				},
 				{
 					label:"Copy to clipboard",
 					action:function(e, row){
