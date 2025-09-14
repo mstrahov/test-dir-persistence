@@ -241,7 +241,20 @@ Main app
 							<a class="dropdown-item" href="#" id="runcommandmenuitem">Run command (CTRL-Enter)</a>
 							<a class="dropdown-item" href="#" id="runselectedcommandmenuitem">Run selected (SHIFT-Enter)</a>
 							<a class="dropdown-item" href="#" id="dumpallhistory">Show all history</a>
-							<a class="dropdown-item" href="#" id="shortcutshelpgriditem">Shortcuts Help</a>
+							<!-- <a class="dropdown-item" href="#" id="shortcutshelpgriditem">Shortcuts Help</a> -->
+							
+							<a class="dropdown-item" href="#" id="clearafterrunitem">
+										<!-- <div class="form-check form-switch form-check-inline mb-0 me-2">
+										  <label class="form-check-label">
+											Clear after run
+											<input class="form-check-input" type="checkbox" id="clearafterrunswitch">
+										  </label>
+										</div>
+										-->
+							</a>
+							
+							
+							
 							<a class="dropdown-item" href="#" id="closegriditem">Close</a>
 						  </div>
 					</div>
@@ -766,11 +779,24 @@ Main app
 				<span class="griditemheadertext ms-1"></span>
 				<div class="ms-auto d-flex" id="controlelements">	
 					
+					<!--
 					<button type="button" class="btn btn-outline-secondary btn-sm">Copy as:</button>
 					<div id="copytemplatesgroup" class="btn-group btn-group-sm me-2" role="group" aria-label="Copy templates">
 					
 					</div>
-									
+					-->
+					<div class="input-group input-group-sm mb-0 me-2" >
+						  <label class="input-group-text" for="inputGroupSelect01">Copy:</label>
+						  <select class="form-select" id="inputGroupSelect01" style="padding-right:2rem;">
+							<option value="0" selected>,field as alias</option>
+							<option value="1">field as alias,</option>
+							<option value="2">,field</option>
+							<option value="3">field,</option>
+							<option value="4">field</option>
+						  </select>
+						</div>
+					
+	
 					<span id="refreshaction" class="btn-ghost small-svg-button clickable-item-action"  data-bs-toggle="tooltip" data-bs-placement="top" title="Refresh" style="display: display;">
 						<svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="1.75"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-refresh"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
 					</span>
