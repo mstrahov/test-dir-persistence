@@ -23,8 +23,9 @@ export class MenuEventsControl {
 		
 		dropdownitems.forEach(menuitem => {
 			//console.log("menuitem ",menuitem);
-			// ignore dropdown-toggle in case menus contain submenus
-			if (!menuitem.classList.contains('dropdown-toggle')) {
+			// ignore dropdown-toggle in case menus contain submenus   
+			// ignore adhocdb-switchitem - handled by bootstrap
+			if (!menuitem.classList.contains('dropdown-toggle') && !menuitem.classList.contains('adhocdb-switchitem')) {
 				menuitem.addEventListener("click", this.onClickEvent.bind(this));
 			}
 		},this);

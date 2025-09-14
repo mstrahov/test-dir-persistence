@@ -101,7 +101,7 @@ export class GridItemSQLEditor extends GridItemEditorWithHistory {
 	
 	runEditorCode() {
 		//console.log("py code run from editor");
-		this.eventbus.dispatch('runeditorcode', this, {cmd: this.getValue(), successcallback: this.clearEditor.bind(this), });
+		this.eventbus.dispatch('runeditorcode', this, {cmd: this.getValue(), successcallback: this.clearEditor.bind(this,false), });
 		
 		// maybe myCodeMirror.setOption("readOnly", false); until callback ? 
 	}

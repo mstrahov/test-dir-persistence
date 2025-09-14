@@ -72,12 +72,63 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 		this.cmdhistoryPosition = this.cmdhistory.length;
 		this.contentsChanged = false;
 		this.codeEditorObj = null;
+		
+		//~ this.buildInterfaceItems();
 	}
-
+	// ------------------------------------------------------------------------------
 	//~ get widgetName() {
 		//~ return this.__proto__?.constructor?.name
 	//~ }
+	// ------------------------------------------------------------------------------
 	
+	clearAfterRunSwitchValue() {
+		let fieldsContainerElement = this.headerelement.querySelector('#clearafterrunswitch'+this.uuid);
+		if (!fieldsContainerElement) {
+			console.error('#clearafterrunitem element not found, cannot build a copy template control');
+			return false;
+		}
+		//console.log('#clearafterrunswitch',fieldsContainerElement, fieldsContainerElement.checked);
+		return fieldsContainerElement.checked;
+	}
+	
+	// ------------------------------------------------------------------------------
+	//~ buildInterfaceItems() {
+		//~ //  clearafterrunitem
+		//~ // clearafterrunswitch
+		//~ // <div class="form-check form-switch form-check-inline mb-0 me-2">
+		  //~ // <input class="form-check-input" type="checkbox" id="clearafterrunswitch">
+		  //~ // <label class="form-check-label" for="clearafterrunswitch">Clear after run</label>
+		//~ // </div>
+		
+		//~ let fieldsContainerElement = this.headerelement.querySelector('#clearafterrunitem'+this.uuid);
+		//~ if (!fieldsContainerElement) {
+			//~ console.error('#clearafterrunitem element not found, cannot build a copy template control');
+			//~ return false;
+		//~ }
+		//~ let switchID = 'clearafterrunswitch_' + this.uuid;
+		//~ let el = document.createElement("div");
+		//~ let classNames = "form-check form-switch form-check-inline mb-0 me-2".split(" ");
+		//~ classNames.forEach((className) => {
+			//~ el.classList.add(className);
+		//~ });
+		//~ fieldsContainerElement.appendChild(el);
+		//~ // ----
+		//~ let el2 = document.createElement("input");
+		//~ el2.classList.add("form-check-input");
+		//~ el2.setAttribute("type", "checkbox");
+		//~ el2.id = switchID;
+		//~ el.appendChild(el2);
+		//~ // ---
+		//~ el2 = document.createElement("label");
+		//~ el2.classList.add("form-check-label");
+		//~ el2.setAttribute("for", switchID);
+		//~ el2.innerText = "Clear after run";
+		//~ el.appendChild(el2);
+		
+	//~ }
+
+	
+	// ------------------------------------------------------------------------------
 	codeEditorObjOnChange(instance, changeObj) {
 		//console.log("Changes",changeObj);
 		if (changeObj.origin !=='setValue') {
@@ -86,18 +137,32 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 		//console.log(this.contentsChanged,this.cmdhistoryPosition,this.cmdhistory);
 	}
 	
-	
-	clearEditor() {
+	// ------------------------------------------------------------------------------
+	clearEditor(ignoreClearAfterRunSwitch=true) {
+		//~ let editorcontents = this.getValue();
+		//~ if (this.contentsChanged && editorcontents && editorcontents.trim().length>0) {
+			//~ if (!editorcontents.endsWith("\n")) { editorcontents+="\n"}
+			//~ this.cmdhistory.push(editorcontents);
+			//~ this.cmdhistoryPosition = this.cmdhistory.length;
+		//~ }
+		this.saveEditorContentsToHistoryIfChanged();
+		
+		if (ignoreClearAfterRunSwitch || this.clearAfterRunSwitchValue()) {
+			this.codeEditorObj.setValue('');
+		}		
+		
+	}
+	// ------------------------------------------------------------------------------
+	saveEditorContentsToHistoryIfChanged() {
 		let editorcontents = this.getValue();
 		if (this.contentsChanged && editorcontents && editorcontents.trim().length>0) {
 			if (!editorcontents.endsWith("\n")) { editorcontents+="\n"}
 			this.cmdhistory.push(editorcontents);
 			this.cmdhistoryPosition = this.cmdhistory.length;
 		}
-		this.codeEditorObj.setValue('');		
 		this.contentsChanged = false;
 	}
-	
+	// ------------------------------------------------------------------------------
 	setCursorToLastLine() {
 	/*
 		 * doc.setCursor(pos: {line, ch}|number, ?ch: number, ?options: object)
@@ -108,7 +173,7 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 		this.codeEditorObj.scrollIntoView(this.codeEditorObj.lastLine(),0);
 		this.codeEditorObj.focus();
 	}
-	
+	// ------------------------------------------------------------------------------
 	getSelection() {
 		/*
 		 * doc.somethingSelected() boolean
@@ -122,19 +187,19 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 		} 
 		return '';
 	}
-	
+	// ------------------------------------------------------------------------------
 	getValue() {
 		//~ doc.getValue(?separator: string) → string
 		//~ Get the current editor content. You can pass it an optional argument to specify the string to be used to separate lines (defaults to "\n").
 		return this.codeEditorObj.getValue()
 	}
-	
+	// ------------------------------------------------------------------------------
 	setValue(valstr) {
 		//~ doc.setValue(content: string)    Set the editor content.
 		this.clearEditor();
 		this.codeEditorObj.setValue(valstr);
 	}
-	
+	// ------------------------------------------------------------------------------
 	showPreviousCommand() {
 		if (this.cmdhistory.length===0) { return;}
 		this.cmdhistoryPosition--;
@@ -150,7 +215,7 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 		this.setCursorToLastLine();
 		this.contentsChanged = false;
 	}
-	
+	// ------------------------------------------------------------------------------
 	showNextCommand() {
 		if (this.cmdhistory.length===0) { return;}
 		this.cmdhistoryPosition++;
@@ -167,6 +232,7 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 		this.contentsChanged = false;
 	} 
 	
+	// ------------------------------------------------------------------------------
 	showAllHistory() {
 		if (this.cmdhistory.length===0) { return;}
 		if (this.contentsChanged) {
@@ -190,15 +256,17 @@ export class GridItemEditorWithHistory extends GridItemWithMenu {
 		this.codeEditorObj.replaceRange(valstr, this.codeEditorObj.getCursor());
 		this.codeEditorObj.focus();
 	}
-	
-	
 	// ------------------------------------------------------------------------------
+	
+
 	toOwnFormat() {
 		let res = super.toOwnFormat();
 		res.cmdhistory = this.cmdhistory;
 		
 		return res;
 	}
+	
+	
 	
 }
 

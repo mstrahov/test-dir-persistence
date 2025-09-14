@@ -156,7 +156,7 @@ export class gridItemDBView extends GridItemWithMenu {
 			//~ (async (text)=> {await navigator.clipboard.writeText(text);})(row.getData().leftcolumn);
 		//~ });
 		this.tabulatorObj.on("rowDblClick", this.rowDoubleClickEvent.bind(this));
-		this.tabulatorObj.on("rowDblTap", this.rowDoubleClickEvent.bind(this));
+		// this.tabulatorObj.on("rowDblTap", this.rowDoubleClickEvent.bind(this));
 		
 	}
 	
