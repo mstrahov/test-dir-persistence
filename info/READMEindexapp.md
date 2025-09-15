@@ -1,4 +1,4 @@
-# adhocdb
+# AdhocDB
 Local-first in-browser database and Python notebook-like environment with data storage persistence. <br><br>
 Runs DuckDB Wasm and Pyodide in your browser locally. Your data never leaves your browser.
 
